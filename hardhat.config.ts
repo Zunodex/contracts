@@ -95,36 +95,12 @@ const config: HardhatUserConfig = {
     },
   },
   solidity: {
-    compilers: [
-      {
-        version: "0.8.7",
-      },
-      {
-        version: "0.8.19",
-      },
-      {
-        version: "0.8.5",
-      },
-      {
-        version: "0.8.9",
-      },
-      {
-        version: "0.5.16",
-      },
-      {
-        version: "0.6.6",
-      },
-      {
-        version: "0.4.18",
-      },
-      {
-        version: "0.8.10",
-      },
-    ],
+    version: "0.8.26",
     settings: {
+      viaIR: true,
       optimizer: {
         enabled: true,
-        runs: 999999,
+        runs: 200,
       },
     },
   },
