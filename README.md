@@ -1,94 +1,66 @@
-# Template for a ZetaChain Hardhat Project
+## Foundry
 
-This is a simple Hardhat template that provides a starting point for developing
-smart contract applications on the ZetaChain blockchain.
+**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
 
-## Prerequisites
+Foundry consists of:
 
-Before getting started, ensure that you have
-[Node.js](https://nodejs.org/en/download) and [Yarn](https://yarnpkg.com/)
-installed on your system.
+-   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
+-   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
+-   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
+-   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
 
-## Getting Started
+## Documentation
 
-To get started, install the necessary dependencies by running the following
-command in your terminal:
+https://book.getfoundry.sh/
 
-```
-yarn
-```
+## Usage
 
-## Hardhat Tasks
+### Build
 
-This template includes Hardhat tasks that can be used make it easier to build
-with ZetaChain.
-
-### Generating a Random Wallet
-
-To generate a random wallet, run the following command in your terminal:
-
-```
-npx hardhat account --save
+```shell
+$ forge build
 ```
 
-This will generate a random wallet, print information about the wallet to the
-terminal, and save the private key to a `.env` file to make it accessible to
-Hardhat. If you don't want to save the wallet (for example, if you just need an
-address to send tokens to), you can run the command without the `--save` flag.
+### Test
 
-### Querying for Token Balances
-
-To query for token balances, run the following command in your terminal:
-
-```
-npx hardhat balances
+```shell
+$ forge test
 ```
 
-This command will query token balances for the account address derived from the
-private key specified in the `.env`.
+### Format
 
-If you want to query for token balances for a different account, you can use the
-`--address` flag:
-
-```
-npx hardhat balances --address <address>
+```shell
+$ forge fmt
 ```
 
-### Requesting Tokens from the Faucet
+### Gas Snapshots
 
-To install a faucet, run the following command in your terminal:
-
-```
-yarn global add @zetachain/faucet-cli@athens3
+```shell
+$ forge snapshot
 ```
 
-You can then use it with the following command:
+### Anvil
 
-```
-zetafaucet -h
-```
-
-### Verifying a Contract
-
-You can verify a deployed contract with the following command:
-
-```
-npx hardhat verify:zeta --contract <address>
+```shell
+$ anvil
 ```
 
-Select the contract to verify:
+### Deploy
 
-```
-? Select a contract to verify: (Use arrow keys)
-  @zetachain/zevm-protocol-contracts/contracts/interfaces/IZRC20.sol:IZRC20
-  @zetachain/zevm-protocol-contracts/contracts/interfaces/zContract.sol:zContract
-❯ contracts/Withdraw.sol:Withdraw
+```shell
+$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
 ```
 
-After the confirmation the contract will be verified.
+### Cast
 
-## Next Steps
+```shell
+$ cast <subcommand>
+```
 
-To learn more about building decentralized apps on ZetaChain, follow the
-tutorials available in
-[the documentation](https://www.zetachain.com/docs/developers/overview/).
+### Help
+
+```shell
+$ forge --help
+$ anvil --help
+$ cast --help
+```
