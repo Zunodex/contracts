@@ -147,6 +147,15 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
                 decoded.receiver,
                 amount - platformFeesForTx
             );
+
+            emit EddyCrossChainSwap(
+                zrc20,
+                decoded.targetZRC20,
+                amount,
+                amount - platformFeesForTx,
+                decoded.receiver,
+                platformFeesForTx
+            );
         } else {
             // swap
             IZRC20(zrc20).approve(DodoRouteProxy, amount);
@@ -170,16 +179,16 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
                     outputAmount
                 );
             }
-        }
 
-        emit EddyCrossChainSwap(
-            zrc20,
-            decoded.targetZRC20,
-            amount,
-            amount - platformFeesForTx,
-            decoded.receiver,
-            platformFeesForTx
-        );
+            emit EddyCrossChainSwap(
+                zrc20,
+                decoded.targetZRC20,
+                amount,
+                outputAmount,
+                decoded.receiver,
+                platformFeesForTx
+            );
+        }
     }
 
     receive() external payable {}
