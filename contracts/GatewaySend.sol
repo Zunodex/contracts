@@ -53,12 +53,12 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     function depositAndCall(
-        address targetContract,
-        uint256 amount,
         address fromToken,
+        uint256 amount,
+        bytes calldata swapData,
+        address targetContract,
         address asset,
-        bytes calldata payload,
-        bytes calldata swapData
+        bytes calldata payload
     ) public {
         // Swap on DODO Router
         IERC20(fromToken).approve(DodoRouteProxy, amount);

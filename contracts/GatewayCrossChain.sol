@@ -17,9 +17,8 @@ contract GatewayCrossChain {
     address public constant WZETA = 0x5F0b1a82749cb4E2278EC87F8BF6B618dC71a8bf;
     address public constant UniswapRouter = 0x2ca7d64A7EFE2D62A725E2B35Cf7230D6677FfEe;
     address public constant UniswapFactory = 0x9fd96203f7b22bCF72d9DCb40ff98302376cE09c;
-    uint32 constant BITCOIN_EDDY = 9999; // chain Id from eddy db
-    uint32 constant SOLANA_EDDY = 88888; // chain Id from eddy db
-    uint256 constant BITCOIN = 8332;
+    uint32 constant BITCOIN_EDDY = 8332; // chain Id from eddy db
+    uint32 constant SOLANA_EDDY = 900; // chain Id from eddy db
     uint256 constant ZETACHAIN = 7000;
     uint256 constant MAX_DEADLINE = 200;
     address private EddyTreasurySafe;
@@ -210,7 +209,7 @@ contract GatewayCrossChain {
         address inputToken,
         address outputToken,
         uint256 amount
-    ) public {
+    ) private {
         gateway.withdraw(
             sender,
             amount,
@@ -524,7 +523,7 @@ contract GatewayCrossChain {
         DecodedMessage memory decoded = decodeMessage(message);
 
         // Check if the message is from Bitcoin to Solana
-        bool btcToSolana = (context.chainID == BITCOIN && decoded.destChainId == SOLANA_EDDY);
+        bool btcToSolana = (context.chainID == uint256(BITCOIN_EDDY) && decoded.destChainId == SOLANA_EDDY);
         address evmWalletAddress = getEvmAddress(context, message, decoded.destChainId);
 
         // Transfer platform fees
