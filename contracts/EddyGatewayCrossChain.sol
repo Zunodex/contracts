@@ -929,7 +929,7 @@ contract EddyGatewayCrossChain is UniversalContract,Initializable, OwnableUpgrad
         
     }
 
-    function getEvmAddress(MessageContext calldata context,bytes calldata message, uint32 chainId) internal pure returns(address evmWalletAddress) {
+    function getEvmAddress(MessageContext calldata context, bytes calldata message, uint32 chainId) internal pure returns(address evmWalletAddress) {
         if (chainId == BITCOIN_EDDY || chainId == SOLANA_EDDY) {
             evmWalletAddress = context.sender;
         } else {

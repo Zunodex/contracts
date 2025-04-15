@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {GatewayEVM} from "@zetachain/protocol-contracts/contracts/evm/GatewayEVM.sol";
-import {IGatewayEVM, RevertOptions} from "@zetachain/protocol-contracts/contracts/evm/interfaces/IGatewayEVM.sol";
+import "@zetachain/protocol-contracts/contracts/evm/interfaces/IGatewayEVM.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -15,7 +15,13 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     event DodoRouteProxyUpdated(address dodoRouteProxy);
     event GatewayUpdated(address gateway);
 
+    error Unauthorized();
     error RouteProxyCallFailed();
+
+    modifier onlyGateway() {
+        if (msg.sender != address(gateway)) revert Unauthorized();
+        _;
+    }
 
     constructor() {
         _disableInitializers();
@@ -68,6 +74,7 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         }
         uint256 outputAmount = abi.decode(returnData, (uint256));
 
+        IERC20(asset).approve(address(gateway), outputAmount);
         gateway.depositAndCall(
             targetContract,
             outputAmount,
@@ -89,6 +96,8 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         address asset,
         bytes calldata payload
     ) public {
+        IERC20(asset).transferFrom(msg.sender, address(this), amount);
+        IERC20(asset).approve(address(gateway), amount);
         gateway.depositAndCall(
             targetContract,
             amount,
@@ -102,6 +111,13 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
                 onRevertGasLimit: 0
             })
         );
+    }
+
+    function onCall(
+        MessageContext calldata context,
+        bytes calldata message
+    ) external payable onlyGateway returns (bytes4) {
+        
     }
 
     receive() external payable {}

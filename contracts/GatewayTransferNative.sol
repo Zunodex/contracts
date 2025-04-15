@@ -2,17 +2,19 @@
 pragma solidity ^0.8.20;
 
 import {GatewayZEVM} from "@zetachain/protocol-contracts/contracts/zevm/GatewayZEVM.sol";
-import {IGatewayZEVM, MessageContext, CallOptions, RevertOptions} from "@zetachain/protocol-contracts/contracts/zevm/interfaces/IGatewayZEVM.sol";
+import "@zetachain/protocol-contracts/contracts/zevm/interfaces/IGatewayZEVM.sol";
 import {IZRC20} from "@zetachain/protocol-contracts/contracts/zevm/interfaces/IZRC20.sol";
 import {UniversalContract} from "@zetachain/protocol-contracts/contracts/zevm/interfaces/UniversalContract.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {IUniswapV2Router01} from "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router01.sol";
+import {IUniswapV2Factory} from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 import {UniswapV2Library} from "./libraries/UniswapV2Library.sol";
 import {TransferHelper} from "./libraries/TransferHelper.sol";
 import {BytesHelperLib} from "./libraries/BytesHelperLib.sol";
 import {IWETH9} from "./interfaces/IWETH9.sol";
+import {IDODORouteProxy} from "./interfaces/IDODORouteProxy.sol";
 
 contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgradeable, UUPSUpgradeable {
     address public constant WZETA = 0x5F0b1a82749cb4E2278EC87F8BF6B618dC71a8bf;
@@ -23,7 +25,8 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
     uint256 constant ZETACHAIN = 7000;
     uint256 constant MAX_DEADLINE = 200;
     address private EddyTreasurySafe;
-    address public DodoRouteProxy;
+    address public DODORouteProxy;
+    address public DODOApprove;
     uint256 public feePercent;
     uint256 public slippage;
     uint256 public gasLimit;
@@ -85,14 +88,17 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         address payable _gateway,
         address _EddyTreasurySafe,
         address _dodoRouteProxy,
-        uint256 _feePercent
+        uint256 _feePercent,
+        uint256 _slippage
     ) public initializer {
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
         gateway = GatewayZEVM(_gateway);
         EddyTreasurySafe = _EddyTreasurySafe;
-        DodoRouteProxy = _dodoRouteProxy;
+        DODORouteProxy = _dodoRouteProxy;
+        DODOApprove = IDODORouteProxy(_dodoRouteProxy)._DODO_APPROVE_PROXY_();
         feePercent = _feePercent;
+        slippage = _slippage;
     }
 
     function setOwner(address _owner) external onlyOwner {
@@ -100,7 +106,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
     }
 
     function setDodoRouteProxy(address _dodoRouteProxy) external onlyOwner {
-        DodoRouteProxy = _dodoRouteProxy;
+        DODORouteProxy = _dodoRouteProxy;
         emit DodoRouteProxyUpdated(_dodoRouteProxy);
     }
 
@@ -118,6 +124,11 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         EddyTreasurySafe = _EddyTreasurySafe;
         emit EddyTreasurySafeUpdated(_EddyTreasurySafe);
     }
+
+    // function setUniswapRouter(address _uniswapRouter) external onlyOwner {
+    //     UniswapRouter = _uniswapRouter;
+    //     UniswapFactory = IUniswapV2Router01(_uniswapRouter).factory();
+    // }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
@@ -224,10 +235,10 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
     function decodeNativeMessage(
         bytes calldata message
     ) internal pure returns (DecodedNativeMessage memory decodedMessage) {
-        // 20 bytes(evmAddress) + 20 bytes(taregtZRC20) + 32 bytes(swapData)
+        // 20 bytes(evmAddress) + 20 bytes(targetZRC20) + bytes(swapData)
         address receiver = BytesHelperLib.bytesToAddress(message, 0); // 20
         address targetZRC20 = BytesHelperLib.bytesToAddress(message, 20); // 40
-        bytes memory swapData = abi.decode(message[40:72], (bytes)); // 72
+        bytes memory swapData = abi.decode(message[40:], (bytes)); 
         decodedMessage = DecodedNativeMessage({
             receiver: receiver,
             targetZRC20: targetZRC20,
@@ -242,6 +253,8 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
 
         bool isTargetZRC20;
         bytes memory swapData = bytes("");
+        bytes memory contractAddress = bytes("");
+        bytes memory crossChainSwapData = bytes("");
         if(chainId == BITCOIN_EDDY) {
             // 24 bytes + 42 bytes(bechdata) + 32 bytes(isTargetZRC20) + 32 bytes(swapData)
             require(message.length >= 98, "Invalid message length for BTC");
@@ -253,26 +266,28 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             isTargetZRC20 = abi.decode(message[68:100], (bool));
             swapData = abi.decode(message[100:132], (bytes));
         } else {
-            // 24 bytes + 20 bytes(evmAddress) + 32 bytes(isTargetZRC20) + 32 bytes(swapData)
+            // 24 bytes + 20 bytes(evmAddress) + 32 bytes(isTargetZRC20) 
+            // bytes(swapData) + 20 bytes(contractAddress) + bytes(crossChainSwapData)
             isTargetZRC20 = abi.decode(message[44:76], (bool));
-            swapData = abi.decode(message[76:108], (bytes)); 
+            (swapData, contractAddress, crossChainSwapData) = abi.decode(
+                message[76:], (bytes, bytes, bytes)); 
         }
 
-        bytes memory contractAddress = bytes("");
-        bytes memory crossChainSwapData = bytes("");
-        if(isTargetZRC20 == false) {
-            if(chainId == SOLANA_EDDY) {
-                // to SOLANA
-                // 132 bytes + 32 bytes(contractAddress) + 32 bytes(crossChainSwapData)
-                contractAddress = abi.decode(message[132:164], (bytes));
-                crossChainSwapData = abi.decode(message[164:], (bytes));
-            } else {
-                // to EVM
-                // 108 bytes + 20 bytes(contractAddress) + 32 bytes(crossChainSwapData)
-                contractAddress = abi.decode(message[108:128], (bytes));
-                crossChainSwapData = abi.decode(message[128:], (bytes));
-            }
-        }
+        // bytes memory contractAddress = bytes("");
+        // bytes memory crossChainSwapData = bytes("");
+        // if(isTargetZRC20 == false) {
+        //     if(chainId == SOLANA_EDDY) {
+        //         // to SOLANA
+        //         // 132 bytes + 32 bytes(contractAddress) + 32 bytes(crossChainSwapData)
+        //         contractAddress = abi.decode(message[132:164], (bytes));
+        //         crossChainSwapData = abi.decode(message[164:], (bytes));
+        //     } else {
+        //         // to EVM
+        //         // 108 bytes + 20 bytes(contractAddress) + 32 bytes(crossChainSwapData)
+        //         contractAddress = abi.decode(message[108:128], (bytes));
+        //         crossChainSwapData = abi.decode(message[128:], (bytes));
+        //     }
+        // }
 
         return DecodedMessage({
             targetZRC20: targetZRC20,
@@ -282,6 +297,14 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             contractAddress: contractAddress,
             crossChainSwapData: crossChainSwapData
         });
+    }
+
+    function getEvmAddress(bytes calldata message, uint32 chainId) internal view returns(address evmWalletAddress) {
+        if (chainId == BITCOIN_EDDY || chainId == SOLANA_EDDY) {
+            evmWalletAddress = msg.sender;
+        } else {
+            evmWalletAddress = BytesHelperLib.bytesToAddress(message, 24);
+        }
     }
 
     function withdrawAndCall(
@@ -392,7 +415,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             );
         }
         
-        amountsOut = targetAmount - amountInMax;
+        amountsOut = targetAmount - amounts[0];
     }
 
     function _handleBTCCase(
@@ -410,8 +433,8 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         if(swapData.length == 0) {
             outputAmount = amount;
         } else {
-            IZRC20(zrc20).approve(DodoRouteProxy, amount);
-            (bool success, bytes memory returnData) = DodoRouteProxy.call(swapData); // swap on zetachain
+            IZRC20(zrc20).approve(DODORouteProxy, amount);
+            (bool success, bytes memory returnData) = DODORouteProxy.call(swapData); // swap on zetachain
             if(!success) {
                 revert RouteProxyCallFailed();
             } 
@@ -458,8 +481,8 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         if(swapData.length == 0) {
             outputAmount = amount;
         } else {
-            IZRC20(zrc20).approve(DodoRouteProxy, amount);
-            (bool success, bytes memory returnData) = DodoRouteProxy.call(swapData); // swap on zetachain
+            IZRC20(zrc20).approve(DODORouteProxy, amount);
+            (bool success, bytes memory returnData) = DODORouteProxy.call(swapData); // swap on zetachain
             if(!success) {
                 revert RouteProxyCallFailed();
             } 
@@ -561,8 +584,8 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             );
         } else {
             // swap
-            IZRC20(zrc20).approve(DodoRouteProxy, amount);
-            (bool success, bytes memory returnData) = DodoRouteProxy.call(
+            IZRC20(zrc20).approve(DODORouteProxy, amount);
+            (bool success, bytes memory returnData) = DODORouteProxy.call(
                 decoded.swapData
             ); // swap on zetachain
             if (!success) {
@@ -600,8 +623,8 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         bytes calldata message
     ) external {
         require(IZRC20(zrc20).transferFrom(msg.sender, address(this), amount), "INSUFFICIENT ALLOWANCE: TRANSFER FROM FAILED");
-        address evmWalletAddress = msg.sender;
         DecodedMessage memory decoded = decodeMessage(message);
+        address evmWalletAddress = getEvmAddress(message, decoded.destChainId);
 
         // Transfer platform fees
         uint256 platformFeesForTx = _handleFeeTransfer(zrc20, amount); // platformFee = 5 <> 0.5%
@@ -641,8 +664,8 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             if(decoded.swapData.length == 0) {
                 outputAmount = amount;
             } else {
-                IZRC20(zrc20).approve(DodoRouteProxy, amount);
-                (bool success, bytes memory returnData) = DodoRouteProxy.call(decoded.swapData); // swap on zetachain
+                IZRC20(zrc20).approve(DODORouteProxy, amount);
+                (bool success, bytes memory returnData) = DODORouteProxy.call(decoded.swapData); // swap on zetachain
                 if(!success) {
                     revert RouteProxyCallFailed();
                 } 
@@ -685,7 +708,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
                     decoded.targetZRC20,
                     gasZRC20,
                     gasFee,
-                    abi.encodePacked(evmWalletAddress),
+                    abi.encode(evmWalletAddress),
                     outputAmount,
                     zrc20,
                     decoded.contractAddress,
@@ -703,6 +726,35 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         }
     }
 
+    /**
+     * @notice Function called by the gateway to revert the cross-chain swap
+     * @param context Revert context
+     * @dev Only the gateway can call this function
+     */
+    function onRevert(RevertContext calldata context) external onlyGateway {
+        (address senderEvmAddress, address zrc20) = abi.decode(context.revertMessage, (address, address));
+
+        address[] memory path = getPathForTokens(context.asset, zrc20);
+        uint[] memory amountsQuote = UniswapV2Library.getAmountsOut(
+                UniswapFactory,
+                context.amount,
+                path
+            );
+
+        uint amountOutMin = (amountsQuote[amountsQuote.length - 1]) - (slippage * amountsQuote[amountsQuote.length - 1]) / 1000;
+        IZRC20(zrc20).approve(UniswapRouter, context.amount);
+
+        uint256[] memory amounts = IUniswapV2Router01(UniswapRouter)
+            .swapExactTokensForTokens(
+                context.amount,
+                amountOutMin,
+                path,
+                address(this),
+                block.timestamp + MAX_DEADLINE
+            );
+        
+        TransferHelper.safeTransfer(zrc20, senderEvmAddress, amounts[path.length - 1]);
+    }
 
     receive() external payable {}
 
