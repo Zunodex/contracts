@@ -3,8 +3,8 @@ pragma solidity ^0.8.20;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {GatewayZEVMMock} from "../mocks/GatewayZEVMMock.sol";
-import "@zetachain/protocol-contracts/contracts/zevm/GatewayZEVM.sol";
-import "@zetachain/protocol-contracts/contracts/zevm/interfaces/UniversalContract.sol";
+import {Callable, MessageContext} from "@zetachain/protocol-contracts/contracts/evm/interfaces/IGatewayEVM.sol";
+import {CallOptions, RevertOptions} from "@zetachain/protocol-contracts/contracts/zevm/interfaces/IGatewayZEVM.sol";
 
 contract GatewayEVMMock {
     uint256 chainId;
@@ -41,11 +41,7 @@ contract GatewayEVMMock {
     ) external {
         IERC20(asset).transferFrom(msg.sender, address(this), amount);
         gatewayZEVM.depositAndCall(
-            MessageContext({
-                origin: "",
-                sender: tx.origin,
-                chainID: chainId
-            }),
+            chainId,
             toZRC20[asset],
             amount,
             receiver,
@@ -58,9 +54,10 @@ contract GatewayEVMMock {
         uint256 amount,
         address zrc20,
         RevertOptions calldata /*revertOptions*/
-    ) external {
+    ) external payable {
         address asset = toERC20[zrc20];
-        IERC20(asset).transfer(address(bytes20(receiver)), amount);
+        (address to) = abi.decode(receiver, (address));
+        IERC20(asset).transfer(to, amount);
     }
 
     function withdrawAndCall(
@@ -68,15 +65,17 @@ contract GatewayEVMMock {
         uint256 amount,
         address zrc20,
         bytes calldata message,
-        CallOptions calldata callOptions,
-        RevertOptions calldata revertOptions
-    ) external {
+        CallOptions calldata /*callOptions*/,
+        RevertOptions calldata /*revertOptions*/
+    ) external payable {
         address asset = toERC20[zrc20];
         (address targetContract) = abi.decode(receiver, (address));
-        IERC20(asset).transfer(targetContract, amount);
-        (bool success, ) = targetContract.call(message);
-        if(!success) {
-            revert TargetContractCallFailed();
-        } 
+        IERC20(asset).approve(targetContract, amount);
+        Callable(targetContract).onCall(
+            MessageContext({
+                sender: address(this)
+            }),
+            message
+        );
     }
 }

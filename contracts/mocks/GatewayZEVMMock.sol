@@ -3,9 +3,10 @@ pragma solidity ^0.8.20;
 
 import {IZRC20} from "@zetachain/protocol-contracts/contracts/zevm/interfaces/IZRC20.sol";
 import {GatewayEVMMock} from "../mocks/GatewayEVMMock.sol";
+import {MessageContext} from "@zetachain/protocol-contracts/contracts/zevm/GatewayZEVM.sol";
 import "@zetachain/protocol-contracts/contracts/zevm/GatewayZEVM.sol";
 import "@zetachain/protocol-contracts/contracts/zevm/interfaces/UniversalContract.sol";
-import {console} from "../../lib/forge-std/src/console.sol";
+
 
 contract GatewayZEVMMock {
     GatewayEVMMock public gatewayEVM;
@@ -15,14 +16,23 @@ contract GatewayZEVMMock {
     }
 
     function depositAndCall(
-        MessageContext calldata context,
+        uint256 chainId,
         address zrc20,
         uint256 amount,
         address target,
         bytes calldata message
     ) external {
         IZRC20(zrc20).transfer(target, amount);
-        UniversalContract(target).onCall(context, zrc20, amount, message);
+        UniversalContract(target).onCall(
+            MessageContext({
+                origin: "",
+                sender: address(this),
+                chainID: chainId
+            }), 
+            zrc20, 
+            amount, 
+            message
+        );
     }
 
     function withdraw(

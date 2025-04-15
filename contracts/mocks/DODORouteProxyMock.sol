@@ -15,7 +15,7 @@ contract DODORouteProxyMock is IDODORouteProxy {
     mapping(address baseToken => mapping(address quoteToken => uint256 price))
         public prices;
 
-    constructor(address dodoApprove) {
+    function setDODOApprove(address dodoApprove) public {
         DODOApprove = dodoApprove;
     }
 

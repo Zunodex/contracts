@@ -315,13 +315,14 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         address evmWalletAddress,
         bytes memory swapData
     ) public {
+        bytes memory message = abi.encode(evmWalletAddress, outputAmount, swapData);
         gateway.withdrawAndCall(
             contractAddress,
             outputAmount,
             targetZRC20,
-            swapData,
+            message,
             CallOptions({
-                isArbitraryCall: true,
+                isArbitraryCall: false,
                 gasLimit: gasLimit
             }),
             RevertOptions({
@@ -433,7 +434,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         if(swapData.length == 0) {
             outputAmount = amount;
         } else {
-            IZRC20(zrc20).approve(DODORouteProxy, amount);
+            IZRC20(zrc20).approve(DODOApprove, amount);
             (bool success, bytes memory returnData) = DODORouteProxy.call(swapData); // swap on zetachain
             if(!success) {
                 revert RouteProxyCallFailed();
@@ -481,7 +482,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         if(swapData.length == 0) {
             outputAmount = amount;
         } else {
-            IZRC20(zrc20).approve(DODORouteProxy, amount);
+            IZRC20(zrc20).approve(DODOApprove, amount);
             (bool success, bytes memory returnData) = DODORouteProxy.call(swapData); // swap on zetachain
             if(!success) {
                 revert RouteProxyCallFailed();
@@ -584,7 +585,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             );
         } else {
             // swap
-            IZRC20(zrc20).approve(DODORouteProxy, amount);
+            IZRC20(zrc20).approve(DODOApprove, amount);
             (bool success, bytes memory returnData) = DODORouteProxy.call(
                 decoded.swapData
             ); // swap on zetachain
@@ -664,7 +665,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             if(decoded.swapData.length == 0) {
                 outputAmount = amount;
             } else {
-                IZRC20(zrc20).approve(DODORouteProxy, amount);
+                IZRC20(zrc20).approve(DODOApprove, amount);
                 (bool success, bytes memory returnData) = DODORouteProxy.call(decoded.swapData); // swap on zetachain
                 if(!success) {
                     revert RouteProxyCallFailed();
@@ -679,7 +680,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
                 if(decoded.contractAddress.length == 0) {
                     // withdraw
                     withdraw(
-                        abi.encodePacked(evmWalletAddress),
+                        abi.encode(evmWalletAddress),
                         zrc20,
                         decoded.targetZRC20,
                         outputAmount - gasFee

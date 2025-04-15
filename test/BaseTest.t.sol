@@ -14,12 +14,10 @@ import {ZRC20Mock} from "../contracts/mocks/ZRC20Mock.sol";
 import {DODORouteProxyMock} from "../contracts/mocks/DODORouteProxyMock.sol";
 import {IUniswapV2Factory} from "../contracts/interfaces/IUniswapV2Factory.sol";
 import {IUniswapV2Router01} from "../contracts/interfaces/IUniswapV2Router01.sol";
-import {Multicall} from "../contracts/Multicall.sol";
 
 
 contract BaseTest is Test {
     address public EddyTreasurySafe = address(0x123);
-    address public dodoApproveMock = address(0x456);
     address public user1 = address(0x111);
     address public user2 = address(0x222);
     uint256 constant initialBalance = 1000 ether;
@@ -29,10 +27,12 @@ contract BaseTest is Test {
     GatewayEVMMock public gatewayA; 
     GatewayEVMMock public gatewayB; 
     GatewayZEVMMock public gatewayZEVM; 
-    GatewaySend public gatewaySend; // on A chain
+    GatewaySend public gatewaySendA;
+    GatewaySend public gatewaySendB;
     GatewayCrossChain public gatewayCrossChain; // on zetachain
     GatewayTransferNative public gatewayTransferNative; // on zetachain
-    ERC1967Proxy public sendProxy; 
+    ERC1967Proxy public sendProxyA; 
+    ERC1967Proxy public sendProxyB;
     ERC1967Proxy public crossChainProxy;
     ERC1967Proxy public transferNativeProxy;
     ERC20Mock public token1A; 
@@ -44,21 +44,18 @@ contract BaseTest is Test {
     DODORouteProxyMock public dodoRouteProxyA; // A chain
     DODORouteProxyMock public dodoRouteProxyZ; // zetachain
     DODORouteProxyMock public dodoRouteProxyB; // B chain
-    Multicall public multicallA;
-    Multicall public multicallB;
 
     function setUp() public virtual {
         gatewayA = new GatewayEVMMock();
         gatewayB = new GatewayEVMMock();
         gatewayZEVM = new GatewayZEVMMock();
-        gatewaySend = new GatewaySend(); // A chain
+        gatewaySendA = new GatewaySend();
+        gatewaySendB = new GatewaySend();
         gatewayCrossChain = new GatewayCrossChain(); // zetachain
         gatewayTransferNative = new GatewayTransferNative(); // zetachain
-        dodoRouteProxyA = new DODORouteProxyMock(dodoApproveMock);
-        dodoRouteProxyZ = new DODORouteProxyMock(dodoApproveMock);
-        dodoRouteProxyB = new DODORouteProxyMock(dodoApproveMock);
-        multicallA = new Multicall();
-        multicallB = new Multicall();
+        dodoRouteProxyA = new DODORouteProxyMock();
+        dodoRouteProxyZ = new DODORouteProxyMock();
+        dodoRouteProxyB = new DODORouteProxyMock();
         
         token1A = new ERC20Mock("Token1A", "TK1A", 18);
         token2A = new ERC20Mock("Token2A", "TK2A", 18);
@@ -79,17 +76,35 @@ contract BaseTest is Test {
         // set GatewayZEVM
         gatewayZEVM.setGatewayEVM(address(gatewayB));
 
+        // set DODORouteProxy
+        dodoRouteProxyA.setDODOApprove(address(dodoRouteProxyA)); // should be DODOApprove in real scenario
+        dodoRouteProxyZ.setDODOApprove(address(dodoRouteProxyZ));
+        dodoRouteProxyB.setDODOApprove(address(dodoRouteProxyB));
+        dodoRouteProxyA.setPrice(address(token1A), address(token2A), 3e18); // 1 token1A = 3 token2A
+        dodoRouteProxyZ.setPrice(address(token1Z), address(token2Z), 2e18); // 1 token1Z = 2 token2Z
+        dodoRouteProxyB.setPrice(address(token1B), address(token2B), 4e18); // 1 token1B = 4 token2B
+
         // set GatewaySend
         bytes memory data = abi.encodeWithSignature(
             "initialize(address,address)",
             address(gatewayA),
             address(dodoRouteProxyA)
         );
-        sendProxy = new ERC1967Proxy(
-            address(gatewaySend),
+        sendProxyA = new ERC1967Proxy(
+            address(gatewaySendA),
             data
         );
-        gatewaySend = GatewaySend(payable(address(sendProxy)));
+        gatewaySendA = GatewaySend(payable(address(sendProxyA)));
+        data = abi.encodeWithSignature(
+            "initialize(address,address)",
+            address(gatewayB),
+            address(dodoRouteProxyB)
+        );
+        sendProxyB = new ERC1967Proxy(
+            address(gatewaySendB),
+            data
+        );
+        gatewaySendB = GatewaySend(payable(address(sendProxyB)));
 
         // set GatewayTransferNative
         data = abi.encodeWithSignature(
@@ -105,11 +120,6 @@ contract BaseTest is Test {
             data
         );
         gatewayTransferNative = GatewayTransferNative(payable(address(transferNativeProxy)));
-
-        // set DODORouteProxy
-        dodoRouteProxyA.setPrice(address(token1A), address(token2A), 3e18); // 1 token1A = 3 token2A
-        dodoRouteProxyZ.setPrice(address(token1Z), address(token2Z), 2e18); // 1 token1Z = 2 token2Z
-        dodoRouteProxyB.setPrice(address(token1B), address(token2B), 4e18); // 1 token1B = 4 token2B
 
         // set ZRC20 tokens
         token1Z.setGasFee(1e18);

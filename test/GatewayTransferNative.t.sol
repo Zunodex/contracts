@@ -3,11 +3,11 @@
 pragma solidity ^0.8.20;
 
 import {IZRC20} from "@zetachain/protocol-contracts/contracts/zevm/interfaces/IZRC20.sol";
+import {UniswapV2Library} from "../contracts/libraries/UniswapV2Library.sol";
 import {BaseTest} from "./BaseTest.t.sol";
 import {console} from "forge-std/console.sol";
-import {UniswapV2Library} from "../contracts/libraries/UniswapV2Library.sol";
-import {Call} from "../contracts/Multicall.sol";
 
+/* forge test --fork-url https://zetachain-evm.blockpi.network/v1/rpc/public */
 contract GatewayTransferNativeTest is BaseTest {
     
     // A - zetachain: token1A -> token1Z
@@ -25,10 +25,10 @@ contract GatewayTransferNativeTest is BaseTest {
 
         vm.startPrank(user1);
         token1A.approve(
-            address(gatewaySend),
+            address(gatewaySendA),
             amount
         );
-        gatewaySend.depositAndCall(
+        gatewaySendA.depositAndCall(
             targetContract,
             amount,
             asset,
@@ -66,10 +66,10 @@ contract GatewayTransferNativeTest is BaseTest {
 
         vm.startPrank(user1);
         token1A.approve(
-            address(gatewaySend),
+            address(gatewaySendA),
             amount
         );
-        gatewaySend.depositAndCall(
+        gatewaySendA.depositAndCall(
             targetContract,
             amount,
             asset,
@@ -185,14 +185,10 @@ contract GatewayTransferNativeTest is BaseTest {
             "",
             block.timestamp + 60
         );
-        bytes memory contractAddress = abi.encode(address(multicallB));
-        Call[] memory calls = new Call[](2);
-        calls[0] = Call(
-            address(token2B), 
-            abi.encodeWithSignature("approve(address,uint256)", address(dodoRouteProxyB), 198995986959878634903)
-        );
-        calls[1] = Call(
-            address(dodoRouteProxyB), 
+        bytes memory contractAddress = abi.encode(address(gatewaySendB));
+        bytes memory crossChainSwapData = abi.encode(
+            address(token2B),
+            address(token1B),
             abi.encodeWithSignature(
                 "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
                 address(token2B),
@@ -205,10 +201,6 @@ contract GatewayTransferNativeTest is BaseTest {
                 "",
                 block.timestamp + 60
             )
-        );
-        bytes memory crossChainSwapData = abi.encodeWithSignature(
-            "aggregate((address,bytes)[])",
-            calls
         );
         bytes memory message = bytes.concat(
             bytes4(chainId),
