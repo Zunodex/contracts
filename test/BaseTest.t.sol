@@ -41,6 +41,8 @@ contract BaseTest is Test {
     ZRC20Mock public token2Z;
     ERC20Mock public token1B; 
     ERC20Mock public token2B;
+    ZRC20Mock public btcZ; // BTC on zetachain
+    ERC20Mock public btc; // BTC on Bitcoin
     DODORouteProxyMock public dodoRouteProxyA; // A chain
     DODORouteProxyMock public dodoRouteProxyZ; // zetachain
     DODORouteProxyMock public dodoRouteProxyB; // B chain
@@ -63,14 +65,20 @@ contract BaseTest is Test {
         token2Z = new ZRC20Mock("Token2Z", "TK2Z", 18);
         token1B = new ERC20Mock("Token1B", "TK1B", 18);
         token2B = new ERC20Mock("Token2B", "TK2B", 18);
+        btcZ = new ZRC20Mock("BTCZ", "BTCZ", 18);
+        btc = new ERC20Mock("BTC", "BTC", 18);
+
 
         // set GatewayEVM
         gatewayA.setGatewayZEVM(address(gatewayZEVM));
         gatewayA.setZRC20(address(token1A), address(token1Z));
-        gatewayA.setZRC20(address(token2A), address(token2Z));        
+        gatewayA.setZRC20(address(token2A), address(token2Z));  
+        gatewayA.setZRC20(address(btc), address(btcZ));
+        gatewayA.setDodoRouteProxy(address(dodoRouteProxyA));
         gatewayB.setGatewayZEVM(address(gatewayZEVM));
         gatewayB.setZRC20(address(token1B), address(token1Z));
         gatewayB.setZRC20(address(token2B), address(token2Z));
+        gatewayB.setZRC20(address(btc), address(btcZ));
         gatewayB.setDodoRouteProxy(address(dodoRouteProxyB));
 
         // set GatewayZEVM
@@ -82,6 +90,7 @@ contract BaseTest is Test {
         dodoRouteProxyB.setDODOApprove(address(dodoRouteProxyB));
         dodoRouteProxyA.setPrice(address(token1A), address(token2A), 3e18); // 1 token1A = 3 token2A
         dodoRouteProxyZ.setPrice(address(token1Z), address(token2Z), 2e18); // 1 token1Z = 2 token2Z
+        dodoRouteProxyZ.setPrice(address(token1Z), address(btcZ), 1e18); // 1 token1Z = 1 btcZ
         dodoRouteProxyB.setPrice(address(token1B), address(token2B), 4e18); // 1 token1B = 4 token2B
 
         // set GatewaySend
@@ -126,6 +135,8 @@ contract BaseTest is Test {
         token1Z.setGasZRC20(address(token1Z));
         token2Z.setGasFee(1e18);
         token2Z.setGasZRC20(address(token1Z));
+        btcZ.setGasFee(1e18);
+        btcZ.setGasZRC20(address(btcZ));
 
         // create token1Z - token2Z pool for gas fee
         token1Z.mint(address(this), initialBalance);
@@ -155,6 +166,7 @@ contract BaseTest is Test {
         token2Z.mint(user1, initialBalance);
         token2Z.mint(address(gatewayZEVM), initialBalance);
         token2Z.mint(address(dodoRouteProxyZ), initialBalance);
+        btcZ.mint(address(dodoRouteProxyZ), initialBalance);
 
         token1B.mint(address(gatewayB), initialBalance);
         token1B.mint(address(dodoRouteProxyB), initialBalance);

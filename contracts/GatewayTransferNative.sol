@@ -27,6 +27,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
     address private EddyTreasurySafe;
     address public DODORouteProxy;
     address public DODOApprove;
+    uint256 public globalNonce;
     uint256 public feePercent;
     uint256 public slippage;
     uint256 public gasLimit;
@@ -55,6 +56,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
     error ZeroAddress();
 
     event EddyCrossChainSwap(
+        bytes32 externalId,
         address zrc20,
         address targetZRC20,
         uint256 amount,
@@ -131,6 +133,10 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
     // }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+
+    function _calcExternalId(address sender) internal view returns (bytes32 externalId) {
+        externalId = keccak256(abi.encodePacked(address(this), sender, globalNonce, block.timestamp));
+    }
 
     // ============== Uniswap Helper ================ 
 
@@ -259,7 +265,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             // 24 bytes + 42 bytes(bechdata) + 32 bytes(isTargetZRC20) + 32 bytes(swapData)
             require(message.length >= 98, "Invalid message length for BTC");
             isTargetZRC20 = abi.decode(message[66:98], (bool)); 
-            swapData = abi.decode(message[98:130], (bytes));
+            swapData = abi.decode(message[98:], (bytes));
         } else if(chainId == SOLANA_EDDY) {
             // 24 bytes + 44 bytes(bechdata) + 32 bytes(isTargetZRC20) + 32 bytes(swapData)
             require(message.length >= 100, "Invalid message length for SOLANA");
@@ -308,6 +314,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
     }
 
     function withdrawAndCall(
+        bytes32 externalId,
         bytes memory contractAddress,
         address zrc20,
         address targetZRC20,
@@ -315,7 +322,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         address evmWalletAddress,
         bytes memory swapData
     ) public {
-        bytes memory message = abi.encode(evmWalletAddress, outputAmount, swapData);
+        bytes memory message = abi.encode(externalId, evmWalletAddress, outputAmount, swapData);
         gateway.withdrawAndCall(
             contractAddress,
             outputAmount,
@@ -329,7 +336,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
                 revertAddress: address(this),
                 callOnRevert: true,
                 abortAddress: address(0),
-                revertMessage: abi.encode(evmWalletAddress, zrc20),
+                revertMessage: abi.encode(externalId, evmWalletAddress, zrc20),
                 onRevertGasLimit: gasLimit
             })
         );
@@ -343,6 +350,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
      * @param amount amount to withdraw
      */
     function withdraw(
+        bytes32 externalId,
         bytes memory sender,
         address inputToken,
         address outputToken,
@@ -356,13 +364,14 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
                 revertAddress: address(this),
                 callOnRevert: true,
                 abortAddress: address(0),
-                revertMessage: abi.encode(sender, inputToken),
+                revertMessage: abi.encode(externalId, sender, inputToken),
                 onRevertGasLimit: gasLimit
             })
         );
     }
 
     function _swapAndSendERC20Tokens(
+        bytes32 externalId,
         address targetZRC20,
         address gasZRC20,
         uint256 gasFee,
@@ -400,6 +409,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
 
         if(contractAddress.length == 0) {
             withdraw(
+                externalId,
                 recipient,
                 inputToken,
                 targetZRC20,
@@ -407,6 +417,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             );
         } else {
             withdrawAndCall(
+                externalId,
                 contractAddress,
                 inputToken,
                 targetZRC20,
@@ -420,6 +431,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
     }
 
     function _handleBTCCase(
+        bytes32 externalId,
         address evmWalletAddress,
         address zrc20,
         address targetZRC20,
@@ -446,6 +458,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         if(outputAmount < gasFee) revert NotEnoughToPayGasFee();
         IZRC20(targetZRC20).approve(address(gateway), outputAmount + gasFee);
         withdraw(
+            externalId,
             recipientAddressBech32,
             zrc20,
             targetZRC20,
@@ -454,6 +467,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
 
         address _evmWalletAddress = evmWalletAddress;
         emit EddyCrossChainSwap(
+            externalId,
             zrc20,
             targetZRC20,
             amount,
@@ -464,6 +478,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
     }
 
     function _handleSolanaCase(
+        bytes32 externalId,
         address evmWalletAddress,
         address zrc20,
         address targetZRC20,
@@ -499,6 +514,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
 
             if(contractAddress.length == 0) {
                 withdraw(
+                    externalId,
                     recipientAddressBech32,
                     _zrc20,
                     targetZRC20,
@@ -506,6 +522,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
                 );
             } else {
                 withdrawAndCall(
+                    externalId,
                     contractAddress,
                     _zrc20,
                     targetZRC20,
@@ -517,6 +534,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         } else {
             // swap partial output amount to gasZRC20
             amountAfterGasFees = _swapAndSendERC20Tokens(
+                externalId,
                 targetZRC20,
                 gasZRC20,
                 gasFee,
@@ -530,6 +548,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
 
         address _evmWalletAddress = evmWalletAddress;
         emit EddyCrossChainSwap(
+            externalId,
             zrc20,
             targetZRC20,
             amount,
@@ -562,7 +581,9 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         bytes calldata message
     ) external override onlyGateway {
         // Decode the message
-        DecodedNativeMessage memory decoded = decodeNativeMessage(message);
+        (bytes32 externalId) = abi.decode(message[0:32], (bytes32)); // 32 bytes(externalId) + bytes message
+        bytes calldata _message = message[32:];
+        DecodedNativeMessage memory decoded = decodeNativeMessage(_message);
 
         // Fee for platform
         uint256 platformFeesForTx = _handleFeeTransfer(zrc20, amount); // platformFee = 5 <> 0.5%
@@ -576,6 +597,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             );
 
             emit EddyCrossChainSwap(
+                externalId,
                 zrc20,
                 decoded.targetZRC20,
                 amount,
@@ -608,6 +630,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             }
 
             emit EddyCrossChainSwap(
+                externalId,
                 zrc20,
                 decoded.targetZRC20,
                 amount,
@@ -624,6 +647,9 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         bytes calldata message
     ) external {
         require(IZRC20(zrc20).transferFrom(msg.sender, address(this), amount), "INSUFFICIENT ALLOWANCE: TRANSFER FROM FAILED");
+
+        globalNonce++;
+        bytes32 externalId = _calcExternalId(msg.sender);
         DecodedMessage memory decoded = decodeMessage(message);
         address evmWalletAddress = getEvmAddress(message, decoded.destChainId);
 
@@ -639,6 +665,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         if(decoded.destChainId == BITCOIN_EDDY) {
             // EVM to Bitcoin
             _handleBTCCase(
+                externalId,
                 evmWalletAddress,
                 zrc20,
                 decoded.targetZRC20,
@@ -650,6 +677,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         } else if(decoded.destChainId == SOLANA_EDDY) {
             // EVM to Solana
             _handleSolanaCase(
+                externalId,
                 evmWalletAddress,
                 zrc20,
                 decoded.targetZRC20,
@@ -680,6 +708,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
                 if(decoded.contractAddress.length == 0) {
                     // withdraw
                     withdraw(
+                        externalId,
                         abi.encode(evmWalletAddress),
                         zrc20,
                         decoded.targetZRC20,
@@ -688,6 +717,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
                 } else {
                     // withdraw and call
                     withdrawAndCall(
+                        externalId,
                         decoded.contractAddress,
                         zrc20,
                         decoded.targetZRC20,
@@ -697,6 +727,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
                     );
                 }
                 emit EddyCrossChainSwap(
+                    externalId,
                     zrc20,
                     decoded.targetZRC20,
                     amount,
@@ -706,6 +737,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
                 );
             } else {
                 uint256 amountsOutTarget = _swapAndSendERC20Tokens(
+                    externalId,
                     decoded.targetZRC20,
                     gasZRC20,
                     gasFee,
@@ -716,6 +748,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
                     decoded.crossChainSwapData
                 );
                 emit EddyCrossChainSwap(
+                    externalId,
                     zrc20,
                     decoded.targetZRC20,
                     amount,

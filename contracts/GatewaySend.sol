@@ -10,17 +10,18 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
 import {IDODORouteProxy} from "./interfaces/IDODORouteProxy.sol";
 
 contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
+    uint256 public globalNonce;
     address public DODORouteProxy;
     address public DODOApprove;
     GatewayEVM public gateway;
 
     event EddyCrossChainSwap(
+        bytes32 externalId,
         address fromToken,
         address toToken,
         uint256 amount,
         uint256 outputAmount,
-        address walletAddress,
-        uint256 fees
+        address walletAddress
     );
     event DodoRouteProxyUpdated(address dodoRouteProxy);
     event GatewayUpdated(address gateway);
@@ -69,6 +70,10 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
+    function _calcExternalId(address sender) internal view returns (bytes32 externalId) {
+        externalId = keccak256(abi.encodePacked(address(this), sender, globalNonce, block.timestamp));
+    }
+
     function depositAndCall(
         address fromToken,
         uint256 amount,
@@ -77,6 +82,8 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         address asset,
         bytes calldata payload
     ) public {
+        globalNonce++;
+        bytes32 externalId = _calcExternalId(msg.sender);
         // Swap on DODO Router
         IERC20(fromToken).approve(DODORouteProxy, amount);
         (bool success, bytes memory returnData) = DODORouteProxy.call(swapData); // swap on zetachain
@@ -90,7 +97,7 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
             targetContract,
             outputAmount,
             asset,
-            payload,
+            bytes.concat(externalId, payload),
             RevertOptions({
                 revertAddress: msg.sender,
                 callOnRevert: false,
@@ -98,6 +105,14 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
                 revertMessage: "",
                 onRevertGasLimit: 0
             })
+        );
+        emit EddyCrossChainSwap(
+            externalId,
+            fromToken,
+            asset,
+            amount,
+            outputAmount,
+            msg.sender
         );
     }
 
@@ -107,13 +122,15 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         address asset,
         bytes calldata payload
     ) public {
+        globalNonce++;
+        bytes32 externalId = _calcExternalId(msg.sender);
         IERC20(asset).transferFrom(msg.sender, address(this), amount);
         IERC20(asset).approve(address(gateway), amount);
         gateway.depositAndCall(
             targetContract,
             amount,
             asset,
-            payload,
+            bytes.concat(externalId, payload),
             RevertOptions({
                 revertAddress: msg.sender,
                 callOnRevert: false,
@@ -122,15 +139,23 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
                 onRevertGasLimit: 0
             })
         );
+        emit EddyCrossChainSwap(
+            externalId,
+            asset,
+            asset,
+            amount,
+            amount,
+            msg.sender
+        );
     }
 
     function onCall(
         MessageContext calldata /*context*/,
         bytes calldata message
     ) external payable onlyGateway returns (bytes4) {
-        (address evmWalletAddress, uint256 amount, bytes memory crossChainSwapData) = abi.decode(
+        (bytes32 externalId, address evmWalletAddress, uint256 amount, bytes memory crossChainSwapData) = abi.decode(
             message, 
-            (address, uint256, bytes)
+            (bytes32, address, uint256, bytes)
         );
         (address fromToken, address toToken, bytes memory swapData) = abi.decode(
             crossChainSwapData,
@@ -146,13 +171,13 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         IERC20(toToken).transfer(evmWalletAddress, outputAmount);
 
         emit EddyCrossChainSwap(
+            externalId,
             fromToken,
             toToken,
             amount,
             outputAmount,
-            evmWalletAddress,
-            0
-        ); 
+            evmWalletAddress
+        );
 
         return "";
     }
