@@ -32,5 +32,9 @@ contract ZRC20Mock is ERC20 {
         return (gasZRC20, gasFee);
     }
 
+    function withdrawGasFeeWithGasLimit(uint256 /*gasLimit*/) external view returns (address, uint256) {
+        return (gasZRC20, gasFee);
+    }
+
     function test() public {}
 }

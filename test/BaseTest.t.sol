@@ -74,12 +74,12 @@ contract BaseTest is Test {
         gatewayA.setZRC20(address(token1A), address(token1Z));
         gatewayA.setZRC20(address(token2A), address(token2Z));  
         gatewayA.setZRC20(address(btc), address(btcZ));
-        gatewayA.setDodoRouteProxy(address(dodoRouteProxyA));
+        gatewayA.setDODORouteProxy(address(dodoRouteProxyA));
         gatewayB.setGatewayZEVM(address(gatewayZEVM));
         gatewayB.setZRC20(address(token1B), address(token1Z));
         gatewayB.setZRC20(address(token2B), address(token2Z));
         gatewayB.setZRC20(address(btc), address(btcZ));
-        gatewayB.setDodoRouteProxy(address(dodoRouteProxyB));
+        gatewayB.setDODORouteProxy(address(dodoRouteProxyB));
         gatewayB.setConvertBTCAddress(new bytes(42), address(user2));
         gatewayB.setConvertSOLAddress(bytes32(0), address(user2));
 
@@ -93,13 +93,15 @@ contract BaseTest is Test {
         dodoRouteProxyA.setPrice(address(token1A), address(token2A), 3e18); // 1 token1A = 3 token2A
         dodoRouteProxyZ.setPrice(address(token1Z), address(token2Z), 2e18); // 1 token1Z = 2 token2Z
         dodoRouteProxyZ.setPrice(address(token1Z), address(btcZ), 1e18); // 1 token1Z = 1 btcZ
+        dodoRouteProxyZ.setPrice(address(token2Z), address(btcZ), 2e18); // 1 token2Z = 2 btcZ
         dodoRouteProxyB.setPrice(address(token1B), address(token2B), 4e18); // 1 token1B = 4 token2B
 
         // set GatewaySend
         bytes memory data = abi.encodeWithSignature(
-            "initialize(address,address)",
+            "initialize(address,address,uint256)",
             address(gatewayA),
-            address(dodoRouteProxyA)
+            address(dodoRouteProxyA),
+            100000
         );
         sendProxyA = new ERC1967Proxy(
             address(gatewaySendA),
@@ -107,9 +109,10 @@ contract BaseTest is Test {
         );
         gatewaySendA = GatewaySend(payable(address(sendProxyA)));
         data = abi.encodeWithSignature(
-            "initialize(address,address)",
+            "initialize(address,address,uint256)",
             address(gatewayB),
-            address(dodoRouteProxyB)
+            address(dodoRouteProxyB),
+            100000
         );
         sendProxyB = new ERC1967Proxy(
             address(gatewaySendB),
@@ -119,18 +122,35 @@ contract BaseTest is Test {
 
         // set GatewayTransferNative
         data = abi.encodeWithSignature(
-            "initialize(address,address,address,uint256,uint256)",
+            "initialize(address,address,address,uint256,uint256,uint256)",
             address(gatewayZEVM),
             EddyTreasurySafe,
             address(dodoRouteProxyZ),
             0,
-            10
+            10,
+            100000
         );
         transferNativeProxy = new ERC1967Proxy(
             address(gatewayTransferNative),
             data
         );
         gatewayTransferNative = GatewayTransferNative(payable(address(transferNativeProxy)));
+
+        // set GatewayCrossChain
+        data = abi.encodeWithSignature(
+            "initialize(address,address,address,uint256,uint256,uint256)",
+            address(gatewayZEVM),
+            EddyTreasurySafe,
+            address(dodoRouteProxyZ),
+            0,
+            10,
+            100000
+        );
+        crossChainProxy = new ERC1967Proxy(
+            address(gatewayCrossChain),
+            data
+        );
+        gatewayCrossChain = GatewayCrossChain(payable(address(crossChainProxy)));
 
         // set ZRC20 tokens
         token1Z.setGasFee(1e18);

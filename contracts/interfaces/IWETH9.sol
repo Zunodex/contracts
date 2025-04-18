@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
 interface IWETH9 {
     function name() external view returns (string memory);
 

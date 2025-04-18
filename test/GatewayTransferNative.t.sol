@@ -17,11 +17,11 @@ contract GatewayTransferNativeTest is BaseTest {
         uint256 amount = 100 ether;
         address asset = address(token1A);
         address targetZRC20 = address(token1Z);
-        bytes memory swapData = "";
+        bytes memory swapDataA = "";
         bytes memory payload = bytes.concat(
             bytes20(user2),
             bytes20(targetZRC20),
-            abi.encode(swapData)
+            abi.encode(swapDataA)
         );
 
         vm.startPrank(user1);
@@ -47,7 +47,7 @@ contract GatewayTransferNativeTest is BaseTest {
         uint256 amount = 100 ether;
         address asset = address(token1A);
         address targetZRC20 = address(token2Z);
-        bytes memory swapData = abi.encodeWithSignature(
+        bytes memory swapDataZ = abi.encodeWithSignature(
             "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
             address(token1Z),
             address(token2Z),
@@ -62,7 +62,7 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory payload = bytes.concat(
             bytes20(user2),
             bytes20(targetZRC20),
-            abi.encode(swapData)
+            abi.encode(swapDataZ)
         );
 
         vm.startPrank(user1);
@@ -87,13 +87,13 @@ contract GatewayTransferNativeTest is BaseTest {
 
     // A swap - zetachain swap
 
-    // BTC - zetachain swap: btcZ - token1Z
+    // BTC - zetachain swap: btc -> btcZ -> token1Z
     function test_BTC2ZSwap() public {
         bytes32 externalId = keccak256(abi.encodePacked(block.timestamp));
         address zrc20 = address(btcZ);
         uint256 amount = 100 ether;
         address targetZRC20 = address(token1Z);
-        bytes memory swapData = abi.encodeWithSignature(
+        bytes memory swapDataZ = abi.encodeWithSignature(
             "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
             address(btcZ),
             address(token1Z),
@@ -108,7 +108,7 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory message = bytes.concat(
             bytes20(user2),
             bytes20(targetZRC20),
-            abi.encode(swapData)
+            abi.encode(swapDataZ)
         );
 
         btcZ.mint(address(gatewayTransferNative), amount);
@@ -127,13 +127,13 @@ contract GatewayTransferNativeTest is BaseTest {
         assertEq(token1Z.balanceOf(user2), 100000000000000000000);
     }
 
-    // SOL - zetachain swap: token1Z - token2Z
+    // SOL - zetachain swap: SOL -> token1Z -> token2Z
     function test_SOL2ZSwap() public {
         bytes32 externalId = keccak256(abi.encodePacked(block.timestamp));
         address zrc20 = address(token1Z);
         uint256 amount = 100 ether;
         address targetZRC20 = address(token2Z);
-        bytes memory swapData = abi.encodeWithSignature(
+        bytes memory swapDataZ = abi.encodeWithSignature(
             "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
             address(token1Z),
             address(token2Z),
@@ -148,7 +148,7 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory message = bytes.concat(
             bytes20(user2),
             bytes20(targetZRC20),
-            abi.encode(swapData)
+            abi.encode(swapDataZ)
         );
 
         token1Z.mint(address(gatewayTransferNative), amount);
@@ -173,16 +173,14 @@ contract GatewayTransferNativeTest is BaseTest {
         uint32 chainId = 2;
         address targetZRC20 = address(token1Z);
         address evmWalletAddress = user2;
-        bytes32 isTargetERC20 = bytes32(uint256(1));
-        bytes memory swapData = "";
+        bytes memory swapDataZ = "";
         bytes memory contractAddress = "";
-        bytes memory crossChainSwapData = "";
+        bytes memory swapDataB = "";
         bytes memory message = bytes.concat(
             bytes4(chainId),
             bytes20(targetZRC20),
             bytes20(evmWalletAddress),
-            isTargetERC20,
-            abi.encode(swapData, contractAddress, crossChainSwapData)
+            abi.encode(swapDataZ, contractAddress, swapDataB)
         );
 
         vm.startPrank(user1);
@@ -208,8 +206,7 @@ contract GatewayTransferNativeTest is BaseTest {
         uint32 chainId = 2;
         address targetZRC20 = address(token2Z);
         address evmWalletAddress = user2;
-        bytes32 isTargetERC20 = bytes32(uint256(1));
-        bytes memory swapData = abi.encodeWithSignature(
+        bytes memory swapDataZ = abi.encodeWithSignature(
             "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
             address(token1Z),
             address(token2Z),
@@ -222,13 +219,12 @@ contract GatewayTransferNativeTest is BaseTest {
             block.timestamp + 60
         );
         bytes memory contractAddress = "";
-        bytes memory crossChainSwapData = "";
+        bytes memory swapDataB = "";
         bytes memory message = bytes.concat(
             bytes4(chainId),
             bytes20(targetZRC20),
             bytes20(evmWalletAddress),
-            isTargetERC20,
-            abi.encode(swapData, contractAddress, crossChainSwapData)
+            abi.encode(swapDataZ, contractAddress, swapDataB)
         );
 
         vm.startPrank(user1);
@@ -253,8 +249,7 @@ contract GatewayTransferNativeTest is BaseTest {
         uint32 chainId = 2;
         address targetZRC20 = address(token2Z);
         address evmWalletAddress = user2;
-        bytes32 isTargetERC20 = bytes32(uint256(1));
-        bytes memory swapData = abi.encodeWithSignature(
+        bytes memory swapDataZ = abi.encodeWithSignature(
             "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
             address(token1Z),
             address(token2Z),
@@ -267,7 +262,7 @@ contract GatewayTransferNativeTest is BaseTest {
             block.timestamp + 60
         );
         bytes memory contractAddress = abi.encodePacked(address(gatewaySendB));
-        bytes memory crossChainSwapData = abi.encode(
+        bytes memory swapDataB = abi.encode(
             address(token2B),
             address(token1B),
             abi.encodeWithSignature(
@@ -287,8 +282,7 @@ contract GatewayTransferNativeTest is BaseTest {
             bytes4(chainId),
             bytes20(targetZRC20),
             bytes20(evmWalletAddress),
-            isTargetERC20,
-            abi.encode(swapData, contractAddress, crossChainSwapData)
+            abi.encode(swapDataZ, contractAddress, swapDataB)
         );
 
         vm.startPrank(user1);
@@ -313,8 +307,7 @@ contract GatewayTransferNativeTest is BaseTest {
         uint32 chainId = 8332;
         address targetZRC20 = address(btcZ);
         bytes memory btcAddress = new bytes(42); // BTC Address is 42 bytes
-        bytes32 isTargetERC20 = bytes32(uint256(1));
-        bytes memory swapData = abi.encodeWithSignature(
+        bytes memory swapDataZ = abi.encodeWithSignature(
             "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
             address(token1Z),
             address(btcZ),
@@ -330,8 +323,7 @@ contract GatewayTransferNativeTest is BaseTest {
             bytes4(chainId),
             bytes20(targetZRC20),
             btcAddress,
-            isTargetERC20,
-            abi.encode(swapData)
+            abi.encode(swapDataZ)
         );
 
         vm.startPrank(user1);
@@ -356,8 +348,7 @@ contract GatewayTransferNativeTest is BaseTest {
         uint32 chainId = 900;
         address targetZRC20 = address(token2Z);
         bytes memory solAddress = new bytes(32); // SOL Address is 32 bytes
-        bytes32 isTargetERC20 = bytes32(uint256(1));
-        bytes memory swapData = abi.encodeWithSignature(
+        bytes memory swapDataZ = abi.encodeWithSignature(
             "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
             address(token1Z),
             address(token2Z),
@@ -370,13 +361,12 @@ contract GatewayTransferNativeTest is BaseTest {
             block.timestamp + 60
         );
         bytes memory contractAddress = "";
-        bytes memory crossChainSwapData = "";
+        bytes memory swapDataB = "";
         bytes memory message = bytes.concat(
             bytes4(chainId),
             bytes20(targetZRC20),
             solAddress,
-            isTargetERC20,
-            abi.encode(swapData, contractAddress, crossChainSwapData)
+            abi.encode(swapDataZ, contractAddress, swapDataB)
         );
 
         vm.startPrank(user1);

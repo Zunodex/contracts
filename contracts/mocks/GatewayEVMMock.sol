@@ -22,7 +22,7 @@ contract GatewayEVMMock {
         gatewayZEVM = GatewayZEVMMock(_gatewayEVM);
     }
 
-    function setDodoRouteProxy(address _dodoRouteProxy) public {
+    function setDODORouteProxy(address _dodoRouteProxy) public {
         DODORouteProxy = _dodoRouteProxy;
     }
 
