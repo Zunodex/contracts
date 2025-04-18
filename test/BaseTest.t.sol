@@ -80,6 +80,8 @@ contract BaseTest is Test {
         gatewayB.setZRC20(address(token2B), address(token2Z));
         gatewayB.setZRC20(address(btc), address(btcZ));
         gatewayB.setDodoRouteProxy(address(dodoRouteProxyB));
+        gatewayB.setConvertBTCAddress(new bytes(42), address(user2));
+        gatewayB.setConvertSOLAddress(bytes32(0), address(user2));
 
         // set GatewayZEVM
         gatewayZEVM.setGatewayEVM(address(gatewayB));
@@ -172,5 +174,6 @@ contract BaseTest is Test {
         token1B.mint(address(dodoRouteProxyB), initialBalance);
         token2B.mint(address(gatewayB), initialBalance);
         token2B.mint(address(dodoRouteProxyB), initialBalance);
+        btc.mint(address(gatewayB), initialBalance);
     }
 }

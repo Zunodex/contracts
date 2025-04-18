@@ -220,8 +220,8 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         bytes memory data,
         uint256 offset
     ) internal pure returns (bytes memory) {
-        bytes memory bech32Bytes = new bytes(44);
-        for (uint i = 0; i < 44; i++) {
+        bytes memory bech32Bytes = new bytes(32);
+        for (uint i = 0; i < 32; i++) {
             bech32Bytes[i] = data[i + offset];
         }
         return bech32Bytes;
@@ -262,15 +262,18 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         bytes memory contractAddress = bytes("");
         bytes memory crossChainSwapData = bytes("");
         if(chainId == BITCOIN_EDDY) {
-            // 24 bytes + 42 bytes(bechdata) + 32 bytes(isTargetZRC20) + 32 bytes(swapData)
+            // 24 bytes + 42 bytes(btcAddress) + 32 bytes(isTargetZRC20)
+            // bytes(swapData)
             require(message.length >= 98, "Invalid message length for BTC");
             isTargetZRC20 = abi.decode(message[66:98], (bool)); 
             swapData = abi.decode(message[98:], (bytes));
         } else if(chainId == SOLANA_EDDY) {
-            // 24 bytes + 44 bytes(bechdata) + 32 bytes(isTargetZRC20) + 32 bytes(swapData)
+            // 24 bytes + 32 bytes(solAddress) + 32 bytes(isTargetZRC20)
+            // bytes(swapData) + 20 bytes(contractAddress) + bytes(crossChainSwapData)
             require(message.length >= 100, "Invalid message length for SOLANA");
-            isTargetZRC20 = abi.decode(message[68:100], (bool));
-            swapData = abi.decode(message[100:132], (bytes));
+            isTargetZRC20 = abi.decode(message[56:88], (bool));
+            (swapData, contractAddress, crossChainSwapData) = abi.decode(
+                message[88:], (bytes, bytes, bytes)); 
         } else {
             // 24 bytes + 20 bytes(evmAddress) + 32 bytes(isTargetZRC20) 
             // bytes(swapData) + 20 bytes(contractAddress) + bytes(crossChainSwapData)
@@ -422,7 +425,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
                 inputToken,
                 targetZRC20,
                 targetAmount - amounts[0],
-                abi.decode(recipient, (address)),
+                address(bytes20(recipient)),
                 crossChainSwapData
             );
         }
@@ -484,13 +487,13 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         address targetZRC20,
         uint256 amount,
         bytes memory swapData,
+        bytes memory contractAddress,
+        bytes memory crossChainSwapData,
         bytes calldata message,
         uint256 platformFeesForTx
     ) internal {
         address _zrc20 = zrc20;
         bytes memory recipientAddressBech32 = bytesToSolana(message, 24);
-        bytes memory contractAddress = abi.decode(message[132:164], (bytes));
-        bytes memory crossChainSwapData = abi.decode(message[164:196], (bytes));
 
         // swap
         uint256 outputAmount;
@@ -683,6 +686,8 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
                 decoded.targetZRC20,
                 amount,
                 decoded.swapData,
+                decoded.contractAddress,
+                decoded.crossChainSwapData,
                 message,
                 platformFeesForTx
             );
@@ -709,7 +714,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
                     // withdraw
                     withdraw(
                         externalId,
-                        abi.encode(evmWalletAddress),
+                        abi.encodePacked(evmWalletAddress),
                         zrc20,
                         decoded.targetZRC20,
                         outputAmount - gasFee
@@ -741,7 +746,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
                     decoded.targetZRC20,
                     gasZRC20,
                     gasFee,
-                    abi.encode(evmWalletAddress),
+                    abi.encodePacked(evmWalletAddress),
                     outputAmount,
                     zrc20,
                     decoded.contractAddress,

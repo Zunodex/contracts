@@ -5,12 +5,15 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {GatewayZEVMMock} from "../mocks/GatewayZEVMMock.sol";
 import {Callable, MessageContext} from "@zetachain/protocol-contracts/contracts/evm/interfaces/IGatewayEVM.sol";
 import {CallOptions, RevertOptions} from "@zetachain/protocol-contracts/contracts/zevm/interfaces/IGatewayZEVM.sol";
+import {console} from "../../lib/forge-std/src/console.sol";
 
 contract GatewayEVMMock {
     uint256 chainId;
     address DODORouteProxy;
     mapping(address => address) public toZRC20; // erc20 => zrc20
     mapping(address => address) public toERC20; // zrc20 => erc20
+    mapping(bytes => address) public convertBTCAddress;
+    mapping(bytes32 => address) public convertSOLAddress;
     GatewayZEVMMock public gatewayZEVM;
 
     error TargetContractCallFailed();
@@ -26,6 +29,14 @@ contract GatewayEVMMock {
     function setZRC20(address erc20, address zrc20) public {
         toZRC20[erc20] = zrc20;
         toERC20[zrc20] = erc20;
+    }
+
+    function setConvertBTCAddress(bytes memory btcAddress, address evmAddress) public {
+        convertBTCAddress[btcAddress] = evmAddress;
+    }
+
+    function setConvertSOLAddress(bytes32 solAddress, address evmAddress) public {
+        convertSOLAddress[solAddress] = evmAddress;
     }
 
     function setChainId(uint256 _chainId) public {
@@ -56,8 +67,17 @@ contract GatewayEVMMock {
         RevertOptions calldata /*revertOptions*/
     ) external payable {
         address asset = toERC20[zrc20];
-        (address to) = abi.decode(receiver, (address));
-        IERC20(asset).transfer(to, amount);
+        if(receiver.length == 42) {
+            // BTC case
+            address to = convertBTCAddress[receiver];
+            IERC20(asset).transfer(to, amount);
+        } else if(receiver.length == 32) {
+            // SOL case
+            address to = convertSOLAddress[bytes32(receiver)];
+            IERC20(asset).transfer(to, amount);
+        } else {
+            IERC20(asset).transfer(address(bytes20(receiver)), amount);
+        }    
     }
 
     function withdrawAndCall(
@@ -69,13 +89,18 @@ contract GatewayEVMMock {
         RevertOptions calldata /*revertOptions*/
     ) external payable {
         address asset = toERC20[zrc20];
-        (address targetContract) = abi.decode(receiver, (address));
-        IERC20(asset).approve(targetContract, amount);
-        Callable(targetContract).onCall(
-            MessageContext({
-                sender: address(this)
-            }),
-            message
-        );
+        if(receiver.length == 32) {
+            console.log("Called Solana Contract");
+        } else {
+            address targetContract = address(bytes20(receiver));
+            IERC20(asset).approve(targetContract, amount);
+            Callable(targetContract).onCall(
+                MessageContext({
+                    sender: address(this)
+                }),
+                message
+            );
+        }
+
     }
 }
