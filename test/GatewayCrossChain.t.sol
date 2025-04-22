@@ -348,6 +348,12 @@ contract GatewayCrossChainTest is BaseTest {
             bytes20(targetZRC20),
             abi.encode(solAddress, swapDataZ, contractAddress, swapDataB)
         );
+        console.log(targetZRC20);
+        console.logBytes(solAddress);
+        console.logBytes(swapDataZ);
+        console.logBytes(contractAddress);
+        console.logBytes(swapDataB);
+        console.logBytes(payload);
 
         vm.startPrank(user1);
         token2A.approve(
@@ -366,5 +372,63 @@ contract GatewayCrossChainTest is BaseTest {
 
         assertEq(token2A.balanceOf(user1), initialBalance - amount);
         assertEq(token2B.balanceOf(user2), 65662653626545301503); 
+    }
+
+        // A swap - zetachain swap - SOL swap: token2A -> token1A -> token1Z -> token2Z -> token2B
+    function test_ASwap2ZSwap2SOLSwap() public {
+        address fromToken = address(token2A);
+        uint256 amount = 100 ether;
+        bytes memory swapDataA = abi.encodeWithSignature(
+            "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
+            address(token2A),
+            address(token1A),
+            address(0),
+            address(0),
+            amount,
+            0,
+            "",
+            "",
+            block.timestamp + 60
+        );
+        address asset = address(token1A);
+        uint32 dstChainId = 900;
+        address targetZRC20 = address(token2Z);
+        address targetContract = address(gatewayCrossChain);
+        bytes memory swapDataZ = abi.encodeWithSignature(
+            "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
+            address(token1Z),
+            address(token2Z),
+            address(0),
+            address(0),
+            33333333333333333300,
+            0,
+            "",
+            "",
+            block.timestamp + 60
+        );
+        bytes memory contractAddress = abi.encodePacked("EwUjcjz8jvFeE99kjcZKM5Aojs3eKcyW2JHNKNDP9M4k");
+        bytes memory swapDataB = "0x12345678";
+        bytes memory payload = bytes.concat(
+            bytes4(dstChainId),
+            bytes20(targetZRC20),
+            abi.encode(solAddress, swapDataZ, contractAddress, swapDataB)
+        );
+        
+        vm.startPrank(user1);
+        token2A.approve(
+            address(gatewaySendA),
+            amount
+        );
+        gatewaySendA.depositAndCall(
+            fromToken,
+            amount,
+            swapDataA,
+            targetContract,
+            asset,
+            payload
+        );
+        vm.stopPrank();
+
+        assertEq(token2A.balanceOf(user1), initialBalance - amount);
     }
 }
