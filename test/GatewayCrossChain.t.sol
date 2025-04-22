@@ -16,9 +16,9 @@ contract GatewayCrossChainTest is BaseTest {
         address targetContract = address(gatewayCrossChain);
         uint256 amount = 100 ether;
         address asset = address(token2A);
-        uint32 chainId = 2;
+        uint32 dstChainId = 2;
         address targetZRC20 = address(token1Z);
-        address evmWalletAddress = user2;
+        bytes memory evmWalletAddress = abi.encodePacked(user2);
         bytes memory swapDataZ = abi.encodeWithSignature(
             "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
             address(token2Z),
@@ -34,10 +34,9 @@ contract GatewayCrossChainTest is BaseTest {
         bytes memory contractAddress = "";
         bytes memory swapDataB = "";
         bytes memory payload = bytes.concat(
-            bytes4(chainId),
+            bytes4(dstChainId),
             bytes20(targetZRC20),
-            bytes20(evmWalletAddress),
-            abi.encode(swapDataZ, contractAddress, swapDataB)
+            abi.encode(evmWalletAddress, swapDataZ, contractAddress, swapDataB)
         );
 
         vm.startPrank(user1);
@@ -75,9 +74,9 @@ contract GatewayCrossChainTest is BaseTest {
         );
         address targetContract = address(gatewayCrossChain);
         address asset = address(token1A);
-        uint32 chainId = 2;
+        uint32 dstChainId = 2;
         address targetZRC20 = address(token2Z);
-        address evmWalletAddress = user2;
+        bytes memory evmWalletAddress = abi.encodePacked(user2);
         bytes memory swapDataZ = abi.encodeWithSignature(
             "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
             address(token1Z),
@@ -93,10 +92,9 @@ contract GatewayCrossChainTest is BaseTest {
         bytes memory contractAddress = "";
         bytes memory swapDataB = "";
         bytes memory payload = bytes.concat(
-            bytes4(chainId),
+            bytes4(dstChainId),
             bytes20(targetZRC20),
-            bytes20(evmWalletAddress),
-            abi.encode(swapDataZ, contractAddress, swapDataB)
+            abi.encode(evmWalletAddress, swapDataZ, contractAddress, swapDataB)
         );
 
         vm.startPrank(user1);
@@ -136,9 +134,9 @@ contract GatewayCrossChainTest is BaseTest {
         );
         address targetContract = address(gatewayCrossChain);
         address asset = address(token1A);
-        uint32 chainId = 2;
+        uint32 dstChainId = 2;
         address targetZRC20 = address(token2Z);
-        address evmWalletAddress = user2;
+        bytes memory evmWalletAddress = abi.encodePacked(user2);
         bytes memory swapDataZ = abi.encodeWithSignature(
             "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
             address(token1Z),
@@ -169,10 +167,9 @@ contract GatewayCrossChainTest is BaseTest {
             )
         );
         bytes memory payload = bytes.concat(
-            bytes4(chainId),
+            bytes4(dstChainId),
             bytes20(targetZRC20),
-            bytes20(evmWalletAddress),
-            abi.encode(swapDataZ, contractAddress, swapDataB)
+            abi.encode(evmWalletAddress, swapDataZ, contractAddress, swapDataB)
         );
 
         vm.startPrank(user1);
@@ -199,9 +196,9 @@ contract GatewayCrossChainTest is BaseTest {
         bytes32 externalId = keccak256(abi.encodePacked(block.timestamp));
         address zrc20 = address(btcZ);
         uint256 amount = 100 ether;
-        uint32 chainId = 2;
+        uint32 dstChainId = 2;
         address targetZRC20 = address(token2Z);
-        address evmWalletAddress = user2;
+        bytes memory evmWalletAddress = abi.encodePacked(user2);
         bytes memory swapDataZ = abi.encodeWithSignature(
             "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
             address(btcZ),
@@ -232,10 +229,9 @@ contract GatewayCrossChainTest is BaseTest {
             )
         );
         bytes memory payload = bytes.concat(
-            bytes4(chainId),
+            bytes4(dstChainId),
             bytes20(targetZRC20),
-            bytes20(evmWalletAddress),
-            abi.encode(swapDataZ, contractAddress, swapDataB)
+            abi.encode(evmWalletAddress, swapDataZ, contractAddress, swapDataB)
         );
 
         btcZ.mint(address(gatewayCrossChain), amount);
@@ -271,9 +267,8 @@ contract GatewayCrossChainTest is BaseTest {
             block.timestamp + 60
         );
         address asset = address(token1A);
-        uint32 chainId = 8332;
+        uint32 dstChainId = 8332;
         address targetZRC20 = address(btcZ);
-        bytes memory btcAddress = new bytes(42); // BTC Address is 42 bytes
         address targetContract = address(gatewayCrossChain);
         bytes memory swapDataZ = abi.encodeWithSignature(
             "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
@@ -290,10 +285,9 @@ contract GatewayCrossChainTest is BaseTest {
         bytes memory contractAddress = "";
         bytes memory swapDataB = "";
         bytes memory payload = bytes.concat(
-            bytes4(chainId),
+            bytes4(dstChainId),
             bytes20(targetZRC20),
-            btcAddress,
-            abi.encode(swapDataZ, contractAddress, swapDataB)
+            abi.encode(btcAddress, swapDataZ, contractAddress, swapDataB)
         );
 
         vm.startPrank(user1);
@@ -332,9 +326,8 @@ contract GatewayCrossChainTest is BaseTest {
             block.timestamp + 60
         );
         address asset = address(token1A);
-        uint32 chainId = 900;
+        uint32 dstChainId = 900;
         address targetZRC20 = address(token2Z);
-        bytes memory solAddress = new bytes(32); // SOL Address is 32 bytes
         address targetContract = address(gatewayCrossChain);
         bytes memory swapDataZ = abi.encodeWithSignature(
             "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
@@ -351,10 +344,9 @@ contract GatewayCrossChainTest is BaseTest {
         bytes memory contractAddress = "";
         bytes memory swapDataB = "";
         bytes memory payload = bytes.concat(
-            bytes4(chainId),
+            bytes4(dstChainId),
             bytes20(targetZRC20),
-            solAddress,
-            abi.encode(swapDataZ, contractAddress, swapDataB)
+            abi.encode(solAddress, swapDataZ, contractAddress, swapDataB)
         );
 
         vm.startPrank(user1);

@@ -12,8 +12,7 @@ contract GatewayEVMMock {
     address DODORouteProxy;
     mapping(address => address) public toZRC20; // erc20 => zrc20
     mapping(address => address) public toERC20; // zrc20 => erc20
-    mapping(bytes => address) public convertBTCAddress;
-    mapping(bytes32 => address) public convertSOLAddress;
+    mapping(bytes => address) public toEVMAddress;
     GatewayZEVMMock public gatewayZEVM;
 
     error TargetContractCallFailed();
@@ -31,12 +30,8 @@ contract GatewayEVMMock {
         toERC20[zrc20] = erc20;
     }
 
-    function setConvertBTCAddress(bytes memory btcAddress, address evmAddress) public {
-        convertBTCAddress[btcAddress] = evmAddress;
-    }
-
-    function setConvertSOLAddress(bytes32 solAddress, address evmAddress) public {
-        convertSOLAddress[solAddress] = evmAddress;
+    function setEVMAddress(bytes memory otherAddress, address evmAddress) public {
+        toEVMAddress[otherAddress] = evmAddress;
     }
 
     function setChainId(uint256 _chainId) public {
@@ -67,16 +62,11 @@ contract GatewayEVMMock {
         RevertOptions calldata /*revertOptions*/
     ) external payable {
         address asset = toERC20[zrc20];
-        if(receiver.length == 42) {
-            // BTC case
-            address to = convertBTCAddress[receiver];
-            IERC20(asset).transfer(to, amount);
-        } else if(receiver.length == 32) {
-            // SOL case
-            address to = convertSOLAddress[bytes32(receiver)];
-            IERC20(asset).transfer(to, amount);
-        } else {
+        if(receiver.length == 20) {
             IERC20(asset).transfer(address(bytes20(receiver)), amount);
+        } else {
+            address to = toEVMAddress[receiver];
+            IERC20(asset).transfer(to, amount);
         }    
     }
 
@@ -89,9 +79,7 @@ contract GatewayEVMMock {
         RevertOptions calldata /*revertOptions*/
     ) external payable {
         address asset = toERC20[zrc20];
-        if(receiver.length == 32) {
-            console.log("Called Solana Contract");
-        } else {
+        if(receiver.length == 20) {
             address targetContract = address(bytes20(receiver));
             IERC20(asset).approve(targetContract, amount);
             Callable(targetContract).onCall(
@@ -100,6 +88,8 @@ contract GatewayEVMMock {
                 }),
                 message
             );
+        } else {
+            console.log("Called Solana Contract");
         }
 
     }

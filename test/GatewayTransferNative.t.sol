@@ -17,11 +17,11 @@ contract GatewayTransferNativeTest is BaseTest {
         uint256 amount = 100 ether;
         address asset = address(token1A);
         address targetZRC20 = address(token1Z);
-        bytes memory swapDataA = "";
+        bytes memory swapDataZ = "";
         bytes memory payload = bytes.concat(
             bytes20(user2),
             bytes20(targetZRC20),
-            abi.encode(swapDataA)
+            abi.encode(swapDataZ)
         );
 
         vm.startPrank(user1);
@@ -170,17 +170,16 @@ contract GatewayTransferNativeTest is BaseTest {
     // zatachain - B: token1Z -> token1B
     function test_Z2B() public {
         uint256 amount = 100 ether;
-        uint32 chainId = 2;
+        uint32 dstChainId = 2;
         address targetZRC20 = address(token1Z);
-        address evmWalletAddress = user2;
+        bytes memory evmWalletAddress = abi.encodePacked(user2);
         bytes memory swapDataZ = "";
         bytes memory contractAddress = "";
         bytes memory swapDataB = "";
         bytes memory message = bytes.concat(
-            bytes4(chainId),
+            bytes4(dstChainId),
             bytes20(targetZRC20),
-            bytes20(evmWalletAddress),
-            abi.encode(swapDataZ, contractAddress, swapDataB)
+            abi.encode(evmWalletAddress, swapDataZ, contractAddress, swapDataB)
         );
 
         vm.startPrank(user1);
@@ -203,9 +202,9 @@ contract GatewayTransferNativeTest is BaseTest {
     // zetachain swap - B：token1Z -> token2Z -> token2B
     function test_ZSwap2B() public {
         uint256 amount = 100 ether;
-        uint32 chainId = 2;
+        uint32 dstChainId = 2;
         address targetZRC20 = address(token2Z);
-        address evmWalletAddress = user2;
+        bytes memory evmWalletAddress = abi.encodePacked(user2);
         bytes memory swapDataZ = abi.encodeWithSignature(
             "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
             address(token1Z),
@@ -221,10 +220,9 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory contractAddress = "";
         bytes memory swapDataB = "";
         bytes memory message = bytes.concat(
-            bytes4(chainId),
+            bytes4(dstChainId),
             bytes20(targetZRC20),
-            bytes20(evmWalletAddress),
-            abi.encode(swapDataZ, contractAddress, swapDataB)
+            abi.encode(evmWalletAddress, swapDataZ, contractAddress, swapDataB)
         );
 
         vm.startPrank(user1);
@@ -246,9 +244,9 @@ contract GatewayTransferNativeTest is BaseTest {
     // zetachain swap - B swap：token1Z -> token2Z -> token2B -> token1B
     function test_ZSwap2BSwap() public {
         uint256 amount = 100 ether;
-        uint32 chainId = 2;
+        uint32 dstChainId = 2;
         address targetZRC20 = address(token2Z);
-        address evmWalletAddress = user2;
+        bytes memory evmWalletAddress = abi.encodePacked(user2);
         bytes memory swapDataZ = abi.encodeWithSignature(
             "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
             address(token1Z),
@@ -279,10 +277,9 @@ contract GatewayTransferNativeTest is BaseTest {
             )
         );
         bytes memory message = bytes.concat(
-            bytes4(chainId),
+            bytes4(dstChainId),
             bytes20(targetZRC20),
-            bytes20(evmWalletAddress),
-            abi.encode(swapDataZ, contractAddress, swapDataB)
+            abi.encode(evmWalletAddress, swapDataZ, contractAddress, swapDataB)
         );
 
         vm.startPrank(user1);
@@ -304,9 +301,8 @@ contract GatewayTransferNativeTest is BaseTest {
     // zetachain swap - BTC: token1Z -> btcZ -> btc
     function test_ZSwap2BTC() public {
         uint256 amount = 100 ether;
-        uint32 chainId = 8332;
+        uint32 dstChainId = 8332;
         address targetZRC20 = address(btcZ);
-        bytes memory btcAddress = new bytes(42); // BTC Address is 42 bytes
         bytes memory swapDataZ = abi.encodeWithSignature(
             "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
             address(token1Z),
@@ -319,11 +315,12 @@ contract GatewayTransferNativeTest is BaseTest {
             "",
             block.timestamp + 60
         );
+        bytes memory contractAddress = "";
+        bytes memory swapDataB = "";
         bytes memory message = bytes.concat(
-            bytes4(chainId),
+            bytes4(dstChainId),
             bytes20(targetZRC20),
-            btcAddress,
-            abi.encode(swapDataZ)
+            abi.encode(btcAddress, swapDataZ, contractAddress, swapDataB)
         );
 
         vm.startPrank(user1);
@@ -345,9 +342,8 @@ contract GatewayTransferNativeTest is BaseTest {
     // zetachain swap - SOL: token1Z -> token2Z -> token2B
     function test_ZSwap2SOL() public {
         uint256 amount = 100 ether;
-        uint32 chainId = 900;
+        uint32 dstChainId = 900;
         address targetZRC20 = address(token2Z);
-        bytes memory solAddress = new bytes(32); // SOL Address is 32 bytes
         bytes memory swapDataZ = abi.encodeWithSignature(
             "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
             address(token1Z),
@@ -363,10 +359,9 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory contractAddress = "";
         bytes memory swapDataB = "";
         bytes memory message = bytes.concat(
-            bytes4(chainId),
+            bytes4(dstChainId),
             bytes20(targetZRC20),
-            solAddress,
-            abi.encode(swapDataZ, contractAddress, swapDataB)
+            abi.encode(solAddress, swapDataZ, contractAddress, swapDataB)
         );
 
         vm.startPrank(user1);

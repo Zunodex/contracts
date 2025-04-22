@@ -20,6 +20,8 @@ contract BaseTest is Test {
     address public EddyTreasurySafe = address(0x123);
     address public user1 = address(0x111);
     address public user2 = address(0x222);
+    bytes public btcAddress = abi.encodePacked("tb1qy9pqmk2pd9sv63g27jt8r657wy0d9ueeh0nqur");
+    bytes public solAddress = abi.encodePacked("DrexsvCMH9WWjgnjVbx1iFf3YZcKadupFmxnZLfSyotd");
     uint256 constant initialBalance = 1000 ether;
     IUniswapV2Factory factory = IUniswapV2Factory(0x9fd96203f7b22bCF72d9DCb40ff98302376cE09c);
     IUniswapV2Router01 router = IUniswapV2Router01(0x2ca7d64A7EFE2D62A725E2B35Cf7230D6677FfEe);
@@ -80,8 +82,8 @@ contract BaseTest is Test {
         gatewayB.setZRC20(address(token2B), address(token2Z));
         gatewayB.setZRC20(address(btc), address(btcZ));
         gatewayB.setDODORouteProxy(address(dodoRouteProxyB));
-        gatewayB.setConvertBTCAddress(new bytes(42), address(user2));
-        gatewayB.setConvertSOLAddress(bytes32(0), address(user2));
+        gatewayB.setEVMAddress(btcAddress, address(user2));
+        gatewayB.setEVMAddress(solAddress, address(user2));
 
         // set GatewayZEVM
         gatewayZEVM.setGatewayEVM(address(gatewayB));
