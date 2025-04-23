@@ -7,7 +7,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {IDODORouteProxy} from "./interfaces/IDODORouteProxy.sol";
 import {TransferHelper} from "./libraries/TransferHelper.sol";
 
 contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
@@ -55,13 +54,14 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     function initialize(
         address payable _gateway,
         address _dodoRouteProxy,
+        address _dodoApprove,
         uint256 _gasLimit
     ) public initializer {
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
         gateway = GatewayEVM(_gateway);
         DODORouteProxy = _dodoRouteProxy;
-        DODOApprove = IDODORouteProxy(_dodoRouteProxy)._DODO_APPROVE_PROXY_();
+        DODOApprove = _dodoApprove;
         gasLimit = _gasLimit;
     }
 

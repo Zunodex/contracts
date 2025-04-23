@@ -12,7 +12,6 @@ import {IUniswapV2Router01} from "@uniswap/v2-periphery/contracts/interfaces/IUn
 import {UniswapV2Library} from "./libraries/UniswapV2Library.sol";
 import {TransferHelper} from "./libraries/TransferHelper.sol";
 import {BytesHelperLib} from "./libraries/BytesHelperLib.sol";
-import {IDODORouteProxy} from "./interfaces/IDODORouteProxy.sol";
 
 contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeable, UUPSUpgradeable {
     address public constant WZETA = 0x5F0b1a82749cb4E2278EC87F8BF6B618dC71a8bf;
@@ -65,6 +64,7 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
     event GatewayUpdated(address gateway);
     event FeePercentUpdated(uint256 feePercent);
     event DODORouteProxyUpdated(address dodoRouteProxy);
+    event DODOApproveUpdated(address dodoApprove);
     event EddyTreasurySafeUpdated(address EddyTreasurySafe);
     
     modifier onlyGateway() {
@@ -90,6 +90,7 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
         address payable _gateway,
         address _EddyTreasurySafe,
         address _dodoRouteProxy,
+        address _dodoApprove,
         uint256 _feePercent,
         uint256 _slippage,
         uint256 _gasLimit
@@ -99,7 +100,7 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
         gateway = GatewayZEVM(_gateway);
         EddyTreasurySafe = _EddyTreasurySafe;
         DODORouteProxy = _dodoRouteProxy;
-        DODOApprove = IDODORouteProxy(_dodoRouteProxy)._DODO_APPROVE_PROXY_();
+        DODOApprove = _dodoApprove;
         feePercent = _feePercent;
         slippage = _slippage;
         gasLimit = _gasLimit;
@@ -112,6 +113,11 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
     function setDODORouteProxy(address _dodoRouteProxy) external onlyOwner {
         DODORouteProxy = _dodoRouteProxy;
         emit DODORouteProxyUpdated(_dodoRouteProxy);
+    }
+
+    function setDODOApprove(address _dodoApprove) external onlyOwner {
+        DODOApprove = _dodoApprove;
+        emit DODOApproveUpdated(_dodoApprove);
     }
 
     function setFeePercent(uint256 _feePercent) external onlyOwner {

@@ -89,9 +89,6 @@ contract BaseTest is Test {
         gatewayZEVM.setGatewayEVM(address(gatewayB));
 
         // set DODORouteProxy
-        dodoRouteProxyA.setDODOApprove(address(dodoRouteProxyA)); // should be DODOApprove in real scenario
-        dodoRouteProxyZ.setDODOApprove(address(dodoRouteProxyZ));
-        dodoRouteProxyB.setDODOApprove(address(dodoRouteProxyB));
         dodoRouteProxyA.setPrice(address(token1A), address(token2A), 3e18); // 1 token1A = 3 token2A
         dodoRouteProxyZ.setPrice(address(token1Z), address(token2Z), 2e18); // 1 token1Z = 2 token2Z
         dodoRouteProxyZ.setPrice(address(token1Z), address(btcZ), 1e18); // 1 token1Z = 1 btcZ
@@ -100,9 +97,10 @@ contract BaseTest is Test {
 
         // set GatewaySend
         bytes memory data = abi.encodeWithSignature(
-            "initialize(address,address,uint256)",
+            "initialize(address,address,address,uint256)",
             address(gatewayA),
             address(dodoRouteProxyA),
+            address(dodoRouteProxyA), // DODOApprove
             100000
         );
         sendProxyA = new ERC1967Proxy(
@@ -111,9 +109,10 @@ contract BaseTest is Test {
         );
         gatewaySendA = GatewaySend(payable(address(sendProxyA)));
         data = abi.encodeWithSignature(
-            "initialize(address,address,uint256)",
+            "initialize(address,address,address,uint256)",
             address(gatewayB),
             address(dodoRouteProxyB),
+            address(dodoRouteProxyB), // DODOApprove
             100000
         );
         sendProxyB = new ERC1967Proxy(
@@ -124,10 +123,11 @@ contract BaseTest is Test {
 
         // set GatewayTransferNative
         data = abi.encodeWithSignature(
-            "initialize(address,address,address,uint256,uint256,uint256)",
+            "initialize(address,address,address,address,uint256,uint256,uint256)",
             address(gatewayZEVM),
             EddyTreasurySafe,
             address(dodoRouteProxyZ),
+            address(dodoRouteProxyZ), // DODOApprove
             0,
             10,
             100000
@@ -140,9 +140,10 @@ contract BaseTest is Test {
 
         // set GatewayCrossChain
         data = abi.encodeWithSignature(
-            "initialize(address,address,address,uint256,uint256,uint256)",
+            "initialize(address,address,address,address,uint256,uint256,uint256)",
             address(gatewayZEVM),
             EddyTreasurySafe,
+            address(dodoRouteProxyZ),
             address(dodoRouteProxyZ),
             0,
             10,

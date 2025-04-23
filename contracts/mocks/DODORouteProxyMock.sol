@@ -8,20 +8,10 @@
 pragma solidity ^0.8.20;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IDODORouteProxy} from "../interfaces/IDODORouteProxy.sol";
 
-contract DODORouteProxyMock is IDODORouteProxy {
-    address DODOApprove;
+contract DODORouteProxyMock {
     mapping(address baseToken => mapping(address quoteToken => uint256 price))
         public prices;
-
-    function setDODOApprove(address dodoApprove) public {
-        DODOApprove = dodoApprove;
-    }
-
-    function _DODO_APPROVE_PROXY_() external view returns (address) {
-        return DODOApprove;
-    }
 
     function setPrice(
         address baseToken,
