@@ -10,6 +10,7 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
 import {TransferHelper} from "./libraries/TransferHelper.sol";
 
 contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
+    address constant _ETH_ADDRESS_ = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     uint256 public globalNonce;
     uint256 public gasLimit;
     address public DODORouteProxy;
@@ -96,33 +97,56 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         address targetContract,
         address asset,
         bytes calldata payload
-    ) public {
-        require(IERC20(fromToken).transferFrom(msg.sender, address(this), amount), "INSUFFICIENT ALLOWANCE: TRANSFER FROM FAILED");
+    ) public payable {
         globalNonce++;
         bytes32 externalId = _calcExternalId(msg.sender);
+
+        uint256 swapValue;
+        bool fromIsETH = fromToken == _ETH_ADDRESS_ ? true : false;
+        if(fromIsETH) {
+            require(msg.value >= amount, "INSUFFICIENT AMOUNT: ETH NOT ENOUGH");
+            swapValue = amount;
+        } else {
+            require(IERC20(fromToken).transferFrom(msg.sender, address(this), amount), "INSUFFICIENT AMOUNT: ERC20 TRANSFER FROM FAILED");
+            IERC20(fromToken).approve(DODOApprove, amount);
+        }
+         
         // Swap on DODO Router
-        IERC20(fromToken).approve(DODOApprove, amount);
-        
-        (bool success, bytes memory returnData) = DODORouteProxy.call(swapData);
+        (bool success, bytes memory returnData) = DODORouteProxy.call{value: swapValue}(swapData);
         if (!success) {
             revert RouteProxyCallFailed();
         }
         uint256 outputAmount = abi.decode(returnData, (uint256));
 
-        IERC20(asset).approve(address(gateway), outputAmount);
-        gateway.depositAndCall(
-            targetContract,
-            outputAmount,
-            asset,
-            bytes.concat(externalId, payload),
-            RevertOptions({
-                revertAddress: address(this),
-                callOnRevert: true,
-                abortAddress: address(0),
-                revertMessage: abi.encode(externalId, asset, amount, msg.sender),
-                onRevertGasLimit: gasLimit
-            })
-        );
+        bool toIsETH = asset == _ETH_ADDRESS_ ? true : false;
+        if(toIsETH) {
+            gateway.depositAndCall{value: outputAmount}(
+                targetContract,
+                bytes.concat(externalId, payload),
+                RevertOptions({
+                    revertAddress: address(this),
+                    callOnRevert: true,
+                    abortAddress: targetContract,
+                    revertMessage: bytes.concat(externalId, bytes20(msg.sender)),
+                    onRevertGasLimit: gasLimit
+                })
+            );
+        } else {
+            IERC20(asset).approve(address(gateway), outputAmount);
+            gateway.depositAndCall(
+                targetContract,
+                outputAmount,
+                asset,
+                bytes.concat(externalId, payload),
+                RevertOptions({
+                    revertAddress: address(this),
+                    callOnRevert: true,
+                    abortAddress: targetContract,
+                    revertMessage: bytes.concat(externalId, bytes20(msg.sender)),
+                    onRevertGasLimit: gasLimit
+                })
+            );
+        }
         emit EddyCrossChainSwap(
             externalId,
             fromToken,
@@ -138,24 +162,41 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         uint256 amount,
         address asset,
         bytes calldata payload
-    ) public {
+    ) public payable {
         globalNonce++;
         bytes32 externalId = _calcExternalId(msg.sender);
-        IERC20(asset).transferFrom(msg.sender, address(this), amount);
-        IERC20(asset).approve(address(gateway), amount);
-        gateway.depositAndCall(
-            targetContract,
-            amount,
-            asset,
-            bytes.concat(externalId, payload),
-            RevertOptions({
-                revertAddress: address(this),
-                callOnRevert: true,
-                abortAddress: address(0),
-                revertMessage: abi.encode(externalId, asset, amount, msg.sender),
-                onRevertGasLimit: gasLimit
-            })
-        );
+
+        bool isETH = asset == _ETH_ADDRESS_ ? true : false;
+        if(isETH) {
+            require(msg.value >= amount, "INSUFFICIENT AMOUNT: ETH NOT ENOUGH");
+            gateway.depositAndCall{value: amount}(
+                targetContract,
+                bytes.concat(externalId, payload),
+                RevertOptions({
+                    revertAddress: address(this),
+                    callOnRevert: true,
+                    abortAddress: targetContract,
+                    revertMessage: bytes.concat(externalId, bytes20(msg.sender)),
+                    onRevertGasLimit: gasLimit
+                })
+            );
+        } else {
+            require(IERC20(asset).transferFrom(msg.sender, address(this), amount), "INSUFFICIENT AMOUNT: ERC20 TRANSFER FROM FAILED");
+            IERC20(asset).approve(address(gateway), amount);
+            gateway.depositAndCall(
+                targetContract,
+                amount,
+                asset,
+                bytes.concat(externalId, payload),
+                RevertOptions({
+                    revertAddress: address(this),
+                    callOnRevert: true,
+                    abortAddress: targetContract,
+                    revertMessage: bytes.concat(externalId, bytes20(msg.sender)),
+                    onRevertGasLimit: gasLimit
+                })
+            );
+        }
         emit EddyCrossChainSwap(
             externalId,
             asset,
@@ -205,14 +246,14 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      * @dev Only the gateway can call this function
      */
     function onRevert(RevertContext calldata context) external onlyGateway {
-        (bytes32 externalId, address asset, uint256 amount, address sender) 
-            = abi.decode(context.revertMessage, (bytes32, address, uint256, address));
-        TransferHelper.safeTransfer(asset, sender, amount);
+        bytes32 externalId = bytes32(context.revertMessage[0:32]);
+        address sender = address(uint160(bytes20(context.revertMessage[32:])));
+        TransferHelper.safeTransfer(context.asset, sender, context.amount);
         
         emit EddyCrossChainSwapRevert(
             externalId,
-            asset,
-            amount,
+            context.asset,
+            context.amount,
             sender
         );
     }

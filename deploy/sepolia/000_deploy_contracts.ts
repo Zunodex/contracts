@@ -12,7 +12,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployer } = await getNamedAccounts();
     const { ethers, upgrades } = require("hardhat");
   
-    // await main();
+    await main();
   
     async function main() {
         await deployProxys();
@@ -67,6 +67,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         const gatewaySend = await upgrades.deployProxy(GatewaySend, [
             d.Gateway,
             d.DODORouteProxy,
+            d.DODOApprove,
             gasLimit
         ]);
         await gatewaySend.waitForDeployment();

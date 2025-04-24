@@ -10,6 +10,7 @@ pragma solidity ^0.8.20;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract DODORouteProxyMock {
+    address constant _ETH_ADDRESS_ = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     mapping(address baseToken => mapping(address quoteToken => uint256 price))
         public prices;
 
@@ -33,13 +34,19 @@ contract DODORouteProxyMock {
         bytes memory, // callDataConcat
         uint256 // deadLine
     ) external payable returns (uint256 receiveAmount) {
-        IERC20(fromToken).transferFrom(
-            msg.sender,
-            address(this),
-            fromTokenAmount
-        );
+        if(fromToken != _ETH_ADDRESS_) {
+            IERC20(fromToken).transferFrom(
+                msg.sender,
+                address(this),
+                fromTokenAmount
+            );
+        }
         receiveAmount = (fromTokenAmount * prices[fromToken][toToken]) / 1e18;
-        IERC20(toToken).transfer(msg.sender, receiveAmount);
+        if(toToken != _ETH_ADDRESS_) {
+            IERC20(toToken).transfer(msg.sender, receiveAmount);
+        } else {
+            payable(msg.sender).transfer(receiveAmount);
+        }
     }
 
     function mixSwap(

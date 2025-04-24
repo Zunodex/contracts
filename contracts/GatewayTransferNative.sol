@@ -231,7 +231,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         // 20 bytes(evmAddress) + 20 bytes(targetZRC20) + bytes(swapData)
         address receiver = BytesHelperLib.bytesToAddress(message, 0); // 20
         address targetZRC20 = BytesHelperLib.bytesToAddress(message, 20); // 40
-        bytes memory swapData = abi.decode(message[40:], (bytes)); 
+        bytes memory swapData = message[40:];
         decodedMessage = DecodedNativeMessage({
             receiver: receiver,
             targetZRC20: targetZRC20,
@@ -280,7 +280,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
                 revertAddress: address(this),
                 callOnRevert: true,
                 abortAddress: address(0),
-                revertMessage: abi.encode(externalId, targetZRC20, outputAmount, evmWalletAddress),
+                revertMessage: bytes.concat(externalId, bytes20(evmWalletAddress)),
                 onRevertGasLimit: gasLimit
             })
         );
@@ -306,7 +306,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
                 revertAddress: address(this),
                 callOnRevert: true,
                 abortAddress: address(0),
-                revertMessage: abi.encode(externalId, outputToken, amount, sender),
+                revertMessage: bytes.concat(externalId, bytes20(sender)),
                 onRevertGasLimit: gasLimit
             })
         );
@@ -699,14 +699,27 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
      * @dev Only the gateway can call this function
      */
     function onRevert(RevertContext calldata context) external onlyGateway {
-        (bytes32 externalId, address asset, uint256 amount, address sender) 
-            = abi.decode(context.revertMessage, (bytes32, address, uint256, address));
-        TransferHelper.safeTransfer(asset, sender, amount);
+        bytes32 externalId = bytes32(context.revertMessage[0:32]);
+        address sender = address(uint160(bytes20(context.revertMessage[32:])));
+        TransferHelper.safeTransfer(context.asset, sender, context.amount);
         
         emit EddyCrossChainSwapRevert(
             externalId,
-            asset,
-            amount,
+            context.asset,
+            context.amount,
+            sender
+        );
+    }
+
+    function onAbort(AbortContext calldata abortContext) external onlyGateway {
+        bytes32 externalId = bytes32(abortContext.revertMessage[0:32]);
+        address sender = address(uint160(bytes20(abortContext.revertMessage[32:])));
+        TransferHelper.safeTransfer(abortContext.asset, sender, abortContext.amount);
+        
+        emit EddyCrossChainSwapRevert(
+            externalId,
+            abortContext.asset,
+            abortContext.amount,
             sender
         );
     }

@@ -12,7 +12,7 @@ contract GatewayZEVMMock {
     GatewayEVMMock public gatewayEVM;
 
     function setGatewayEVM(address _gatewayEVM) public {
-        gatewayEVM = GatewayEVMMock(_gatewayEVM);
+        gatewayEVM = GatewayEVMMock(payable(_gatewayEVM));
     }
 
     function depositAndCall(

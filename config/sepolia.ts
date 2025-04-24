@@ -13,8 +13,8 @@ const SEPOLIA_CONFIG = {
         DODOApprove: "0x66c45FF040e86DC613F239123A5E21FFdC3A3fEC",
     }, 
     deployedAddress: {
-        Send: "0xcac7b4b9648e2a5c2835ccd36490fad7c1091024",
-        GatewaySend: "0xa822D83d72af894D59acF9d03E5042d4A8eAa01f",
+        Send: "0x6e04364f4ae6084689e4c467b4c22d5198577330",
+        GatewaySend: "0xfE5b4cbf273b3e37F4E4E368218093d564345237",
     },
   };
   

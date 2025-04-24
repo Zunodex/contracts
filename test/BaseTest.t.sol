@@ -17,6 +17,7 @@ import {IUniswapV2Router01} from "../contracts/interfaces/IUniswapV2Router01.sol
 
 
 contract BaseTest is Test {
+    address constant _ETH_ADDRESS_ = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     address public EddyTreasurySafe = address(0x123);
     address public user1 = address(0x111);
     address public user2 = address(0x222);
@@ -41,8 +42,10 @@ contract BaseTest is Test {
     ERC20Mock public token2A;
     ZRC20Mock public token1Z;
     ZRC20Mock public token2Z;
+    ZRC20Mock public token3Z; // for mapping A native token 
     ERC20Mock public token1B; 
     ERC20Mock public token2B;
+    ERC20Mock public token3B;
     ZRC20Mock public btcZ; // BTC on zetachain
     ERC20Mock public btc; // BTC on Bitcoin
     DODORouteProxyMock public dodoRouteProxyA; // A chain
@@ -65,8 +68,10 @@ contract BaseTest is Test {
         token2A = new ERC20Mock("Token2A", "TK2A", 18);
         token1Z = new ZRC20Mock("Token1Z", "TK1Z", 18);
         token2Z = new ZRC20Mock("Token2Z", "TK2Z", 18);
+        token3Z = new ZRC20Mock("NativeToken", "NT", 18);
         token1B = new ERC20Mock("Token1B", "TK1B", 18);
         token2B = new ERC20Mock("Token2B", "TK2B", 18);
+        token3B = new ERC20Mock("Token3B", "TK3B", 18);
         btcZ = new ZRC20Mock("BTCZ", "BTCZ", 18);
         btc = new ERC20Mock("BTC", "BTC", 18);
 
@@ -76,10 +81,12 @@ contract BaseTest is Test {
         gatewayA.setZRC20(address(token1A), address(token1Z));
         gatewayA.setZRC20(address(token2A), address(token2Z));  
         gatewayA.setZRC20(address(btc), address(btcZ));
+        gatewayA.setZRC20(_ETH_ADDRESS_, address(token3Z));
         gatewayA.setDODORouteProxy(address(dodoRouteProxyA));
         gatewayB.setGatewayZEVM(address(gatewayZEVM));
         gatewayB.setZRC20(address(token1B), address(token1Z));
         gatewayB.setZRC20(address(token2B), address(token2Z));
+        gatewayB.setZRC20(address(token3B), address(token3Z));
         gatewayB.setZRC20(address(btc), address(btcZ));
         gatewayB.setDODORouteProxy(address(dodoRouteProxyB));
         gatewayB.setEVMAddress(btcAddress, address(user2));
@@ -90,7 +97,11 @@ contract BaseTest is Test {
 
         // set DODORouteProxy
         dodoRouteProxyA.setPrice(address(token1A), address(token2A), 3e18); // 1 token1A = 3 token2A
+        dodoRouteProxyA.setPrice(address(token2A), _ETH_ADDRESS_, 2e18); // 1 token2A = 2 ETH
+        dodoRouteProxyA.setPrice(address(token1A), _ETH_ADDRESS_, 3e18); // 1 token1A = 1 ETH
         dodoRouteProxyZ.setPrice(address(token1Z), address(token2Z), 2e18); // 1 token1Z = 2 token2Z
+        dodoRouteProxyZ.setPrice(address(token1Z), address(token3Z), 3e18); // 1 token1Z = 3 token3Z
+        dodoRouteProxyZ.setPrice(address(token2Z), address(token3Z), 1e18); // 1 token2Z = 1 token3Z
         dodoRouteProxyZ.setPrice(address(token1Z), address(btcZ), 1e18); // 1 token1Z = 1 btcZ
         dodoRouteProxyZ.setPrice(address(token2Z), address(btcZ), 2e18); // 1 token2Z = 2 btcZ
         dodoRouteProxyB.setPrice(address(token1B), address(token2B), 4e18); // 1 token1B = 4 token2B
@@ -160,6 +171,8 @@ contract BaseTest is Test {
         token1Z.setGasZRC20(address(token1Z));
         token2Z.setGasFee(1e18);
         token2Z.setGasZRC20(address(token1Z));
+        token3Z.setGasFee(1e18);
+        token3Z.setGasZRC20(address(token1Z));
         btcZ.setGasFee(1e18);
         btcZ.setGasZRC20(address(btcZ));
 
@@ -184,6 +197,8 @@ contract BaseTest is Test {
         token1A.mint(address(dodoRouteProxyA), initialBalance);
         token2A.mint(user1, initialBalance);
         token2A.mint(address(dodoRouteProxyA), initialBalance);
+        vm.deal(user1, initialBalance);
+        vm.deal(address(dodoRouteProxyA), initialBalance);
 
         token1Z.mint(user1, initialBalance);
         token1Z.mint(address(gatewayZEVM), initialBalance);
@@ -191,6 +206,8 @@ contract BaseTest is Test {
         token2Z.mint(user1, initialBalance);
         token2Z.mint(address(gatewayZEVM), initialBalance);
         token2Z.mint(address(dodoRouteProxyZ), initialBalance);
+        token3Z.mint(address(gatewayZEVM), initialBalance);
+        token3Z.mint(address(dodoRouteProxyZ), initialBalance);
         btcZ.mint(address(dodoRouteProxyZ), initialBalance);
 
         token1B.mint(address(gatewayB), initialBalance);

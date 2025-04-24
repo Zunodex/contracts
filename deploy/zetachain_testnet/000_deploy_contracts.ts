@@ -70,6 +70,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             d.Gateway,
             d.MultiSig,
             d.DODORouteProxy,
+            d.DODOApprove,
             feePercent,
             slippage,
             gasLimit
@@ -81,6 +82,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             d.Gateway,
             d.MultiSig,
             d.DODORouteProxy,
+            d.DODOApprove,
             feePercent,
             slippage,
             gasLimit

@@ -8,6 +8,7 @@ import {CallOptions, RevertOptions} from "@zetachain/protocol-contracts/contract
 import {console} from "../../lib/forge-std/src/console.sol";
 
 contract GatewayEVMMock {
+    address constant _ETH_ADDRESS_ = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     uint256 chainId;
     address DODORouteProxy;
     mapping(address => address) public toZRC20; // erc20 => zrc20
@@ -55,6 +56,21 @@ contract GatewayEVMMock {
         );
     }
 
+    function depositAndCall(
+        address receiver,
+        bytes calldata payload,
+        RevertOptions calldata /*revertOptions*/
+    ) external payable {
+        gatewayZEVM.depositAndCall(
+            chainId,
+            toZRC20[_ETH_ADDRESS_],
+            msg.value,
+            receiver,
+            payload
+        );
+    }
+
+
     function withdraw(
         bytes memory receiver,
         uint256 amount,
@@ -93,4 +109,8 @@ contract GatewayEVMMock {
         }
 
     }
+
+    receive() external payable {}
+
+    fallback() external payable {}
 }

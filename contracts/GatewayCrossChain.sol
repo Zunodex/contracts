@@ -230,7 +230,7 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
                 revertAddress: address(this),
                 callOnRevert: true,
                 abortAddress: address(0),
-                revertMessage: abi.encode(externalId, targetZRC20, outputAmount, evmWalletAddress),
+                revertMessage: bytes.concat(externalId, bytes20(evmWalletAddress)),
                 onRevertGasLimit: gasLimit
             })
         );
@@ -256,7 +256,7 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
                 revertAddress: address(this),
                 callOnRevert: true,
                 abortAddress: address(0),
-                revertMessage: abi.encode(externalId, outputToken, amount, sender),
+                revertMessage: bytes.concat(externalId, bytes20(sender)),
                 onRevertGasLimit: gasLimit
             })
         );
@@ -570,14 +570,27 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
      * @dev Only the gateway can call this function
      */
     function onRevert(RevertContext calldata context) external onlyGateway {
-        (bytes32 externalId, address asset, uint256 amount, address sender) 
-            = abi.decode(context.revertMessage, (bytes32, address, uint256, address));
-        TransferHelper.safeTransfer(asset, sender, amount);
+        bytes32 externalId = bytes32(context.revertMessage[0:32]);
+        address sender = address(uint160(bytes20(context.revertMessage[32:])));
+        TransferHelper.safeTransfer(context.asset, sender, context.amount);
         
         emit EddyCrossChainSwapRevert(
             externalId,
-            asset,
-            amount,
+            context.asset,
+            context.amount,
+            sender
+        );
+    }
+
+    function onAbort(AbortContext calldata abortContext) external onlyGateway {
+        bytes32 externalId = bytes32(abortContext.revertMessage[0:32]);
+        address sender = address(uint160(bytes20(abortContext.revertMessage[32:])));
+        TransferHelper.safeTransfer(abortContext.asset, sender, abortContext.amount);
+        
+        emit EddyCrossChainSwapRevert(
+            externalId,
+            abortContext.asset,
+            abortContext.amount,
             sender
         );
     }

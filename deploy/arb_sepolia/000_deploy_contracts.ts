@@ -67,6 +67,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         const gatewaySend = await upgrades.deployProxy(GatewaySend, [
             d.Gateway,
             d.DODORouteProxy,
+            d.DODOApprove,
             gasLimit
         ]);
         await gatewaySend.waitForDeployment();
