@@ -12,7 +12,7 @@ import {console} from "forge-std/console.sol";
 contract GatewayCrossChainTest is BaseTest {
 
     // A - zetachain swap - B: token2A -> token2Z -> token1Z -> token1B
-        function test_A2ZSwap2B() public {
+    function test_A2ZSwap2B() public {
         address targetContract = address(gatewayCrossChain);
         uint256 amount = 100 ether;
         address asset = address(token2A);
@@ -33,10 +33,13 @@ contract GatewayCrossChainTest is BaseTest {
         );
         bytes memory contractAddress = "";
         bytes memory swapDataB = "";
-        bytes memory payload = bytes.concat(
-            bytes4(dstChainId),
-            bytes20(targetZRC20),
-            abi.encode(evmWalletAddress, swapDataZ, contractAddress, swapDataB)
+        bytes memory payload = buildCompressedMessage(
+            dstChainId,
+            targetZRC20,
+            evmWalletAddress,
+            swapDataZ,
+            contractAddress,
+            swapDataB
         );
 
         vm.startPrank(user1);
@@ -91,10 +94,13 @@ contract GatewayCrossChainTest is BaseTest {
         );
         bytes memory contractAddress = "";
         bytes memory swapDataB = "";
-        bytes memory payload = bytes.concat(
-            bytes4(dstChainId),
-            bytes20(targetZRC20),
-            abi.encode(evmWalletAddress, swapDataZ, contractAddress, swapDataB)
+        bytes memory payload = buildCompressedMessage(
+            dstChainId,
+            targetZRC20,
+            evmWalletAddress,
+            swapDataZ,
+            contractAddress,
+            swapDataB
         );
 
         vm.startPrank(user1);
@@ -166,10 +172,13 @@ contract GatewayCrossChainTest is BaseTest {
                 block.timestamp + 60
             )
         );
-        bytes memory payload = bytes.concat(
-            bytes4(dstChainId),
-            bytes20(targetZRC20),
-            abi.encode(evmWalletAddress, swapDataZ, contractAddress, swapDataB)
+        bytes memory payload = buildCompressedMessage(
+            dstChainId,
+            targetZRC20,
+            evmWalletAddress,
+            swapDataZ,
+            contractAddress,
+            swapDataB
         );
 
         vm.startPrank(user1);
@@ -228,10 +237,13 @@ contract GatewayCrossChainTest is BaseTest {
                 block.timestamp + 60
             )
         );
-        bytes memory payload = bytes.concat(
-            bytes4(dstChainId),
-            bytes20(targetZRC20),
-            abi.encode(evmWalletAddress, swapDataZ, contractAddress, swapDataB)
+        bytes memory payload = buildCompressedMessage(
+            dstChainId,
+            targetZRC20,
+            evmWalletAddress,
+            swapDataZ,
+            contractAddress,
+            swapDataB
         );
 
         btcZ.mint(address(gatewayCrossChain), amount);
@@ -284,10 +296,13 @@ contract GatewayCrossChainTest is BaseTest {
         );
         bytes memory contractAddress = "";
         bytes memory swapDataB = "";
-        bytes memory payload = bytes.concat(
-            bytes4(dstChainId),
-            bytes20(targetZRC20),
-            abi.encode(btcAddress, swapDataZ, contractAddress, swapDataB)
+        bytes memory payload = buildCompressedMessage(
+            dstChainId,
+            targetZRC20,
+            btcAddress,
+            swapDataZ,
+            contractAddress,
+            swapDataB
         );
 
         vm.startPrank(user1);
@@ -343,17 +358,14 @@ contract GatewayCrossChainTest is BaseTest {
         );
         bytes memory contractAddress = "";
         bytes memory swapDataB = "";
-        bytes memory payload = bytes.concat(
-            bytes4(dstChainId),
-            bytes20(targetZRC20),
-            abi.encode(solAddress, swapDataZ, contractAddress, swapDataB)
+        bytes memory payload = buildCompressedMessage(
+            dstChainId,
+            targetZRC20,
+            solAddress,
+            swapDataZ,
+            contractAddress,
+            swapDataB
         );
-        console.log(targetZRC20);
-        console.logBytes(solAddress);
-        console.logBytes(swapDataZ);
-        console.logBytes(contractAddress);
-        console.logBytes(swapDataB);
-        console.logBytes(payload);
 
         vm.startPrank(user1);
         token2A.approve(
@@ -408,10 +420,13 @@ contract GatewayCrossChainTest is BaseTest {
         );
         bytes memory contractAddress = abi.encodePacked("EwUjcjz8jvFeE99kjcZKM5Aojs3eKcyW2JHNKNDP9M4k");
         bytes memory swapDataB = "0x12345678";
-        bytes memory payload = bytes.concat(
-            bytes4(dstChainId),
-            bytes20(targetZRC20),
-            abi.encode(solAddress, swapDataZ, contractAddress, swapDataB)
+        bytes memory payload = buildCompressedMessage(
+            dstChainId,
+            targetZRC20,
+            solAddress,
+            swapDataZ,
+            contractAddress,
+            swapDataB
         );
         
         vm.startPrank(user1);

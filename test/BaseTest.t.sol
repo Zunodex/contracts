@@ -216,4 +216,26 @@ contract BaseTest is Test {
         token2B.mint(address(dodoRouteProxyB), initialBalance);
         btc.mint(address(gatewayB), initialBalance);
     }
+
+    function buildCompressedMessage(
+        uint32 dstChainId,
+        address targetZRC20,
+        bytes memory receiver,
+        bytes memory swapDataZ,
+        bytes memory contractAddress,
+        bytes memory swapDataB
+    ) public pure returns (bytes memory) {
+        return abi.encodePacked(
+            bytes4(dstChainId),
+            bytes20(targetZRC20),
+            uint16(receiver.length),
+            uint16(contractAddress.length),
+            uint16(swapDataZ.length),
+            uint16(swapDataB.length),
+            receiver,
+            contractAddress,
+            swapDataZ,
+            swapDataB
+        );
+    }
 }

@@ -268,10 +268,13 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory swapDataZ = "";
         bytes memory contractAddress = "";
         bytes memory swapDataB = "";
-        bytes memory message = bytes.concat(
-            bytes4(dstChainId),
-            bytes20(targetZRC20),
-            abi.encode(evmWalletAddress, swapDataZ, contractAddress, swapDataB)
+        bytes memory message = buildCompressedMessage(
+            dstChainId,
+            targetZRC20,
+            evmWalletAddress,
+            swapDataZ,
+            contractAddress,
+            swapDataB
         );
 
         vm.startPrank(user1);
@@ -311,10 +314,13 @@ contract GatewayTransferNativeTest is BaseTest {
         );
         bytes memory contractAddress = "";
         bytes memory swapDataB = "";
-        bytes memory message = bytes.concat(
-            bytes4(dstChainId),
-            bytes20(targetZRC20),
-            abi.encode(evmWalletAddress, swapDataZ, contractAddress, swapDataB)
+        bytes memory message = buildCompressedMessage(
+            dstChainId,
+            targetZRC20,
+            evmWalletAddress,
+            swapDataZ,
+            contractAddress,
+            swapDataB
         );
 
         vm.startPrank(user1);
@@ -368,10 +374,13 @@ contract GatewayTransferNativeTest is BaseTest {
                 block.timestamp + 60
             )
         );
-        bytes memory message = bytes.concat(
-            bytes4(dstChainId),
-            bytes20(targetZRC20),
-            abi.encode(evmWalletAddress, swapDataZ, contractAddress, swapDataB)
+        bytes memory message = buildCompressedMessage(
+            dstChainId,
+            targetZRC20,
+            evmWalletAddress,
+            swapDataZ,
+            contractAddress,
+            swapDataB
         );
 
         vm.startPrank(user1);
@@ -409,10 +418,13 @@ contract GatewayTransferNativeTest is BaseTest {
         );
         bytes memory contractAddress = "";
         bytes memory swapDataB = "";
-        bytes memory message = bytes.concat(
-            bytes4(dstChainId),
-            bytes20(targetZRC20),
-            abi.encode(btcAddress, swapDataZ, contractAddress, swapDataB)
+        bytes memory message = buildCompressedMessage(
+            dstChainId,
+            targetZRC20,
+            btcAddress,
+            swapDataZ,
+            contractAddress,
+            swapDataB
         );
 
         vm.startPrank(user1);
@@ -450,10 +462,13 @@ contract GatewayTransferNativeTest is BaseTest {
         );
         bytes memory contractAddress = "";
         bytes memory swapDataB = "";
-        bytes memory message = bytes.concat(
-            bytes4(dstChainId),
-            bytes20(targetZRC20),
-            abi.encode(solAddress, swapDataZ, contractAddress, swapDataB)
+        bytes memory message = buildCompressedMessage(
+            dstChainId,
+            targetZRC20,
+            solAddress,
+            swapDataZ,
+            contractAddress,
+            swapDataB
         );
 
         vm.startPrank(user1);

@@ -262,21 +262,57 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
         );
     }
 
-    function decodeMessage(bytes calldata message) internal pure returns (DecodedMessage memory) {
-        require(message.length >= 24, "Invalid message length");
-        // dest chainId + targetZRC20 address = 4 + 20 = 24 bytes
-        uint32 chainId = BytesHelperLib.bytesToUint32(message, 0); // 4
-        address targetZRC20 = BytesHelperLib.bytesToAddress(message, 4); // 20
+    // function decodeMessage(bytes calldata message) internal pure returns (DecodedMessage memory) {
+    //     require(message.length >= 24, "Invalid message length");
+    //     // dest chainId + targetZRC20 address = 4 + 20 = 24 bytes
+    //     uint32 chainId = BytesHelperLib.bytesToUint32(message, 0); // 4
+    //     address targetZRC20 = BytesHelperLib.bytesToAddress(message, 4); // 20
 
-        (bytes memory receiver, bytes memory swapDataZ, bytes memory contractAddress, bytes memory swapDataB)
-            = abi.decode(message[24:], (bytes, bytes, bytes, bytes)); 
+    //     (bytes memory receiver, bytes memory swapDataZ, bytes memory contractAddress, bytes memory swapDataB)
+    //         = abi.decode(message[24:], (bytes, bytes, bytes, bytes)); 
+
+    //     return DecodedMessage({
+    //         targetZRC20: targetZRC20,
+    //         dstChainId: chainId,
+    //         receiver: receiver,
+    //         swapDataZ: swapDataZ,
+    //         contractAddress: contractAddress,
+    //         swapDataB: swapDataB
+    //     });
+    // }
+    
+    function decodeMessage(bytes calldata message) public pure returns (DecodedMessage memory) {
+        uint32 dstChainId;
+        address targetZRC20;
+        uint16 receiverLen;
+        uint16 contractAddressLen;
+        uint16 swapDataZLen;
+        uint16 swapDataBLen;
+
+        assembly {
+            dstChainId := shr(224, calldataload(message.offset)) // 4 bytes
+            targetZRC20 := shr(96, calldataload(add(message.offset, 4))) // 20 bytes
+            receiverLen := shr(240, calldataload(add(message.offset, 24))) // 2 bytes
+            contractAddressLen := shr(240, calldataload(add(message.offset, 26))) // 2 bytes
+            swapDataZLen := shr(240, calldataload(add(message.offset, 28))) // 2 bytes
+            swapDataBLen := shr(240, calldataload(add(message.offset, 30))) // 2 bytes
+        }
+
+        uint offset = 32;
+        bytes memory receiver = message[offset : offset + receiverLen];
+        offset += receiverLen;
+        bytes memory contractAddress = message[offset : offset + contractAddressLen];
+        offset += contractAddressLen;
+        bytes memory swapDataZ = message[offset : offset + swapDataZLen];
+        offset += swapDataZLen;
+        bytes memory swapDataB = message[offset : offset + swapDataBLen];
 
         return DecodedMessage({
             targetZRC20: targetZRC20,
-            dstChainId: chainId,
+            dstChainId: dstChainId,
             receiver: receiver,
-            swapDataZ: swapDataZ,
             contractAddress: contractAddress,
+            swapDataZ: swapDataZ,
             swapDataB: swapDataB
         });
     }

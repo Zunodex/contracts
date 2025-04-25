@@ -10,8 +10,8 @@ const ARB_SEPOLIA_CONFIG = {
         DODOApprove: "0xf89f2D25E2AF01eC1414a137BC2bAdD1Fa808d39",
     }, 
     deployedAddress: {
-        Send: "0x3F4CC40EbB27e08D99Aee9E6309697A35d1B8Cc7",
-        GatewaySend: "0x4a443bb00b71014AB29f892c46609A7A2DB8B484",
+        Send: "0xCe39b86442AC7260b3218086F591578500E54241",
+        GatewaySend: "0x337396E352fFB08C7D861573F70f6b5d820958b0",
     },
   };
   

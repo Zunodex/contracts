@@ -86,6 +86,18 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
+    function concatBytes(bytes32 a, bytes memory b) public pure returns (bytes memory) {
+        bytes memory result = new bytes(32 + b.length);
+        uint k = 0;
+        for (uint i = 0; i < 32; i++) {
+            result[k++] = a[i];
+        }
+        for (uint i = 0; i < b.length; i++) {
+            result[k++] = b[i];
+        }
+        return result;
+    }
+
     function _calcExternalId(address sender) internal view returns (bytes32 externalId) {
         externalId = keccak256(abi.encodePacked(address(this), sender, globalNonce, block.timestamp));
     }
@@ -122,7 +134,7 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         if(toIsETH) {
             gateway.depositAndCall{value: outputAmount}(
                 targetContract,
-                bytes.concat(externalId, payload),
+                concatBytes(externalId, payload),
                 RevertOptions({
                     revertAddress: address(this),
                     callOnRevert: true,
@@ -137,7 +149,7 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
                 targetContract,
                 outputAmount,
                 asset,
-                bytes.concat(externalId, payload),
+                concatBytes(externalId, payload),
                 RevertOptions({
                     revertAddress: address(this),
                     callOnRevert: true,
