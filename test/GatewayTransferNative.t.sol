@@ -15,6 +15,7 @@ contract GatewayTransferNativeTest is BaseTest {
     function test_A2Z() public {
         address targetContract = address(gatewayTransferNative);
         uint256 amount = 100 ether;
+        uint32 dstChainId = 7000;
         address asset = address(token1A);
         address targetZRC20 = address(token1Z);
         bytes memory swapDataZ = "";
@@ -33,6 +34,7 @@ contract GatewayTransferNativeTest is BaseTest {
             targetContract,
             amount,
             asset,
+            dstChainId,
             payload
         );
         vm.stopPrank();
@@ -45,6 +47,7 @@ contract GatewayTransferNativeTest is BaseTest {
     function test_A2ZSwap() public {
         address targetContract = address(gatewayTransferNative);
         uint256 amount = 100 ether;
+        uint32 dstChainId = 7000;
         address asset = address(token1A);
         address targetZRC20 = address(token2Z);
         bytes memory swapDataZ = abi.encodeWithSignature(
@@ -74,6 +77,7 @@ contract GatewayTransferNativeTest is BaseTest {
             targetContract,
             amount,
             asset,
+            dstChainId,
             payload
         );
         vm.stopPrank();
@@ -86,6 +90,7 @@ contract GatewayTransferNativeTest is BaseTest {
     function test_ANative2ZSwap() public {
         address targetContract = address(gatewayTransferNative);
         uint256 amount = 100 ether;
+        uint32 dstChainId = 7000;
         address asset = _ETH_ADDRESS_;
         address targetZRC20 = address(token2Z);
         bytes memory swapDataZ = abi.encodeWithSignature(
@@ -111,6 +116,7 @@ contract GatewayTransferNativeTest is BaseTest {
             targetContract,
             amount,
             asset,
+            dstChainId,
             payload
         );
         vm.stopPrank();
@@ -123,6 +129,7 @@ contract GatewayTransferNativeTest is BaseTest {
     function test_ANativeSwap2ZSwap() public {
         address targetContract = address(gatewayTransferNative);
         uint256 amount = 100 ether;
+        uint32 dstChainId = 7000;
         address fromToken = address(token1A);
         address asset = _ETH_ADDRESS_;
         bytes memory swapDataA = abi.encodeWithSignature(
@@ -167,6 +174,7 @@ contract GatewayTransferNativeTest is BaseTest {
             swapDataA,
             targetContract,
             asset,
+            dstChainId,
             payload
         );
         vm.stopPrank();
@@ -524,7 +532,7 @@ contract GatewayTransferNativeTest is BaseTest {
     }
 
     function test_ZOnAbort() public {
-        bytes32 externalId = bytes32(0);
+        bytes32 externalId = keccak256(abi.encodePacked(address(this), block.timestamp));
         uint256 amount = 100 ether;
         token1Z.mint(address(gatewayTransferNative), amount);
 
@@ -539,6 +547,9 @@ contract GatewayTransferNativeTest is BaseTest {
                 revertMessage: bytes.concat(externalId, bytes20(user2))
             })
         );
+
+        vm.prank(user2);
+        gatewayTransferNative.claimRefund(externalId);
 
         assertEq(token1Z.balanceOf(user2), amount);
     }

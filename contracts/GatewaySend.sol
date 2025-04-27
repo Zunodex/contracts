@@ -23,13 +23,24 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         uint256 amount,
         address walletAddress
     );
-    event EddyCrossChainSwap(
+    event EddyCrossChainSend(
+        bytes32 externalId,
+        uint32 dstChainId,
+        address fromToken,
+        address toToken,
+        uint256 amount,
+        uint256 outputAmount,
+        address walletAddress,
+        bytes payload
+    );
+    event EddyCrossChainReceive(
         bytes32 externalId,
         address fromToken,
         address toToken,
         uint256 amount,
         uint256 outputAmount,
-        address walletAddress
+        address walletAddress,
+        bytes payload
     );
     event DODORouteProxyUpdated(address dodoRouteProxy);
     event GatewayUpdated(address gateway);
@@ -108,6 +119,7 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         bytes calldata swapData,
         address targetContract,
         address asset,
+        uint32 dstChainId,
         bytes calldata payload
     ) public payable {
         globalNonce++;
@@ -131,10 +143,11 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         uint256 outputAmount = abi.decode(returnData, (uint256));
 
         bool toIsETH = asset == _ETH_ADDRESS_ ? true : false;
+        bytes memory message = concatBytes(externalId, payload);
         if(toIsETH) {
             gateway.depositAndCall{value: outputAmount}(
                 targetContract,
-                concatBytes(externalId, payload),
+                message,
                 RevertOptions({
                     revertAddress: address(this),
                     callOnRevert: true,
@@ -159,13 +172,15 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
                 })
             );
         }
-        emit EddyCrossChainSwap(
+        emit EddyCrossChainSend(
             externalId,
+            dstChainId,
             fromToken,
             asset,
             amount,
             outputAmount,
-            msg.sender
+            msg.sender,
+            message
         );
     }
 
@@ -173,17 +188,19 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         address targetContract,
         uint256 amount,
         address asset,
+        uint32 dstChainId,
         bytes calldata payload
     ) public payable {
         globalNonce++;
         bytes32 externalId = _calcExternalId(msg.sender);
 
         bool isETH = asset == _ETH_ADDRESS_ ? true : false;
+        bytes memory message = concatBytes(externalId, payload);
         if(isETH) {
             require(msg.value >= amount, "INSUFFICIENT AMOUNT: ETH NOT ENOUGH");
             gateway.depositAndCall{value: amount}(
                 targetContract,
-                bytes.concat(externalId, payload),
+                message,
                 RevertOptions({
                     revertAddress: address(this),
                     callOnRevert: true,
@@ -199,7 +216,7 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
                 targetContract,
                 amount,
                 asset,
-                bytes.concat(externalId, payload),
+                message,
                 RevertOptions({
                     revertAddress: address(this),
                     callOnRevert: true,
@@ -209,13 +226,15 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
                 })
             );
         }
-        emit EddyCrossChainSwap(
+        emit EddyCrossChainSend(
             externalId,
+            dstChainId,
             asset,
             asset,
             amount,
             amount,
-            msg.sender
+            msg.sender,
+            message
         );
     }
 
@@ -240,13 +259,14 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         uint256 outputAmount = abi.decode(returnData, (uint256));
         IERC20(toToken).transfer(evmWalletAddress, outputAmount);
 
-        emit EddyCrossChainSwap(
+        emit EddyCrossChainReceive(
             externalId,
             fromToken,
             toToken,
             amount,
             outputAmount,
-            evmWalletAddress
+            evmWalletAddress,
+            message
         );
 
         return "";

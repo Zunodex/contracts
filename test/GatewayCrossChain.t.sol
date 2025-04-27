@@ -51,6 +51,7 @@ contract GatewayCrossChainTest is BaseTest {
             targetContract,
             amount,
             asset,
+            dstChainId,
             payload
         );
         vm.stopPrank();
@@ -114,6 +115,7 @@ contract GatewayCrossChainTest is BaseTest {
             swapDataA,
             targetContract,
             asset,
+            dstChainId,
             payload
         );
         vm.stopPrank();
@@ -192,6 +194,7 @@ contract GatewayCrossChainTest is BaseTest {
             swapDataA,
             targetContract,
             asset,
+            dstChainId,
             payload
         );
         vm.stopPrank();
@@ -316,6 +319,7 @@ contract GatewayCrossChainTest is BaseTest {
             swapDataA,
             targetContract,
             asset,
+            dstChainId,
             payload
         );
         vm.stopPrank();
@@ -378,6 +382,7 @@ contract GatewayCrossChainTest is BaseTest {
             swapDataA,
             targetContract,
             asset,
+            dstChainId,
             payload
         );
         vm.stopPrank();
@@ -427,8 +432,7 @@ contract GatewayCrossChainTest is BaseTest {
             swapDataZ,
             contractAddress,
             swapDataB
-        );
-        
+        ); 
         vm.startPrank(user1);
         token2A.approve(
             address(gatewaySendA),
@@ -440,6 +444,7 @@ contract GatewayCrossChainTest is BaseTest {
             swapDataA,
             targetContract,
             asset,
+            dstChainId,
             payload
         );
         vm.stopPrank();
