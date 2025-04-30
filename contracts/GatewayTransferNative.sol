@@ -439,7 +439,6 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             outputAmount - gasFee
         );
 
-        address _evmWalletAddress = evmWalletAddress;
         emit EddyCrossChainSwap(
             externalId,
             decoded.dstChainId,
@@ -447,7 +446,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             decoded.targetZRC20,
             amount,
             outputAmount - gasFee,
-            _evmWalletAddress,
+            evmWalletAddress,
             platformFeesForTx
         );
     }
@@ -513,7 +512,6 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             );
         }
 
-        address _evmWalletAddress = evmWalletAddress;
         emit EddyCrossChainSwap(
             externalId,
             decoded.dstChainId,
@@ -521,7 +519,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             decoded.targetZRC20,
             amount,
             amountAfterGasFees,
-            _evmWalletAddress, // context.sender
+            evmWalletAddress, // context.sender
             platformFeesForTx
         );
     }

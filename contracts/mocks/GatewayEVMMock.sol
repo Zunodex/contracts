@@ -98,7 +98,7 @@ contract GatewayEVMMock {
         if(receiver.length == 20) {
             address targetContract = address(bytes20(receiver));
             IERC20(asset).approve(targetContract, amount);
-            Callable(targetContract).onCall(
+            Callable(targetContract).onCall{value: msg.value}(
                 MessageContext({
                     sender: address(this)
                 }),
@@ -107,7 +107,6 @@ contract GatewayEVMMock {
         } else {
             console.log("Called Solana Contract");
         }
-
     }
 
     receive() external payable {}

@@ -18,6 +18,7 @@ import {IUniswapV2Router01} from "../contracts/interfaces/IUniswapV2Router01.sol
 
 contract BaseTest is Test {
     address constant _ETH_ADDRESS_ = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+    address constant WZETA = 0x5F0b1a82749cb4E2278EC87F8BF6B618dC71a8bf;
     address public EddyTreasurySafe = address(0x123);
     address public user1 = address(0x111);
     address public user2 = address(0x222);
@@ -98,13 +99,16 @@ contract BaseTest is Test {
         // set DODORouteProxy
         dodoRouteProxyA.setPrice(address(token1A), address(token2A), 3e18); // 1 token1A = 3 token2A
         dodoRouteProxyA.setPrice(address(token2A), _ETH_ADDRESS_, 2e18); // 1 token2A = 2 ETH
-        dodoRouteProxyA.setPrice(address(token1A), _ETH_ADDRESS_, 3e18); // 1 token1A = 1 ETH
+        dodoRouteProxyA.setPrice(address(token1A), _ETH_ADDRESS_, 3e18); // 1 token1A = 3 ETH
         dodoRouteProxyZ.setPrice(address(token1Z), address(token2Z), 2e18); // 1 token1Z = 2 token2Z
         dodoRouteProxyZ.setPrice(address(token1Z), address(token3Z), 3e18); // 1 token1Z = 3 token3Z
         dodoRouteProxyZ.setPrice(address(token2Z), address(token3Z), 1e18); // 1 token2Z = 1 token3Z
         dodoRouteProxyZ.setPrice(address(token1Z), address(btcZ), 1e18); // 1 token1Z = 1 btcZ
         dodoRouteProxyZ.setPrice(address(token2Z), address(btcZ), 2e18); // 1 token2Z = 2 btcZ
+        dodoRouteProxyZ.setPrice(address(token1Z), WZETA, 1e18); 
         dodoRouteProxyB.setPrice(address(token1B), address(token2B), 4e18); // 1 token1B = 4 token2B
+        dodoRouteProxyB.setPrice(address(token2B), _ETH_ADDRESS_, 1e18); // 1 token2B = 1 ETH
+        dodoRouteProxyB.setPrice(address(token1B), _ETH_ADDRESS_, 1e18); // 1 token1B = 1 ETH
 
         // set GatewaySend
         bytes memory data = abi.encodeWithSignature(
@@ -193,12 +197,14 @@ contract BaseTest is Test {
         );
 
         // mint tokens
+        vm.deal(user1, initialBalance);
+        vm.deal(address(dodoRouteProxyA), initialBalance);
+        vm.deal(address(dodoRouteProxyB), initialBalance);
+
         token1A.mint(user1, initialBalance);
         token1A.mint(address(dodoRouteProxyA), initialBalance);
         token2A.mint(user1, initialBalance);
         token2A.mint(address(dodoRouteProxyA), initialBalance);
-        vm.deal(user1, initialBalance);
-        vm.deal(address(dodoRouteProxyA), initialBalance);
 
         token1Z.mint(user1, initialBalance);
         token1Z.mint(address(gatewayZEVM), initialBalance);
@@ -215,6 +221,30 @@ contract BaseTest is Test {
         token2B.mint(address(gatewayB), initialBalance);
         token2B.mint(address(dodoRouteProxyB), initialBalance);
         btc.mint(address(gatewayB), initialBalance);
+    }
+
+    function test_UpgradeImplementation() public {
+        GatewaySend gatewaySendNew = new GatewaySend();
+        gatewaySendA.upgradeToAndCall(
+            address(gatewaySendNew),
+            ""
+        );
+        gatewaySendB.upgradeToAndCall(
+            address(gatewaySendNew),
+            ""
+        );
+
+        GatewayCrossChain gatewayCrossChainNew = new GatewayCrossChain();
+        gatewayCrossChain.upgradeToAndCall(
+            address(gatewayCrossChainNew),
+            ""
+        );
+
+        GatewayTransferNative gatewayTransferNativeNew = new GatewayTransferNative();
+        gatewayTransferNative.upgradeToAndCall(
+            address(gatewayTransferNativeNew),
+            ""
+        );
     }
 
     function buildCompressedMessage(

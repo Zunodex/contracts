@@ -428,7 +428,6 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
             outputAmount - gasFee
         );
 
-        address _evmWalletAddress = evmWalletAddress;
         emit EddyCrossChainSwap(
             externalId,
             decoded.dstChainId,
@@ -436,7 +435,7 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
             decoded.targetZRC20,
             amount,
             outputAmount - gasFee,
-            _evmWalletAddress,
+            evmWalletAddress,
             platformFeesForTx
         );
     }
@@ -497,7 +496,6 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
             );
         }
 
-        address _evmWalletAddress = evmWalletAddress;
         emit EddyCrossChainSwap(
             externalId,
             decoded.dstChainId,
@@ -505,7 +503,7 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
             decoded.targetZRC20,
             amount,
             amountAfterGasFees,
-            _evmWalletAddress, // context.sender
+            evmWalletAddress, // context.sender
             platformFeesForTx
         );
     }
@@ -677,5 +675,4 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
             refundInfo.walletAddress
         );
     }
-
 }

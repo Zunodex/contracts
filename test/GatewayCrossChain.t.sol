@@ -60,6 +60,70 @@ contract GatewayCrossChainTest is BaseTest {
         assertEq(token1B.balanceOf(user2), 49000000000000000000);  
     }
 
+    // A - zetachain swap - B: token2A -> token2Z -> token1Z -> token1B -> token2B
+    function test_A2ZSwap2BSwap() public {
+        address targetContract = address(gatewayCrossChain);
+        uint256 amount = 100 ether;
+        address asset = address(token2A);
+        uint32 dstChainId = 2;
+        address targetZRC20 = address(token1Z);
+        bytes memory evmWalletAddress = abi.encodePacked(user2);
+        bytes memory swapDataZ = abi.encodeWithSignature(
+            "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
+            address(token2Z),
+            address(token1Z),
+            address(0),
+            address(0),
+            amount,
+            0,
+            "",
+            "",
+            block.timestamp + 60
+        );
+        bytes memory contractAddress = abi.encodePacked(address(gatewaySendB));
+        bytes memory swapDataB = abi.encode(
+            address(token1B),
+            address(token2B),
+            abi.encodeWithSignature(
+                "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
+                address(token1B),
+                address(token2B),
+                address(0),
+                address(0),
+                49000000000000000000,
+                0,
+                "",
+                "",
+                block.timestamp + 60
+            )
+        );
+        bytes memory payload = buildCompressedMessage(
+            dstChainId,
+            targetZRC20,
+            evmWalletAddress,
+            swapDataZ,
+            contractAddress,
+            swapDataB
+        );
+
+        vm.startPrank(user1);
+        token2A.approve(
+            address(gatewaySendA),
+            amount
+        );
+        gatewaySendA.depositAndCall(
+            targetContract,
+            amount,
+            asset,
+            dstChainId,
+            payload
+        );
+        vm.stopPrank();
+
+        assertEq(token2A.balanceOf(user1), initialBalance - amount);
+        assertEq(token2B.balanceOf(user2), 196000000000000000000);  
+    }
+
     // A swap - zetachain swap - B: token2A -> token1A -> token1Z -> token2Z -> token2B
     function test_ASwap2ZSwap2B() public {
         address fromToken = address(token2A);
@@ -328,14 +392,14 @@ contract GatewayCrossChainTest is BaseTest {
         assertEq(btc.balanceOf(user2), 32333333333333333300); 
     }
 
-    // A swap - zetachain swap - SOL: token2A -> token1A -> token1Z -> token2Z -> token2B
+    // A swap - zetachain swap - SOL: token1A -> token2A -> token2Z -> token1Z -> token1B
     function test_ASwap2ZSwap2SOL() public {
-        address fromToken = address(token2A);
+        address fromToken = address(token1A);
         uint256 amount = 100 ether;
         bytes memory swapDataA = abi.encodeWithSignature(
             "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
-            address(token2A),
             address(token1A),
+            address(token2A),
             address(0),
             address(0),
             amount,
@@ -344,14 +408,14 @@ contract GatewayCrossChainTest is BaseTest {
             "",
             block.timestamp + 60
         );
-        address asset = address(token1A);
+        address asset = address(token2A);
         uint32 dstChainId = 900;
-        address targetZRC20 = address(token2Z);
+        address targetZRC20 = address(token1Z);
         address targetContract = address(gatewayCrossChain);
         bytes memory swapDataZ = abi.encodeWithSignature(
             "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
-            address(token1Z),
             address(token2Z),
+            address(token1Z),
             address(0),
             address(0),
             33333333333333333300,
@@ -372,7 +436,7 @@ contract GatewayCrossChainTest is BaseTest {
         );
 
         vm.startPrank(user1);
-        token2A.approve(
+        token1A.approve(
             address(gatewaySendA),
             amount
         );
@@ -387,18 +451,18 @@ contract GatewayCrossChainTest is BaseTest {
         );
         vm.stopPrank();
 
-        assertEq(token2A.balanceOf(user1), initialBalance - amount);
-        assertEq(token2B.balanceOf(user2), 65662653626545301503); 
+        assertEq(token1A.balanceOf(user1), initialBalance - amount);
+        assertEq(token1B.balanceOf(user2), 15666666666666666650); 
     }
 
-        // A swap - zetachain swap - SOL swap: token2A -> token1A -> token1Z -> token2Z -> token2B
+    // A swap - zetachain swap - SOL swap: token1A -> token2A -> token2Z -> token1Z -> token1B
     function test_ASwap2ZSwap2SOLSwap() public {
-        address fromToken = address(token2A);
+        address fromToken = address(token1A);
         uint256 amount = 100 ether;
         bytes memory swapDataA = abi.encodeWithSignature(
             "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
-            address(token2A),
             address(token1A),
+            address(token2A),
             address(0),
             address(0),
             amount,
@@ -407,14 +471,14 @@ contract GatewayCrossChainTest is BaseTest {
             "",
             block.timestamp + 60
         );
-        address asset = address(token1A);
+        address asset = address(token2A);
         uint32 dstChainId = 900;
         address targetZRC20 = address(token2Z);
         address targetContract = address(gatewayCrossChain);
         bytes memory swapDataZ = abi.encodeWithSignature(
             "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
-            address(token1Z),
             address(token2Z),
+            address(token1Z),
             address(0),
             address(0),
             33333333333333333300,
@@ -434,7 +498,7 @@ contract GatewayCrossChainTest is BaseTest {
             swapDataB
         ); 
         vm.startPrank(user1);
-        token2A.approve(
+        token1A.approve(
             address(gatewaySendA),
             amount
         );
@@ -449,6 +513,140 @@ contract GatewayCrossChainTest is BaseTest {
         );
         vm.stopPrank();
 
-        assertEq(token2A.balanceOf(user1), initialBalance - amount);
+        assertEq(token1A.balanceOf(user1), initialBalance - amount);
+    }
+
+    function test_ZOnRevert() public {
+        bytes32 externalId = bytes32(0);
+        uint256 amount = 100 ether;
+        token1Z.mint(address(gatewayCrossChain), amount);
+
+        vm.prank(address(gatewayZEVM));
+        gatewayCrossChain.onRevert(
+            RevertContext({
+                sender: address(this),
+                asset: address(token1Z),
+                amount: amount,
+                revertMessage: bytes.concat(externalId, bytes20(user2))
+            })
+        );
+
+        assertEq(token1Z.balanceOf(user2), amount);
+    }
+
+    function test_ZOnAbort() public {
+        bytes32 externalId = keccak256(abi.encodePacked(block.timestamp));
+        uint256 amount = 100 ether;
+        token1Z.mint(address(gatewayCrossChain), amount);
+
+        vm.prank(address(gatewayZEVM));
+        gatewayCrossChain.onAbort(
+            AbortContext({
+                sender: abi.encode(address(this)),
+                asset: address(token1Z),
+                amount: amount,
+                outgoing: false,
+                chainID: 7000,
+                revertMessage: bytes.concat(externalId, bytes20(user2))
+            })
+        );
+
+        vm.expectRevert();
+        gatewayCrossChain.claimRefund(externalId);
+
+        vm.expectRevert();
+        vm.prank(user2);
+        gatewayCrossChain.claimRefund(bytes32(0));
+
+        vm.prank(user2);
+        gatewayCrossChain.claimRefund(externalId);
+
+        vm.expectRevert();
+        vm.prank(user2);
+        gatewayCrossChain.claimRefund(externalId);
+
+        assertEq(token1Z.balanceOf(user2), amount);
+    }
+
+    function test_Set() public {
+        gatewayCrossChain.setOwner(user1);
+
+        vm.startPrank(user1);
+        gatewayCrossChain.setDODORouteProxy(address(0x111));
+        gatewayCrossChain.setDODOApprove(address(0x111));
+        gatewayCrossChain.setFeePercent(0);
+        gatewayCrossChain.setGateway(payable(address(0x111)));
+        gatewayCrossChain.setEddyTreasurySafe(address(0x111));
+        vm.stopPrank();
+    }
+
+    function test_Revert() public {
+        uint32 dstChainId = 8332;
+        address targetZRC20 = address(btcZ);
+        bytes memory swapDataZ = "";
+        bytes memory contractAddress = "";
+        bytes memory swapDataB = "";
+        bytes memory payload = buildCompressedMessage(
+            dstChainId,
+            targetZRC20,
+            btcAddress,
+            swapDataZ,
+            contractAddress,
+            swapDataB
+        ); 
+        bytes32 externalId = keccak256(abi.encodePacked(block.timestamp));
+        uint256 amount = 100 ether;
+        token1Z.mint(address(gatewayCrossChain), amount);
+        vm.expectRevert();
+        vm.prank(address(gatewayZEVM));
+        gatewayCrossChain.onCall(
+            MessageContext({
+                origin: "",
+                sender: msg.sender,
+                chainID: 1
+            }),
+            address(token1Z),
+            amount,
+            bytes.concat(externalId, payload)
+        );
+
+        dstChainId = 900;
+        targetZRC20 = address(token2Z);
+        payload = buildCompressedMessage(
+            dstChainId,
+            targetZRC20,
+            solAddress,
+            swapDataZ,
+            contractAddress,
+            swapDataB
+        ); 
+        token1Z.mint(address(gatewayCrossChain), amount);
+        vm.expectRevert();
+        vm.prank(address(gatewayZEVM));
+        gatewayCrossChain.onCall(
+            MessageContext({
+                origin: "",
+                sender: msg.sender,
+                chainID: 1
+            }),
+            address(token1Z),
+            amount,
+            bytes.concat(externalId, payload)
+        );
+
+        dstChainId = 2;
+        token1Z.mint(address(gatewayCrossChain), amount);
+        vm.expectRevert();
+        vm.prank(address(gatewayZEVM));
+        gatewayCrossChain.onCall(
+            MessageContext({
+                origin: "",
+                sender: msg.sender,
+                chainID: 1
+            }),
+            address(token1Z),
+            amount,
+            bytes.concat(externalId, payload)
+        );
     }
 }

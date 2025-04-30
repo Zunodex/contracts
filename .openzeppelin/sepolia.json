@@ -20,6 +20,16 @@
       "address": "0xB738893861A265e2EceD0eff769890E0EEaD2B2e",
       "txHash": "0x747dd565c5a4b918790a07218e04d2695fb3797704de4763a07650fc4f6e56c4",
       "kind": "uups"
+    },
+    {
+      "address": "0x7C5168756AD5ad9511201Fbc057EaB85B8559E69",
+      "txHash": "0x4694d80fca90d220bb51c7f84ffb7f5db1d1322c752eef371bfc5eae0f4291cd",
+      "kind": "uups"
+    },
+    {
+      "address": "0x4924F756E954305Aa48F4dC9c42d372B4eed1D41",
+      "txHash": "0x299df1344cee90a5343c60239925ebfca77a17519c767beb925701b6e3056e51",
+      "kind": "uups"
     }
   ],
   "impls": {
@@ -461,6 +471,137 @@
             "type": "t_contract(GatewayEVM)6738",
             "contract": "GatewaySend",
             "src": "contracts/GatewaySend.sol:19"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)211_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(OwnableStorage)151_storage": {
+            "label": "struct OwnableUpgradeable.OwnableStorage",
+            "members": [
+              {
+                "label": "_owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_contract(GatewayEVM)6738": {
+            "label": "contract GatewayEVM",
+            "numberOfBytes": "20"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Ownable": [
+            {
+              "contract": "OwnableUpgradeable",
+              "label": "_owner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    },
+    "12fb9744632a04720ad2f48b6a7a8fe7f49964c685449228ae9908afcb4c407e": {
+      "address": "0x35E97e5F4F03A6713F36f1c428eFEF0f8631a649",
+      "txHash": "0x1f2c375997123d26d8b96e314edb8dd4b57b872314382285a0b5048118a766f8",
+      "layout": {
+        "solcVersion": "0.8.26",
+        "storage": [
+          {
+            "label": "globalNonce",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint256",
+            "contract": "GatewaySend",
+            "src": "contracts/GatewaySend.sol:14"
+          },
+          {
+            "label": "gasLimit",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_uint256",
+            "contract": "GatewaySend",
+            "src": "contracts/GatewaySend.sol:15"
+          },
+          {
+            "label": "DODORouteProxy",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_address",
+            "contract": "GatewaySend",
+            "src": "contracts/GatewaySend.sol:16"
+          },
+          {
+            "label": "DODOApprove",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_address",
+            "contract": "GatewaySend",
+            "src": "contracts/GatewaySend.sol:17"
+          },
+          {
+            "label": "gateway",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_contract(GatewayEVM)6738",
+            "contract": "GatewaySend",
+            "src": "contracts/GatewaySend.sol:18"
           }
         ],
         "types": {

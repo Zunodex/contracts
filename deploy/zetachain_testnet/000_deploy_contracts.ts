@@ -16,6 +16,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   
     async function main() {
         await deployProxys();
+        // await upgradeProxys();
     }
   
     async function deployContract(name: string, contract: string, args?: any[], verify?: boolean) {
@@ -65,6 +66,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         const feePercent = 10; // 1%
         const slippage = 10;
         const gasLimit = 1000000;
+        
         const GatewayCrossChain = await ethers.getContractFactory('GatewayCrossChain');
         const gatewayCrossChain = await upgrades.deployProxy(GatewayCrossChain, [
             d.Gateway,
@@ -76,7 +78,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             gasLimit
         ])
         await gatewayCrossChain.waitForDeployment();
-        console.log("GatewayCrossChain deployed to:", await gatewayCrossChain.getAddress());
+        console.log("✅ GatewayCrossChain proxy deployed at:", gatewayCrossChain.target);
+        const implAddress1 = await upgrades.erc1967.getImplementationAddress(gatewayCrossChain.target);
+        console.log("🔧 GatewayCrossChain implementation deployed at:", implAddress1);
+
         const GatewayTransferNative = await ethers.getContractFactory('GatewayTransferNative');
         const gatewayTransferNative = await upgrades.deployProxy(GatewayTransferNative, [
             d.Gateway,
@@ -88,7 +93,25 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             gasLimit
         ])
         await gatewayTransferNative.waitForDeployment();
-        console.log("GatewayTransferNative deployed to:", await gatewayTransferNative.getAddress());
+        console.log("✅ GatewayTransferNative proxy deployed at:", gatewayTransferNative.target);
+        const implAddress2 = await upgrades.erc1967.getImplementationAddress(gatewayTransferNative.target);
+        console.log("🔧 GatewayTransferNative implementation deployed at:", implAddress2);
+    }
+
+    async function upgradeProxys() {
+        const d = config.deployedAddress;
+
+        const GatewayCrossChain = await ethers.getContractFactory('GatewayCrossChain');
+        const upgraded1 = await upgrades.upgradeProxy(d.GatewayCrossChainProxy, GatewayCrossChain);
+        console.log("✅ GatewayCrossChain proxy upgraded at:", upgraded1.target);
+        const implAddress1 = await upgrades.erc1967.getImplementationAddress(upgraded1.target);
+        console.log("🔧 New GatewayCrossChain implementation deployed at:", implAddress1);
+
+        const GatewayTransferNative = await ethers.getContractFactory('GatewayTransferNative');
+        const upgraded2 = await upgrades.upgradeProxy(d.GatewayTransferNativeProxy, GatewayTransferNative);
+        console.log("✅ GatewayTransferNative proxy upgraded at:", upgraded2.target);
+        const implAddress2 = await upgrades.erc1967.getImplementationAddress(upgraded2.target);
+        console.log("🔧 New GatewayTransferNative implementation deployed at:", implAddress2);
     }
 };
 

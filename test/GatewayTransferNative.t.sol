@@ -125,7 +125,7 @@ contract GatewayTransferNativeTest is BaseTest {
         assertEq(token2Z.balanceOf(user2), 100000000000000000000);  
     }
 
-        // A native token swap - zetachain swap: token1A -> ETH -> token3Z -> token2Z
+    // A native token swap - zetachain swap: token1A -> ETH -> token3Z -> token2Z
     function test_ANativeSwap2ZSwap() public {
         address targetContract = address(gatewayTransferNative);
         uint256 amount = 100 ether;
@@ -184,6 +184,51 @@ contract GatewayTransferNativeTest is BaseTest {
     }
 
     // A swap - zetachain 
+    function test_ASwap2Z() public {
+        address targetContract = address(gatewayTransferNative);
+        uint256 amount = 100 ether;
+        uint32 dstChainId = 7000;
+        address fromToken = address(token1A);
+        address asset = address(token2A);
+        bytes memory swapDataA = abi.encodeWithSignature(
+            "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
+            address(token1A),
+            address(token2A),
+            address(0),
+            address(0),
+            amount,
+            0,
+            "",
+            "",
+            block.timestamp + 60
+        );
+        address targetZRC20 = address(token2Z);
+        bytes memory swapDataZ = "";
+        bytes memory payload = bytes.concat(
+            bytes20(user2),
+            bytes20(targetZRC20),
+            swapDataZ
+        );
+
+        vm.startPrank(user1);
+        token1A.approve(
+            address(gatewaySendA),
+            amount
+        );
+        gatewaySendA.depositAndCall(
+            fromToken,
+            amount,
+            swapDataA,
+            targetContract,
+            asset,
+            dstChainId,
+            payload
+        );
+        vm.stopPrank();
+
+        assertEq(token1A.balanceOf(user1), initialBalance - amount);
+        assertEq(token2Z.balanceOf(user2), 300000000000000000000);  
+    }
 
     // A swap - zetachain swap
 
@@ -347,16 +392,16 @@ contract GatewayTransferNativeTest is BaseTest {
         assertEq(token2B.balanceOf(user2), 198995986959878634903); 
     }
 
-    // zetachain swap - B swap：token1Z -> token2Z -> token2B -> token1B
+    // zetachain swap - B swap：token2Z -> token1Z -> token1B -> token2B
     function test_ZSwap2BSwap() public {
         uint256 amount = 100 ether;
         uint32 dstChainId = 2;
-        address targetZRC20 = address(token2Z);
+        address targetZRC20 = address(token1Z);
         bytes memory evmWalletAddress = abi.encodePacked(user2);
         bytes memory swapDataZ = abi.encodeWithSignature(
             "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
-            address(token1Z),
             address(token2Z),
+            address(token1Z),
             address(0),
             address(0),
             amount,
@@ -367,15 +412,15 @@ contract GatewayTransferNativeTest is BaseTest {
         );
         bytes memory contractAddress = abi.encodePacked(address(gatewaySendB));
         bytes memory swapDataB = abi.encode(
-            address(token2B),
             address(token1B),
+            address(token2B),
             abi.encodeWithSignature(
                 "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
-                address(token2B),
                 address(token1B),
+                address(token2B),
                 address(0),
                 address(0),
-                198995986959878634903,
+                49000000000000000000,
                 0,
                 "",
                 "",
@@ -392,19 +437,19 @@ contract GatewayTransferNativeTest is BaseTest {
         );
 
         vm.startPrank(user1);
-        token1Z.approve(
+        token2Z.approve(
             address(gatewayTransferNative),
             amount
         );
         gatewayTransferNative.withdrawToNativeChain(
-            address(token1Z),
+            address(token2Z),
             amount,
             message
         );
         vm.stopPrank();
 
-        assertEq(token1Z.balanceOf(user1), initialBalance - amount);
-        assertEq(token1B.balanceOf(user2), 49748996739969658725); 
+        assertEq(token2Z.balanceOf(user1), initialBalance - amount);
+        assertEq(token2B.balanceOf(user2), 196000000000000000000); 
     }
 
     // zetachain swap - BTC: token1Z -> btcZ -> btc
@@ -451,15 +496,48 @@ contract GatewayTransferNativeTest is BaseTest {
         assertEq(btc.balanceOf(user2), 99000000000000000000); 
     }
 
-    // zetachain swap - SOL: token1Z -> token2Z -> token2B
+    // zetachain - BTC: btcZ -> btc
+    function test_Z2BTC() public {
+        uint256 amount = 100 ether;
+        uint32 dstChainId = 8332;
+        address targetZRC20 = address(btcZ);
+        bytes memory swapDataZ = "";
+        bytes memory contractAddress = "";
+        bytes memory swapDataB = "";
+        bytes memory message = buildCompressedMessage(
+            dstChainId,
+            targetZRC20,
+            btcAddress,
+            swapDataZ,
+            contractAddress,
+            swapDataB
+        );
+        btcZ.mint(user1, initialBalance);
+        vm.startPrank(user1);
+        btcZ.approve(
+            address(gatewayTransferNative),
+            amount
+        );
+        gatewayTransferNative.withdrawToNativeChain(
+            address(btcZ),
+            amount,
+            message
+        );
+        vm.stopPrank();
+
+        assertEq(btcZ.balanceOf(user1), initialBalance - amount);
+        assertEq(btc.balanceOf(user2), 99000000000000000000); 
+    }
+
+    // zetachain swap - SOL: token2Z -> token1Z -> token1B
     function test_ZSwap2SOL() public {
         uint256 amount = 100 ether;
         uint32 dstChainId = 900;
-        address targetZRC20 = address(token2Z);
+        address targetZRC20 = address(token1Z);
         bytes memory swapDataZ = abi.encodeWithSignature(
             "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
-            address(token1Z),
             address(token2Z),
+            address(token1Z),
             address(0),
             address(0),
             amount,
@@ -468,6 +546,71 @@ contract GatewayTransferNativeTest is BaseTest {
             "",
             block.timestamp + 60
         );
+        bytes memory contractAddress = "";
+        bytes memory swapDataB = "";
+        bytes memory message = buildCompressedMessage(
+            dstChainId,
+            targetZRC20,
+            solAddress,
+            swapDataZ,
+            contractAddress,
+            swapDataB
+        );
+
+        vm.startPrank(user1);
+        token2Z.approve(
+            address(gatewayTransferNative),
+            amount
+        );
+        gatewayTransferNative.withdrawToNativeChain(
+            address(token2Z),
+            amount,
+            message
+        );
+        vm.stopPrank();
+
+        assertEq(token2Z.balanceOf(user1), initialBalance - amount);
+        assertEq(token1B.balanceOf(user2), 49000000000000000000); 
+    }
+
+    // zetachain - SOL: token1Z -> token1B -> token2B
+    function test_Z2SOLSwap() public {
+        uint256 amount = 100 ether;
+        uint32 dstChainId = 900;
+        address targetZRC20 = address(token1Z);
+        bytes memory swapDataZ = "";
+        bytes memory contractAddress = abi.encodePacked("EwUjcjz8jvFeE99kjcZKM5Aojs3eKcyW2JHNKNDP9M4k");
+        bytes memory swapDataB = "0x12345678";
+        bytes memory message = buildCompressedMessage(
+            dstChainId,
+            targetZRC20,
+            solAddress,
+            swapDataZ,
+            contractAddress,
+            swapDataB
+        );
+
+        vm.startPrank(user1);
+        token1Z.approve(
+            address(gatewayTransferNative),
+            amount
+        );
+        gatewayTransferNative.withdrawToNativeChain(
+            address(token1Z),
+            amount,
+            message
+        );
+        vm.stopPrank();
+
+        assertEq(token1Z.balanceOf(user1), initialBalance - amount);
+    }
+
+    // zetachain - SOL: token1Z -> token1B
+    function test_Z2SOL() public {
+        uint256 amount = 100 ether;
+        uint32 dstChainId = 900;
+        address targetZRC20 = address(token1Z);
+        bytes memory swapDataZ = "";
         bytes memory contractAddress = "";
         bytes memory swapDataB = "";
         bytes memory message = buildCompressedMessage(
@@ -492,25 +635,46 @@ contract GatewayTransferNativeTest is BaseTest {
         vm.stopPrank();
 
         assertEq(token1Z.balanceOf(user1), initialBalance - amount);
-        assertEq(token2B.balanceOf(user2), 198995986959878634903); 
+        assertEq(token1B.balanceOf(user2), 99000000000000000000); 
     }
 
-    function test_AOnRevert() public {
-        bytes32 externalId = bytes32(0);
+    // A - Z: tokenWZETAA -> WZETA
+    function test_A2ZWZETA() public {
+        bytes32 externalId = keccak256(abi.encodePacked(block.timestamp));
+        address zrc20 = address(token1Z);
         uint256 amount = 100 ether;
-        token1A.mint(address(gatewaySendA), amount);
-
-        vm.prank(address(gatewayA));
-        gatewaySendA.onRevert(
-            RevertContext({
-                sender: address(this),
-                asset: address(token1A),
-                amount: amount,
-                revertMessage: bytes.concat(externalId, bytes20(user2))
-            })
+        address targetZRC20 = WZETA;
+        bytes memory swapDataZ = abi.encodeWithSignature(
+            "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
+            address(token1Z),
+            WZETA,
+            address(0),
+            address(0),
+            amount,
+            0,
+            "",
+            "",
+            block.timestamp + 60
+        );
+        bytes memory message = bytes.concat(
+            bytes20(user2),
+            bytes20(targetZRC20),
+            swapDataZ
         );
 
-        assertEq(token1A.balanceOf(user2), amount);
+        token1Z.mint(address(gatewayTransferNative), amount);
+        deal(WZETA, address(dodoRouteProxyZ), initialBalance);
+        vm.prank(address(gatewayZEVM));
+        gatewayTransferNative.onCall(
+            MessageContext({
+                origin: "",
+                sender: msg.sender,
+                chainID: 2
+            }),
+            zrc20,
+            amount,
+            bytes.concat(externalId, message)
+        );
     }
 
     function test_ZOnRevert() public {
@@ -532,7 +696,7 @@ contract GatewayTransferNativeTest is BaseTest {
     }
 
     function test_ZOnAbort() public {
-        bytes32 externalId = keccak256(abi.encodePacked(address(this), block.timestamp));
+        bytes32 externalId = keccak256(abi.encodePacked(block.timestamp));
         uint256 amount = 100 ether;
         token1Z.mint(address(gatewayTransferNative), amount);
 
@@ -548,9 +712,115 @@ contract GatewayTransferNativeTest is BaseTest {
             })
         );
 
+        vm.expectRevert();
+        gatewayTransferNative.claimRefund(externalId);
+
+        vm.expectRevert();
+        vm.prank(user2);
+        gatewayTransferNative.claimRefund(bytes32(0));
+
+        vm.prank(user2);
+        gatewayTransferNative.claimRefund(externalId);
+
+        vm.expectRevert();
         vm.prank(user2);
         gatewayTransferNative.claimRefund(externalId);
 
         assertEq(token1Z.balanceOf(user2), amount);
+    }
+
+    function test_Revert() public {
+        uint256 amount = 100 ether;
+        uint32 dstChainId = 2;
+        address targetZRC20 = address(token2Z);
+        bytes memory evmWalletAddress = abi.encodePacked(user2);
+        bytes memory swapDataZ = "";
+        bytes memory contractAddress = "";
+        bytes memory swapDataB = "";
+        bytes memory message = buildCompressedMessage(
+            dstChainId,
+            targetZRC20,
+            evmWalletAddress,
+            swapDataZ,
+            contractAddress,
+            swapDataB
+        );
+
+        vm.prank(user1);
+        token1Z.approve(
+            address(gatewayTransferNative),
+            amount
+        );
+
+        vm.expectRevert();
+        vm.prank(user1);
+        gatewayTransferNative.withdrawToNativeChain(
+            address(token1Z),
+            amount,
+            message
+        );
+
+        vm.expectRevert();
+        vm.prank(user1);
+        gatewayTransferNative.withdrawToNativeChain(
+            address(token1Z),
+            1e6,
+            message
+        );
+
+        vm.expectRevert();
+        vm.prank(user1);
+        gatewayTransferNative.withdrawToNativeChain(
+            address(token1Z),
+            1000 ether,
+            message
+        );
+
+        dstChainId = 8332;
+        message = buildCompressedMessage(
+            dstChainId,
+            targetZRC20,
+            evmWalletAddress,
+            swapDataZ,
+            contractAddress,
+            swapDataB
+        );
+        vm.expectRevert();
+        vm.prank(user1);
+        gatewayTransferNative.withdrawToNativeChain(
+            address(token1Z),
+            amount,
+            message
+        );
+
+        dstChainId = 900;
+        message = buildCompressedMessage(
+            dstChainId,
+            targetZRC20,
+            evmWalletAddress,
+            swapDataZ,
+            contractAddress,
+            swapDataB
+        );
+        vm.expectRevert();
+        vm.prank(user1);
+        gatewayTransferNative.withdrawToNativeChain(
+            address(token1Z),
+            amount,
+            message
+        );
+    }
+
+    function test_Set() public {
+        gatewayTransferNative.setOwner(user1);
+
+        vm.startPrank(user1);
+        gatewayTransferNative.setDODORouteProxy(address(0x111));
+        gatewayTransferNative.setDODOApprove(address(0x111));
+        gatewayTransferNative.setFeePercent(0);
+        gatewayTransferNative.setGasLimit(2000000);
+        gatewayTransferNative.setGateway(payable(address(0x111)));
+        gatewayTransferNative.setEddyTreasurySafe(address(0x111));
+        vm.stopPrank();
     }
 }

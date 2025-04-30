@@ -16,6 +16,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   
     async function main() {
         await deployProxys();
+        // await upgradeProxys();
     }
   
     async function deployContract(name: string, contract: string, args?: any[], verify?: boolean) {
@@ -71,7 +72,20 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             gasLimit
         ]);
         await gatewaySend.waitForDeployment();
-        console.log("GatewaySend deployed to:", await gatewaySend.getAddress());
+        console.log("✅ GatewaySend proxy deployed at:", gatewaySend.target);
+
+        const implAddress = await upgrades.erc1967.getImplementationAddress(gatewaySend.target);
+        console.log("🔧 GatewaySend implementation deployed at:", implAddress);
+    }
+
+    async function upgradeProxys() {
+        const d = config.deployedAddress;
+        const GatewaySend = await ethers.getContractFactory('GatewaySend');
+        const upgraded = await upgrades.upgradeProxy(d.GatewaySendProxy, GatewaySend);
+        console.log("✅ GatewaySend proxy upgraded at:", upgraded.target);
+
+        const implAddress = await upgrades.erc1967.getImplementationAddress(upgraded.target);
+        console.log("🔧 New GatewaySend implementation deployed at:", implAddress);
     }
 };
 

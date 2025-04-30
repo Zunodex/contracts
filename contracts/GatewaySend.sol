@@ -17,7 +17,7 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     address public DODOApprove;
     GatewayEVM public gateway;
     
-    event EddyCrossChainSwapRevert(
+    event EddyCrossChainRevert(
         bytes32 externalId,
         address token,
         uint256 amount,
@@ -250,15 +250,30 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
             crossChainSwapData,
             (address, address, bytes)
         );
-        IERC20(fromToken).transferFrom(msg.sender, address(this), amount);
-        IERC20(fromToken).approve(DODORouteProxy, amount);
-        (bool success, bytes memory returnData) = DODORouteProxy.call(swapData);
+
+        uint256 swapValue;
+        bool fromIsETH = fromToken == _ETH_ADDRESS_ ? true : false;
+        if(fromIsETH) {
+            swapValue = amount;
+        } else {
+            IERC20(fromToken).transferFrom(msg.sender, address(this), amount);
+            IERC20(fromToken).approve(DODOApprove, amount);
+        }
+        
+        // Swap on DODO Router
+        (bool success, bytes memory returnData) = DODORouteProxy.call{value: swapValue}(swapData);
         if (!success) {
             revert RouteProxyCallFailed();
         }
         uint256 outputAmount = abi.decode(returnData, (uint256));
-        IERC20(toToken).transfer(evmWalletAddress, outputAmount);
 
+        bool toIsETH = toToken == _ETH_ADDRESS_ ? true : false;
+        if(toIsETH) {
+            payable(evmWalletAddress).transfer(outputAmount);
+        } else {
+            IERC20(toToken).transfer(evmWalletAddress, outputAmount);
+        }
+        
         emit EddyCrossChainReceive(
             externalId,
             fromToken,
@@ -282,7 +297,7 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         address sender = address(uint160(bytes20(context.revertMessage[32:])));
         TransferHelper.safeTransfer(context.asset, sender, context.amount);
         
-        emit EddyCrossChainSwapRevert(
+        emit EddyCrossChainRevert(
             externalId,
             context.asset,
             context.amount,
