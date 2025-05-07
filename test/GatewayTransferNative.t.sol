@@ -734,7 +734,7 @@ contract GatewayTransferNativeTest is BaseTest {
         uint32 dstChainId = 2;
         address targetZRC20 = address(token2Z);
         bytes memory evmWalletAddress = abi.encodePacked(user2);
-        bytes memory swapDataZ = "";
+        bytes memory swapDataZ = "0x12345678";
         bytes memory contractAddress = "";
         bytes memory swapDataB = "";
         bytes memory message = buildCompressedMessage(
@@ -746,10 +746,11 @@ contract GatewayTransferNativeTest is BaseTest {
             swapDataB
         );
 
+        token1Z.mint(user1, 1000 ether);
         vm.prank(user1);
         token1Z.approve(
             address(gatewayTransferNative),
-            amount
+            type(uint256).max
         );
 
         vm.expectRevert();
@@ -808,6 +809,27 @@ contract GatewayTransferNativeTest is BaseTest {
             address(token1Z),
             amount,
             message
+        );
+
+        bytes32 externalId = keccak256(abi.encodePacked(block.timestamp));
+        swapDataZ = "";
+        message = bytes.concat(
+            bytes20(user2),
+            bytes20(address(token2Z)),
+            swapDataZ
+        );
+        token1Z.mint(address(gatewayZEVM), amount);
+        vm.expectRevert();
+        vm.prank(address(gatewayZEVM));
+        gatewayTransferNative.onCall(
+            MessageContext({
+                origin: "",
+                sender: address(this),
+                chainID: 1
+            }),
+            address(token1Z),
+            amount,
+            bytes.concat(externalId, message)
         );
     }
 

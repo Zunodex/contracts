@@ -596,9 +596,14 @@ contract GatewayCrossChainTest is BaseTest {
         ); 
         bytes32 externalId = keccak256(abi.encodePacked(block.timestamp));
         uint256 amount = 100 ether;
-        token1Z.mint(address(gatewayCrossChain), amount);
+
+        token1Z.mint(address(gatewayZEVM), amount);
+        vm.startPrank(address(gatewayZEVM));
+        token1Z.approve(
+            address(gatewayCrossChain),
+            amount
+        );
         vm.expectRevert();
-        vm.prank(address(gatewayZEVM));
         gatewayCrossChain.onCall(
             MessageContext({
                 origin: "",
@@ -609,6 +614,7 @@ contract GatewayCrossChainTest is BaseTest {
             amount,
             bytes.concat(externalId, payload)
         );
+        vm.stopPrank();
 
         dstChainId = 900;
         targetZRC20 = address(token2Z);
@@ -620,9 +626,13 @@ contract GatewayCrossChainTest is BaseTest {
             contractAddress,
             swapDataB
         ); 
-        token1Z.mint(address(gatewayCrossChain), amount);
+        token1Z.mint(address(gatewayZEVM), amount);
+        vm.startPrank(address(gatewayZEVM));
+        token1Z.approve(
+            address(gatewayCrossChain),
+            amount
+        );
         vm.expectRevert();
-        vm.prank(address(gatewayZEVM));
         gatewayCrossChain.onCall(
             MessageContext({
                 origin: "",
@@ -633,11 +643,24 @@ contract GatewayCrossChainTest is BaseTest {
             amount,
             bytes.concat(externalId, payload)
         );
+        vm.stopPrank();
 
         dstChainId = 2;
-        token1Z.mint(address(gatewayCrossChain), amount);
+        payload = buildCompressedMessage(
+            dstChainId,
+            targetZRC20,
+            abi.encodePacked(user2),
+            swapDataZ,
+            contractAddress,
+            swapDataB
+        ); 
+        token1Z.mint(address(gatewayZEVM), amount);
+        vm.startPrank(address(gatewayZEVM));
+        token1Z.approve(
+            address(gatewayCrossChain),
+            amount
+        );
         vm.expectRevert();
-        vm.prank(address(gatewayZEVM));
         gatewayCrossChain.onCall(
             MessageContext({
                 origin: "",
@@ -648,5 +671,6 @@ contract GatewayCrossChainTest is BaseTest {
             amount,
             bytes.concat(externalId, payload)
         );
+        vm.stopPrank();
     }
 }

@@ -260,7 +260,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         });
     }
 
-    function decodeMessage(bytes calldata message) public pure returns (DecodedMessage memory) {
+    function decodeMessage(bytes calldata message) internal pure returns (DecodedMessage memory) {
         uint32 dstChainId;
         address targetZRC20;
         uint16 receiverLen;
