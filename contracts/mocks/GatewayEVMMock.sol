@@ -44,8 +44,10 @@ contract GatewayEVMMock {
         uint256 amount,
         address asset,
         bytes calldata payload,
-        RevertOptions calldata /*revertOptions*/
+        RevertOptions calldata revertOptions
     ) external {
+        console.log(payload.length + revertOptions.revertMessage.length);
+        
         IERC20(asset).transferFrom(msg.sender, address(this), amount);
         gatewayZEVM.depositAndCall(
             chainId,

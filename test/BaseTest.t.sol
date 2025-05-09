@@ -268,4 +268,66 @@ contract BaseTest is Test {
             swapDataB
         );
     }
+
+    function encodeCompressedMixSwapParams(
+        address fromToken,
+        address toToken,
+        uint256 fromTokenAmount,
+        uint256 expReturnAmount,
+        uint256 minReturnAmount,
+        address[] memory mixAdapters,
+        address[] memory mixPairs,
+        address[] memory assetTo,
+        uint256 directions,
+        bytes[] memory moreInfo,
+        bytes memory feeData,
+        uint256 deadline
+    ) public pure returns (bytes memory) {
+        bytes memory encoded = abi.encodePacked(
+            fromToken,
+            toToken,
+            fromTokenAmount,
+            expReturnAmount,
+            minReturnAmount,
+            directions,
+            deadline
+        );
+
+        encoded = bytes.concat(
+            encoded,
+            encodeAddressArray(mixAdapters),
+            encodeAddressArray(mixPairs),
+            encodeAddressArray(assetTo),
+            encodeBytesArrayWithLens(moreInfo),
+            encodeBytesWith2Len(feeData)
+        );
+
+        return encoded;
+    }
+
+    function encodeAddressArray(address[] memory arr) internal pure returns (bytes memory out) {
+        require(arr.length <= 255, "Too many addresses");
+        out = abi.encodePacked(uint8(arr.length));
+        for (uint i = 0; i < arr.length; i++) {
+            out = bytes.concat(out, abi.encodePacked(arr[i]));
+        }
+    }
+
+    function encodeBytesWith2Len(bytes memory data) internal pure returns (bytes memory out) {
+        require(data.length <= 65535, "Too long");
+        out = abi.encodePacked(uint16(data.length), data);
+    }
+
+    function encodeBytesArrayWithLens(bytes[] memory arr) internal pure returns (bytes memory out) {
+        require(arr.length <= 255, "Too many items");
+        out = abi.encodePacked(uint8(arr.length));
+        for (uint i = 0; i < arr.length; i++) {
+            require(arr[i].length <= 65535, "Item too long");
+            out = bytes.concat(out, abi.encodePacked(uint16(arr[i].length)));
+        }
+        for (uint i = 0; i < arr.length; i++) {
+            out = bytes.concat(out, arr[i]);
+        }
+    }
+
 }

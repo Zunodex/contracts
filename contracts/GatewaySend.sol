@@ -8,6 +8,8 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {TransferHelper} from "./libraries/TransferHelper.sol";
+import {IDODORouteProxy} from "./interfaces/IDODORouteProxy.sol";
+import "./libraries/SwapDataHelperLib.sol";
 
 contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     address constant _ETH_ADDRESS_ = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
@@ -109,6 +111,52 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         return result;
     }
 
+    function decodePackedMessage(
+        bytes calldata message
+    ) internal pure returns (
+        bytes32 externalId, 
+        uint256 outputAmount, 
+        bytes calldata receiver, 
+        address fromToken, 
+        address toToken, 
+        bytes calldata swapDataB
+    ) {
+        uint16 receiverLen;
+        uint16 crossChainDataLen;
+        bytes calldata crossChainData;
+
+        assembly {
+            externalId := calldataload(message.offset) // first 32 bytes
+            outputAmount := calldataload(add(message.offset, 32)) // next 32 bytes
+            receiverLen := shr(240, calldataload(add(message.offset, 64))) // 2 bytes
+            crossChainDataLen := shr(240, calldataload(add(message.offset, 66))) // 2 bytes
+        }
+
+        uint offset = 68; // starting point of receiver
+        receiver = message[offset : offset + receiverLen];
+        offset += receiverLen;
+        crossChainData = message[offset : offset + crossChainDataLen];
+
+        (fromToken, toToken, swapDataB) = decodePackedData(crossChainData);
+    }
+
+    function decodePackedData(bytes calldata data) internal pure returns (
+        address tokenA,
+        address tokenB,
+        bytes calldata swapDataB
+    ) {
+        assembly {
+            tokenA := shr(96, calldataload(data.offset))
+            tokenB := shr(96, calldataload(add(data.offset, 20)))
+        }
+
+        if (data.length > 40) {
+            swapDataB = data[40:];
+        } else {
+            swapDataB = data[0:0]; // empty slice
+        }
+    }
+
     function _calcExternalId(address sender) internal view returns (bytes32 externalId) {
         externalId = keccak256(abi.encodePacked(address(this), sender, globalNonce, block.timestamp));
     }
@@ -125,22 +173,30 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         globalNonce++;
         bytes32 externalId = _calcExternalId(msg.sender);
 
-        uint256 swapValue;
         bool fromIsETH = fromToken == _ETH_ADDRESS_ ? true : false;
         if(fromIsETH) {
             require(msg.value >= amount, "INSUFFICIENT AMOUNT: ETH NOT ENOUGH");
-            swapValue = amount;
         } else {
             require(IERC20(fromToken).transferFrom(msg.sender, address(this), amount), "INSUFFICIENT AMOUNT: ERC20 TRANSFER FROM FAILED");
             IERC20(fromToken).approve(DODOApprove, amount);
         }
          
         // Swap on DODO Router
-        (bool success, bytes memory returnData) = DODORouteProxy.call{value: swapValue}(swapData);
-        if (!success) {
-            revert RouteProxyCallFailed();
-        }
-        uint256 outputAmount = abi.decode(returnData, (uint256));
+        MixSwapParams memory params = SwapDataHelperLib.decodeCompressedMixSwapParams(swapData);
+        uint256 outputAmount = IDODORouteProxy(DODORouteProxy).mixSwap{value: msg.value}(
+            params.fromToken,
+            params.toToken,
+            params.fromTokenAmount,
+            params.expReturnAmount,
+            params.minReturnAmount,
+            params.mixAdapters,
+            params.mixPairs,
+            params.assetTo,
+            params.directions,
+            params.moreInfo,
+            params.feeData,
+            params.deadline
+        );
 
         bool toIsETH = asset == _ETH_ADDRESS_ ? true : false;
         bytes memory message = concatBytes(externalId, payload);
@@ -198,7 +254,7 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         bytes memory message = concatBytes(externalId, payload);
         if(isETH) {
             require(msg.value >= amount, "INSUFFICIENT AMOUNT: ETH NOT ENOUGH");
-            gateway.depositAndCall{value: amount}(
+            gateway.depositAndCall{value: msg.value}(
                 targetContract,
                 message,
                 RevertOptions({
@@ -242,32 +298,43 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         MessageContext calldata /*context*/,
         bytes calldata message
     ) external payable onlyGateway returns (bytes4) {
-        (bytes32 externalId, address evmWalletAddress, uint256 amount, bytes memory crossChainSwapData) = abi.decode(
-            message, 
-            (bytes32, address, uint256, bytes)
-        );
-        (address fromToken, address toToken, bytes memory swapData) = abi.decode(
-            crossChainSwapData,
-            (address, address, bytes)
-        );
+        (
+            bytes32 externalId, 
+            uint256 amount, 
+            bytes calldata recipient, 
+            address fromToken, 
+            address toToken, 
+            bytes calldata swapData
+        ) = decodePackedMessage(message);
+        MixSwapParams memory params = SwapDataHelperLib.decodeCompressedMixSwapParams(swapData);
 
-        uint256 swapValue;
         bool fromIsETH = fromToken == _ETH_ADDRESS_ ? true : false;
-        if(fromIsETH) {
-            swapValue = amount;
-        } else {
+        if(!fromIsETH) {
             IERC20(fromToken).transferFrom(msg.sender, address(this), amount);
-            IERC20(fromToken).approve(DODOApprove, amount);
         }
-        
-        // Swap on DODO Router
-        (bool success, bytes memory returnData) = DODORouteProxy.call{value: swapValue}(swapData);
-        if (!success) {
-            revert RouteProxyCallFailed();
-        }
-        uint256 outputAmount = abi.decode(returnData, (uint256));
 
+        uint256 outputAmount;
+        if(fromToken == toToken) {
+            outputAmount = amount;
+        } else {
+            IERC20(fromToken).approve(DODOApprove, amount);
+            outputAmount = IDODORouteProxy(DODORouteProxy).mixSwap{value: msg.value}(
+                params.fromToken,
+                params.toToken,
+                params.fromTokenAmount,
+                params.expReturnAmount,
+                params.minReturnAmount,
+                params.mixAdapters,
+                params.mixPairs,
+                params.assetTo,
+                params.directions,
+                params.moreInfo,
+                params.feeData,
+                params.deadline
+            );
+        }
         bool toIsETH = toToken == _ETH_ADDRESS_ ? true : false;
+        address evmWalletAddress = address(bytes20(recipient));
         if(toIsETH) {
             payable(evmWalletAddress).transfer(outputAmount);
         } else {

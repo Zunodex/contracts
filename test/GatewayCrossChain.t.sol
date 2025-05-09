@@ -10,6 +10,62 @@ import {console} from "forge-std/console.sol";
 
 /* forge test --fork-url https://zetachain-evm.blockpi.network/v1/rpc/public */
 contract GatewayCrossChainTest is BaseTest {
+    // A zetachain - B swap: token2A -> token2Z -> token2B -> token1B
+    function test_A2Z2BSwap() public {
+        address targetContract = address(gatewayCrossChain);
+        uint256 amount = 100 ether;
+        address asset = address(token2A);
+        uint32 dstChainId = 2;
+        address targetZRC20 = address(token2Z);
+        bytes memory evmWalletAddress = abi.encodePacked(user2);
+        bytes memory swapDataZ = "";
+        bytes memory contractAddress = abi.encodePacked(address(gatewaySendB));
+        bytes memory swapDataB = encodeCompressedMixSwapParams(
+            address(token2B),
+            address(token1B),
+            98995986959878634903,
+            0,
+            0,
+            new address[](1),
+            new address[](1),
+            new address[](1),
+            0,
+            new bytes[](1),
+            abi.encode(address(0), 0),
+            block.timestamp + 600
+        );
+        bytes memory fromTokenB = abi.encodePacked(address(token2B));
+        bytes memory toTokenB = abi.encodePacked(address(token1B));
+        bytes memory payload = buildCompressedMessage(
+            dstChainId,
+            targetZRC20,
+            evmWalletAddress,
+            swapDataZ,
+            contractAddress,
+            abi.encodePacked(
+                fromTokenB, 
+                toTokenB, 
+                swapDataB
+            )
+        );
+
+        vm.startPrank(user1);
+        token2A.approve(
+            address(gatewaySendA),
+            amount
+        );
+        gatewaySendA.depositAndCall(
+            targetContract,
+            amount,
+            asset,
+            dstChainId,
+            payload
+        );
+        vm.stopPrank();
+
+        assertEq(token2A.balanceOf(user1), initialBalance - amount);
+        assertEq(token1B.balanceOf(user2), 24748996739969658725);  
+    }
 
     // A - zetachain swap - B: token2A -> token2Z -> token1Z -> token1B
     function test_A2ZSwap2B() public {
@@ -19,29 +75,37 @@ contract GatewayCrossChainTest is BaseTest {
         uint32 dstChainId = 2;
         address targetZRC20 = address(token1Z);
         bytes memory evmWalletAddress = abi.encodePacked(user2);
-        bytes memory swapDataZ = abi.encodeWithSignature(
-            "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
+        bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token2Z),
             address(token1Z),
-            address(0),
-            address(0),
             amount,
             0,
-            "",
-            "",
-            block.timestamp + 60
+            0,
+            new address[](1),
+            new address[](1),
+            new address[](1),
+            0,
+            new bytes[](1),
+            abi.encode(address(0), 0),
+            block.timestamp + 600
         );
-        bytes memory contractAddress = "";
+        bytes memory contractAddress = abi.encodePacked(address(gatewaySendB));
         bytes memory swapDataB = "";
+        bytes memory fromTokenB = abi.encodePacked(address(token1B));
+        bytes memory toTokenB = abi.encodePacked(address(token1B));
         bytes memory payload = buildCompressedMessage(
             dstChainId,
             targetZRC20,
             evmWalletAddress,
             swapDataZ,
             contractAddress,
-            swapDataB
+            abi.encodePacked(
+                fromTokenB, 
+                toTokenB, 
+                swapDataB
+            )
         );
-
+        
         vm.startPrank(user1);
         token2A.approve(
             address(gatewaySendA),
@@ -68,42 +132,48 @@ contract GatewayCrossChainTest is BaseTest {
         uint32 dstChainId = 2;
         address targetZRC20 = address(token1Z);
         bytes memory evmWalletAddress = abi.encodePacked(user2);
-        bytes memory swapDataZ = abi.encodeWithSignature(
-            "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
+        bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token2Z),
             address(token1Z),
-            address(0),
-            address(0),
             amount,
             0,
-            "",
-            "",
-            block.timestamp + 60
+            0,
+            new address[](1),
+            new address[](1),
+            new address[](1),
+            0,
+            new bytes[](1),
+            abi.encode(address(0), 0),
+            block.timestamp + 600
         );
         bytes memory contractAddress = abi.encodePacked(address(gatewaySendB));
-        bytes memory swapDataB = abi.encode(
+        bytes memory swapDataB = encodeCompressedMixSwapParams(
             address(token1B),
             address(token2B),
-            abi.encodeWithSignature(
-                "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
-                address(token1B),
-                address(token2B),
-                address(0),
-                address(0),
-                49000000000000000000,
-                0,
-                "",
-                "",
-                block.timestamp + 60
-            )
+            49000000000000000000,
+            0,
+            0,
+            new address[](1),
+            new address[](1),
+            new address[](1),
+            0,
+            new bytes[](1),
+            abi.encode(address(0), 0),
+            block.timestamp + 600
         );
+        bytes memory fromTokenB = abi.encodePacked(address(token1B));
+        bytes memory toTokenB = abi.encodePacked(address(token2B));
         bytes memory payload = buildCompressedMessage(
             dstChainId,
             targetZRC20,
             evmWalletAddress,
             swapDataZ,
             contractAddress,
-            swapDataB
+            abi.encodePacked(
+                fromTokenB, 
+                toTokenB, 
+                swapDataB
+            )
         );
 
         vm.startPrank(user1);
