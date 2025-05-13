@@ -161,29 +161,45 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         externalId = keccak256(abi.encodePacked(address(this), sender, globalNonce, block.timestamp));
     }
 
-    function depositAndCall(
-        address fromToken,
-        uint256 amount,
-        bytes calldata swapData,
+    function _handleETHDeposit(
         address targetContract,
-        address asset,
-        uint32 dstChainId,
-        bytes calldata payload
-    ) public payable {
-        globalNonce++;
-        bytes32 externalId = _calcExternalId(msg.sender);
+        uint256 amount,
+        bytes memory message,
+        RevertOptions memory revertOptions
+    ) internal {
+        gateway.depositAndCall{value: amount}(
+            targetContract,
+            message,
+            revertOptions
+        );
+    }
 
-        bool fromIsETH = fromToken == _ETH_ADDRESS_ ? true : false;
-        if(fromIsETH) {
-            require(msg.value >= amount, "INSUFFICIENT AMOUNT: ETH NOT ENOUGH");
-        } else {
-            require(IERC20(fromToken).transferFrom(msg.sender, address(this), amount), "INSUFFICIENT AMOUNT: ERC20 TRANSFER FROM FAILED");
-            IERC20(fromToken).approve(DODOApprove, amount);
-        }
-         
-        // Swap on DODO Router
+    function _handleERC20Deposit(
+        address targetContract,
+        uint256 amount,
+        address asset,
+        bytes memory message,
+        RevertOptions memory revertOptions
+    ) internal {
+        IERC20(asset).approve(address(gateway), amount);
+
+        gateway.depositAndCall(
+            targetContract,
+            amount,
+            asset,
+            message,
+            revertOptions
+        );
+    }
+
+    function _doMixSwap(bytes calldata swapData) internal returns (uint256) {
         MixSwapParams memory params = SwapDataHelperLib.decodeCompressedMixSwapParams(swapData);
-        uint256 outputAmount = IDODORouteProxy(DODORouteProxy).mixSwap{value: msg.value}(
+
+        if(params.fromToken != _ETH_ADDRESS_) {
+            IERC20(params.fromToken).approve(DODOApprove, params.fromTokenAmount);
+        }
+
+        return IDODORouteProxy(DODORouteProxy).mixSwap{value: msg.value}(
             params.fromToken,
             params.toToken,
             params.fromTokenAmount,
@@ -197,37 +213,65 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
             params.feeData,
             params.deadline
         );
+    }
 
-        bool toIsETH = asset == _ETH_ADDRESS_ ? true : false;
-        bytes memory message = concatBytes(externalId, payload);
-        if(toIsETH) {
-            gateway.depositAndCall{value: outputAmount}(
-                targetContract,
-                message,
-                RevertOptions({
-                    revertAddress: address(this),
-                    callOnRevert: true,
-                    abortAddress: targetContract,
-                    revertMessage: bytes.concat(externalId, bytes20(msg.sender)),
-                    onRevertGasLimit: gasLimit
-                })
+    function depositAndCall(
+        address fromToken,
+        uint256 amount,
+        bytes calldata swapData,
+        address targetContract,
+        address asset,
+        uint32 dstChainId,
+        bytes calldata payload
+    ) public payable {
+        globalNonce++;
+        bytes32 externalId = _calcExternalId(msg.sender);
+        bool fromIsETH = (fromToken == _ETH_ADDRESS_);
+
+        // Handle input token
+        if(fromIsETH) {
+            require(
+                msg.value >= amount, 
+                "INSUFFICIENT AMOUNT: ETH NOT ENOUGH"
             );
         } else {
-            IERC20(asset).approve(address(gateway), outputAmount);
-            gateway.depositAndCall(
+            require(
+                IERC20(fromToken).transferFrom(msg.sender, address(this), amount), 
+                "INSUFFICIENT AMOUNT: ERC20 TRANSFER FROM FAILED"
+            );
+        }
+         
+        // Swap on DODO Router
+        uint256 outputAmount = _doMixSwap(swapData);
+
+        // Construct message and revert options
+        bytes memory message = concatBytes(externalId, payload);
+        RevertOptions memory revertOptions = RevertOptions({
+            revertAddress: address(this),
+            callOnRevert: true,
+            abortAddress: targetContract,
+            revertMessage: bytes.concat(externalId, bytes20(msg.sender)),
+            onRevertGasLimit: gasLimit
+        });
+
+        bool toIsETH = (asset == _ETH_ADDRESS_);
+        if (toIsETH) {
+            _handleETHDeposit(
+                targetContract,
+                outputAmount,
+                message,
+                revertOptions
+            );
+        } else {
+            _handleERC20Deposit(
                 targetContract,
                 outputAmount,
                 asset,
-                concatBytes(externalId, payload),
-                RevertOptions({
-                    revertAddress: address(this),
-                    callOnRevert: true,
-                    abortAddress: targetContract,
-                    revertMessage: bytes.concat(externalId, bytes20(msg.sender)),
-                    onRevertGasLimit: gasLimit
-                })
+                message,
+                revertOptions
             );
         }
+
         emit EddyCrossChainSend(
             externalId,
             dstChainId,
@@ -249,39 +293,39 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     ) public payable {
         globalNonce++;
         bytes32 externalId = _calcExternalId(msg.sender);
-
-        bool isETH = asset == _ETH_ADDRESS_ ? true : false;
+        bool isETH = (asset == _ETH_ADDRESS_);
         bytes memory message = concatBytes(externalId, payload);
-        if(isETH) {
+
+        RevertOptions memory revertOptions = RevertOptions({
+            revertAddress: address(this),
+            callOnRevert: true,
+            abortAddress: targetContract,
+            revertMessage: bytes.concat(externalId, bytes20(msg.sender)),
+            onRevertGasLimit: gasLimit
+        });
+
+        if (isETH) {
             require(msg.value >= amount, "INSUFFICIENT AMOUNT: ETH NOT ENOUGH");
-            gateway.depositAndCall{value: msg.value}(
-                targetContract,
-                message,
-                RevertOptions({
-                    revertAddress: address(this),
-                    callOnRevert: true,
-                    abortAddress: targetContract,
-                    revertMessage: bytes.concat(externalId, bytes20(msg.sender)),
-                    onRevertGasLimit: gasLimit
-                })
+            _handleETHDeposit(
+                targetContract, 
+                msg.value,
+                message, 
+                revertOptions
             );
         } else {
-            require(IERC20(asset).transferFrom(msg.sender, address(this), amount), "INSUFFICIENT AMOUNT: ERC20 TRANSFER FROM FAILED");
-            IERC20(asset).approve(address(gateway), amount);
-            gateway.depositAndCall(
-                targetContract,
+            require(
+                IERC20(asset).transferFrom(msg.sender, address(this), amount),
+                "INSUFFICIENT AMOUNT: ERC20 TRANSFER FROM FAILED"
+            );
+            _handleERC20Deposit(
+                targetContract, 
                 amount,
-                asset,
-                message,
-                RevertOptions({
-                    revertAddress: address(this),
-                    callOnRevert: true,
-                    abortAddress: targetContract,
-                    revertMessage: bytes.concat(externalId, bytes20(msg.sender)),
-                    onRevertGasLimit: gasLimit
-                })
+                asset, 
+                message, 
+                revertOptions
             );
         }
+
         emit EddyCrossChainSend(
             externalId,
             dstChainId,
@@ -306,9 +350,11 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
             address toToken, 
             bytes calldata swapData
         ) = decodePackedMessage(message);
-        MixSwapParams memory params = SwapDataHelperLib.decodeCompressedMixSwapParams(swapData);
 
-        bool fromIsETH = fromToken == _ETH_ADDRESS_ ? true : false;
+        bool fromIsETH = (fromToken == _ETH_ADDRESS_);
+        bool toIsETH = (toToken == _ETH_ADDRESS_);
+        address evmWalletAddress = address(bytes20(recipient));
+
         if(!fromIsETH) {
             IERC20(fromToken).transferFrom(msg.sender, address(this), amount);
         }
@@ -317,24 +363,9 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         if(fromToken == toToken) {
             outputAmount = amount;
         } else {
-            IERC20(fromToken).approve(DODOApprove, amount);
-            outputAmount = IDODORouteProxy(DODORouteProxy).mixSwap{value: msg.value}(
-                params.fromToken,
-                params.toToken,
-                params.fromTokenAmount,
-                params.expReturnAmount,
-                params.minReturnAmount,
-                params.mixAdapters,
-                params.mixPairs,
-                params.assetTo,
-                params.directions,
-                params.moreInfo,
-                params.feeData,
-                params.deadline
-            );
+            outputAmount = _doMixSwap(swapData);
         }
-        bool toIsETH = toToken == _ETH_ADDRESS_ ? true : false;
-        address evmWalletAddress = address(bytes20(recipient));
+
         if(toIsETH) {
             payable(evmWalletAddress).transfer(outputAmount);
         } else {

@@ -5,6 +5,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {GatewayZEVMMock} from "../mocks/GatewayZEVMMock.sol";
 import {Callable, MessageContext} from "@zetachain/protocol-contracts/contracts/evm/interfaces/IGatewayEVM.sol";
 import {CallOptions, RevertOptions} from "@zetachain/protocol-contracts/contracts/zevm/interfaces/IGatewayZEVM.sol";
+import {Account, Input} from "../libraries/AccountEncoder.sol";
 import {console} from "../../lib/forge-std/src/console.sol";
 
 contract GatewayEVMMock {
@@ -37,6 +38,11 @@ contract GatewayEVMMock {
 
     function setChainId(uint256 _chainId) public {
         chainId = _chainId;
+    }
+
+    function decodeInput(bytes memory encoded) public pure returns (Account[] memory accounts, bytes memory data) {
+        Input memory input = abi.decode(encoded, (Input));
+        return (input.accounts, input.data);
     }
     
     function depositAndCall(
@@ -107,7 +113,15 @@ contract GatewayEVMMock {
                 message
             );
         } else {
-            console.log("Called Solana Contract");
+            address targetContract = toEVMAddress[receiver];
+            (, bytes memory data) = decodeInput(message);
+            IERC20(asset).approve(targetContract, amount);
+            Callable(targetContract).onCall{value: msg.value}(
+                MessageContext({
+                    sender: address(this)
+                }),
+                data
+            );
         }
     }
 

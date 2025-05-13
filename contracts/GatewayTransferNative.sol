@@ -15,9 +15,11 @@ import {TransferHelper} from "./libraries/TransferHelper.sol";
 import {BytesHelperLib} from "./libraries/BytesHelperLib.sol";
 import {IWETH9} from "./interfaces/IWETH9.sol";
 import {IDODORouteProxy} from "./interfaces/IDODORouteProxy.sol";
+import {Account, AccountEncoder} from "./libraries/AccountEncoder.sol";
 import "./libraries/SwapDataHelperLib.sol";
 
 contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgradeable, UUPSUpgradeable {
+    address constant _ETH_ADDRESS_ = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     address public constant WZETA = 0x5F0b1a82749cb4E2278EC87F8BF6B618dC71a8bf;
     address public constant UniswapRouter = 0x2ca7d64A7EFE2D62A725E2B35Cf7230D6677FfEe;
     address public constant UniswapFactory = 0x9fd96203f7b22bCF72d9DCb40ff98302376cE09c;
@@ -233,37 +235,14 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         }
     }
 
-    // function buildOutputMessage(
-    //     bytes32 externalId,
-    //     uint256 outputAmount,
-    //     bytes memory receiver,
-    //     bytes memory swapDataB
-    // ) public pure returns (bytes memory) {
-    //     return abi.encodePacked(
-    //         externalId,
-    //         bytes32(outputAmount),
-    //         uint16(receiver.length),
-    //         uint16(swapDataB.length),
-    //         receiver,
-    //         swapDataB
-    //     );
-    // }
-
     function withdrawAndCall(
         bytes32 externalId,
         bytes memory contractAddress,
         address targetZRC20,
         uint256 outputAmount,
-        bytes memory recipient,
         address evmWalletAddress,
-        bytes memory swapData
-    ) public {
-        bytes memory message = SwapDataHelperLib.buildOutputMessage(
-            externalId,
-            outputAmount,
-            recipient,
-            swapData
-        );
+        bytes memory message
+    ) internal {
         gateway.withdrawAndCall(
             contractAddress,
             outputAmount,
@@ -310,15 +289,10 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
     }
 
     function _swapAndSendERC20Tokens(
-        bytes32 externalId,
         address targetZRC20,
         address gasZRC20,
         uint256 gasFee,
-        bytes memory recipient,
-        address evmWalletAddress,
-        uint256 targetAmount,
-        bytes memory contractAddress,
-        bytes memory crossChainSwapData
+        uint256 targetAmount
     ) internal returns(uint256 amountsOut) {
         // Get amountOut for Input gasToken
         uint[] memory amountsQuote = UniswapV2Library.getAmountsIn(
@@ -346,136 +320,8 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         IZRC20(gasZRC20).approve(address(gateway), gasFee);
         IZRC20(targetZRC20).approve(address(gateway), targetAmount - amounts[0]);
 
-        withdrawAndCall(
-            externalId,
-            contractAddress,
-            targetZRC20,
-            targetAmount - amounts[0],
-            recipient,
-            evmWalletAddress,
-            crossChainSwapData
-        );
-        
         amountsOut = targetAmount - amounts[0];
     }
-
-    // function _handleBTCCase(
-    //     bytes32 externalId,
-    //     address evmWalletAddress,
-    //     address zrc20,
-    //     uint256 amount,
-    //     DecodedMessage memory decoded,
-    //     MixSwapParams memory params,
-    //     uint256 platformFeesForTx
-    // ) internal {
-    //     bytes memory recipientAddressBech32 = decoded.receiver;
-    //     // swap
-    //     uint256 outputAmount;
-    //     if(decoded.swapDataZ.length == 0) {
-    //         outputAmount = amount;
-    //     } else {
-    //         outputAmount = IDODORouteProxy(DODORouteProxy).mixSwap(
-    //             params.fromToken,
-    //             params.toToken,
-    //             params.fromTokenAmount,
-    //             params.expReturnAmount,
-    //             params.minReturnAmount,
-    //             params.mixAdapters,
-    //             params.mixPairs,
-    //             params.assetTo,
-    //             params.directions,
-    //             params.moreInfo,
-    //             params.feeData,
-    //             params.deadline
-    //         );
-    //     }
-        
-    //     (, uint256 gasFee) = IZRC20(decoded.targetZRC20).withdrawGasFee();
-    //     if(outputAmount < gasFee) revert NotEnoughToPayGasFee();
-    //     IZRC20(decoded.targetZRC20).approve(address(gateway), outputAmount + gasFee);
-    //     withdraw(
-    //         externalId,
-    //         recipientAddressBech32,
-    //         decoded.targetZRC20,
-    //         outputAmount - gasFee
-    //     );
-
-    //     emit EddyCrossChainSwap(
-    //         externalId,
-    //         decoded.dstChainId,
-    //         zrc20,
-    //         decoded.targetZRC20,
-    //         amount,
-    //         outputAmount - gasFee,
-    //         evmWalletAddress,
-    //         platformFeesForTx
-    //     );
-    // }
-
-    // function _handleSolanaCase(
-    //     bytes32 externalId,
-    //     address evmWalletAddress,
-    //     address zrc20,
-    //     uint256 amount,
-    //     DecodedMessage memory decoded,
-    //     uint256 platformFeesForTx
-    // ) internal {
-    //     bytes memory recipientAddressBech32 = decoded.receiver;
-
-    //     // swap
-    //     uint256 outputAmount;
-    //     if(decoded.swapDataZ.length == 0) {
-    //         outputAmount = amount;
-    //     } else {
-    //         IZRC20(zrc20).approve(DODOApprove, amount);
-    //         (bool success, bytes memory returnData) = DODORouteProxy.call(decoded.swapDataZ); // swap on zetachain
-    //         if(!success) {
-    //             revert RouteProxyCallFailed();
-    //         } 
-    //         outputAmount = abi.decode(returnData, (uint256));
-    //     }
-    //     (address gasZRC20, uint256 gasFee) = IZRC20(decoded.targetZRC20).withdrawGasFee();
-
-    //     uint256 amountAfterGasFees;
-    //     if(decoded.targetZRC20 == gasZRC20) {
-    //         if(gasFee >= outputAmount) revert NotEnoughToPayGasFee();
-    //         IZRC20(decoded.targetZRC20).approve(address(gateway), outputAmount + gasFee);
-    //         amountAfterGasFees = outputAmount - gasFee;
-    //         withdrawAndCall(
-    //             externalId,
-    //             decoded.contractAddress,
-    //             decoded.targetZRC20,
-    //             amountAfterGasFees,
-    //             recipientAddressBech32,
-    //             evmWalletAddress,
-    //             decoded.swapDataB
-    //         );
-    //     } else {
-    //         // swap partial output amount to gasZRC20
-    //         amountAfterGasFees = _swapAndSendERC20Tokens(
-    //             externalId,
-    //             decoded.targetZRC20,
-    //             gasZRC20,
-    //             gasFee,
-    //             recipientAddressBech32,
-    //             evmWalletAddress,
-    //             outputAmount,
-    //             decoded.contractAddress,
-    //             decoded.swapDataB
-    //         );
-    //     }
-
-    //     emit EddyCrossChainSwap(
-    //         externalId,
-    //         decoded.dstChainId,
-    //         zrc20,
-    //         decoded.targetZRC20,
-    //         amount,
-    //         amountAfterGasFees,
-    //         evmWalletAddress, // context.sender
-    //         platformFeesForTx
-    //     );
-    // }
 
     function _handleFeeTransfer(
         address zrc20,
@@ -528,21 +374,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             );
         } else {
             // Swap on DODO Router
-            IZRC20(zrc20).approve(DODOApprove, amount);
-            uint256 outputAmount = IDODORouteProxy(DODORouteProxy).mixSwap(
-                params.fromToken,
-                params.toToken,
-                params.fromTokenAmount,
-                params.expReturnAmount,
-                params.minReturnAmount,
-                params.mixAdapters,
-                params.mixPairs,
-                params.assetTo,
-                params.directions,
-                params.moreInfo,
-                params.feeData,
-                params.deadline
-            );
+            uint256 outputAmount = _doMixSwap(decoded.swapData, amount, params);
 
             if (decoded.targetZRC20 == WZETA) {
                 // withdraw WZETA to get Zeta in 1:1 ratio
@@ -570,17 +402,124 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         }
     }
 
+    function _doMixSwap(
+        bytes memory swapData, 
+        uint256 amount, 
+        MixSwapParams memory params
+    ) internal returns (uint256 outputAmount) {
+        if (swapData.length == 0) {
+            return amount;
+        }
+
+        IZRC20(params.fromToken).approve(DODOApprove, amount);
+        return IDODORouteProxy(DODORouteProxy).mixSwap{value: msg.value}(
+            params.fromToken,
+            params.toToken,
+            params.fromTokenAmount,
+            params.expReturnAmount,
+            params.minReturnAmount,
+            params.mixAdapters,
+            params.mixPairs,
+            params.assetTo,
+            params.directions,
+            params.moreInfo,
+            params.feeData,
+            params.deadline
+        );
+    }
+
+    function _handleBitcoinWithdraw(
+        bytes32 externalId, 
+        DecodedMessage memory decoded, 
+        uint256 outputAmount,
+        uint256 gasFee
+    ) internal {
+        if(gasFee >= outputAmount) revert NotEnoughToPayGasFee();
+        IZRC20(decoded.targetZRC20).approve(address(gateway), outputAmount + gasFee);
+        withdraw(
+            externalId, 
+            decoded.receiver, 
+            decoded.targetZRC20, 
+            outputAmount - gasFee
+        );
+    }
+
+    function _handleEvmOrSolanaWithdraw(
+        bytes32 externalId,
+        DecodedMessage memory decoded,
+        uint256 outputAmount,
+        address evmWalletAddress
+    ) internal returns (uint256 amountsOutTarget) {
+        (address gasZRC20, uint256 gasFee) = IZRC20(decoded.targetZRC20).withdrawGasFeeWithGasLimit(gasLimit);
+
+        if (decoded.targetZRC20 == gasZRC20) {
+            if (gasFee >= outputAmount) revert NotEnoughToPayGasFee();
+            IZRC20(decoded.targetZRC20).approve(address(gateway), outputAmount + gasFee);
+
+            bytes memory data = SwapDataHelperLib.buildOutputMessage(
+                externalId, 
+                outputAmount - gasFee, 
+                decoded.receiver, 
+                decoded.swapDataB
+            );
+            
+            bytes memory encoded = (decoded.dstChainId == SOLANA_EDDY)
+                ? AccountEncoder.encodeInput(AccountEncoder.decompressAccounts(decoded.accounts), data)
+                : data;
+
+            withdrawAndCall(
+                externalId, 
+                decoded.contractAddress, 
+                decoded.targetZRC20, 
+                outputAmount - gasFee, 
+                evmWalletAddress, 
+                encoded
+            );
+
+            amountsOutTarget = outputAmount - gasFee;
+        } else {
+            amountsOutTarget = _swapAndSendERC20Tokens(
+                decoded.targetZRC20, 
+                gasZRC20, 
+                gasFee, 
+                outputAmount
+            );
+
+            bytes memory data = SwapDataHelperLib.buildOutputMessage(
+                externalId, 
+                amountsOutTarget, 
+                decoded.receiver, 
+                decoded.swapDataB
+            );
+            
+            bytes memory encoded = (decoded.dstChainId == SOLANA_EDDY)
+                ? AccountEncoder.encodeInput(AccountEncoder.decompressAccounts(decoded.accounts), data)
+                : data;
+
+            withdrawAndCall(
+                externalId, 
+                decoded.contractAddress, 
+                decoded.targetZRC20, 
+                amountsOutTarget, 
+                evmWalletAddress, 
+                encoded
+            );
+        }
+    }
+
     function withdrawToNativeChain(
         address zrc20,
         uint256 amount,
         bytes calldata message
-    ) external {
-        require(IZRC20(zrc20).transferFrom(msg.sender, address(this), amount), "INSUFFICIENT ALLOWANCE: TRANSFER FROM FAILED");
+    ) external payable {
+        if(zrc20 != _ETH_ADDRESS_) {
+            require(IZRC20(zrc20).transferFrom(msg.sender, address(this), amount), "INSUFFICIENT ALLOWANCE: TRANSFER FROM FAILED");
+        } 
 
         globalNonce++;
         bytes32 externalId = _calcExternalId(msg.sender);
 
-        // Decode the message
+        // Decode message and decompress swap params
         (DecodedMessage memory decoded, MixSwapParams memory params) = SwapDataHelperLib.decodeMessage(message);
         
         // Check if the message is from Bitcoin to Solana
@@ -590,102 +529,49 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
 
         // Transfer platform fees
         uint256 platformFeesForTx = _handleFeeTransfer(zrc20, amount); // platformFee = 5 <> 0.5%
-        amount = amount - platformFeesForTx;
+        amount -= platformFeesForTx;
 
         // Swap on DODO Router
-        uint256 outputAmount;
-        if(decoded.swapDataZ.length == 0) {
-            outputAmount = amount;
-        } else {
-            IZRC20(zrc20).approve(DODOApprove, amount);
-            outputAmount = IDODORouteProxy(DODORouteProxy).mixSwap(
-                params.fromToken,
-                params.toToken,
-                params.fromTokenAmount,
-                params.expReturnAmount,
-                params.minReturnAmount,
-                params.mixAdapters,
-                params.mixPairs,
-                params.assetTo,
-                params.directions,
-                params.moreInfo,
-                params.feeData,
-                params.deadline
-            );
-        }
-
-        if(decoded.dstChainId == BITCOIN_EDDY) {
-            // Zetachain to Bitcoin
+        uint256 outputAmount = _doMixSwap(decoded.swapDataZ, amount, params);
+        
+        // Withdraw
+        if (decoded.dstChainId == BITCOIN_EDDY) {
             (, uint256 gasFee) = IZRC20(decoded.targetZRC20).withdrawGasFee();
-            if(outputAmount < gasFee) revert NotEnoughToPayGasFee();
-            IZRC20(decoded.targetZRC20).approve(address(gateway), outputAmount + gasFee);
-            withdraw(
-                externalId,
-                decoded.receiver,
-                decoded.targetZRC20,
-                outputAmount - gasFee
+            _handleBitcoinWithdraw(
+                externalId, 
+                decoded, 
+                outputAmount,
+                gasFee
             );
 
             emit EddyCrossChainSwap(
-                externalId,
-                decoded.dstChainId,
-                zrc20,
-                decoded.targetZRC20,
-                amount,
-                outputAmount - gasFee,
-                evmWalletAddress,
+                externalId, 
+                decoded.dstChainId, 
+                zrc20, 
+                decoded.targetZRC20, 
+                amount, 
+                outputAmount - gasFee, 
+                evmWalletAddress, 
                 platformFeesForTx
             );
         } else {
-            // Zetachain to SOL and to EVM
-            (address gasZRC20, uint256 gasFee) = IZRC20(decoded.targetZRC20).withdrawGasFeeWithGasLimit(gasLimit);
+            uint256 amountsOutTarget = _handleEvmOrSolanaWithdraw(
+                externalId, 
+                decoded, 
+                outputAmount, 
+                evmWalletAddress
+            );
 
-            if(decoded.targetZRC20 == gasZRC20) {
-                if (gasFee >= outputAmount) revert NotEnoughToPayGasFee();
-                IZRC20(decoded.targetZRC20).approve(address(gateway), outputAmount + gasFee);
-                // withdraw and call
-                withdrawAndCall(
-                    externalId,
-                    decoded.contractAddress,
-                    decoded.targetZRC20,
-                    outputAmount - gasFee,
-                    decoded.receiver,
-                    evmWalletAddress,
-                    decoded.swapDataB
-                );
-                emit EddyCrossChainSwap(
-                    externalId,
-                    decoded.dstChainId,
-                    zrc20,
-                    decoded.targetZRC20,
-                    amount,
-                    outputAmount - gasFee,
-                    evmWalletAddress,
-                    platformFeesForTx
-                );
-            } else {
-                uint256 amountsOutTarget = _swapAndSendERC20Tokens(
-                    externalId,
-                    decoded.targetZRC20,
-                    gasZRC20,
-                    gasFee,
-                    decoded.receiver,
-                    evmWalletAddress,
-                    outputAmount,
-                    decoded.contractAddress,
-                    decoded.swapDataB
-                );
-                emit EddyCrossChainSwap(
-                    externalId,
-                    decoded.dstChainId,
-                    zrc20,
-                    decoded.targetZRC20,
-                    amount,
-                    amountsOutTarget,
-                    evmWalletAddress,
-                    platformFeesForTx
-                );
-            }
+            emit EddyCrossChainSwap(
+                externalId, 
+                decoded.dstChainId, 
+                zrc20, 
+                decoded.targetZRC20, 
+                amount, 
+                amountsOutTarget, 
+                evmWalletAddress, 
+                platformFeesForTx
+            );
         }
     }
 

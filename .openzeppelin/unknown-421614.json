@@ -40,6 +40,11 @@
       "address": "0x36361F2102C55Fcd0dE12a99218fC39515c7c45c",
       "txHash": "0x3a9b3bb9ead4a180c14d0bab375f19e86ab6f73acdd8e043fd0c8a6ba79689ac",
       "kind": "uups"
+    },
+    {
+      "address": "0x69B78A97F8Fe43971d14626bbA2Cb9B6a03CeF03",
+      "txHash": "0x3a8b29772701c886b2a06f79d7634e9e531bf371f11351cf42ef2ca63153204b",
+      "kind": "uups"
     }
   ],
   "impls": {
@@ -789,6 +794,137 @@
             "numberOfBytes": "8"
           },
           "t_contract(GatewayEVM)4007": {
+            "label": "contract GatewayEVM",
+            "numberOfBytes": "20"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Ownable": [
+            {
+              "contract": "OwnableUpgradeable",
+              "label": "_owner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    },
+    "61ee84b2c0b19c4b4225f25cbd2d707e0aa73526fe8cf1f667373aacc9e43ccc": {
+      "address": "0xffA60159F13133369cb76797790A359504187872",
+      "txHash": "0x7b6e0a7c7eae4b6bfe8a08d4be8d406cfef9d4b7f73e013eceb8247efc5a42db",
+      "layout": {
+        "solcVersion": "0.8.26",
+        "storage": [
+          {
+            "label": "globalNonce",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint256",
+            "contract": "GatewaySend",
+            "src": "contracts/GatewaySend.sol:16"
+          },
+          {
+            "label": "gasLimit",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_uint256",
+            "contract": "GatewaySend",
+            "src": "contracts/GatewaySend.sol:17"
+          },
+          {
+            "label": "DODORouteProxy",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_address",
+            "contract": "GatewaySend",
+            "src": "contracts/GatewaySend.sol:18"
+          },
+          {
+            "label": "DODOApprove",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_address",
+            "contract": "GatewaySend",
+            "src": "contracts/GatewaySend.sol:19"
+          },
+          {
+            "label": "gateway",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_contract(GatewayEVM)5328",
+            "contract": "GatewaySend",
+            "src": "contracts/GatewaySend.sol:20"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)211_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(OwnableStorage)151_storage": {
+            "label": "struct OwnableUpgradeable.OwnableStorage",
+            "members": [
+              {
+                "label": "_owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_contract(GatewayEVM)5328": {
             "label": "contract GatewayEVM",
             "numberOfBytes": "20"
           },

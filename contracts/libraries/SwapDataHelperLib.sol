@@ -31,6 +31,7 @@ struct DecodedMessage {
     bytes swapDataZ;
     bytes contractAddress; // empty for withdraw, non-empty for withdrawAndCall
     bytes swapDataB;
+    bytes accounts;
 }
 
 library SwapDataHelperLib {
@@ -39,7 +40,7 @@ library SwapDataHelperLib {
         uint256 outputAmount,
         bytes memory receiver,
         bytes memory swapDataB
-    ) internal pure returns (bytes memory) {
+    ) public pure returns (bytes memory) {
         return abi.encodePacked(
             externalId,
             bytes32(outputAmount),
@@ -50,13 +51,14 @@ library SwapDataHelperLib {
         );
     }
 
-    function decodeMessage(bytes calldata message) internal pure returns (DecodedMessage memory, MixSwapParams memory) {
+    function decodeMessage(bytes calldata message) public pure returns (DecodedMessage memory, MixSwapParams memory) {
         uint32 dstChainId;
         address targetZRC20;
         uint16 receiverLen;
         uint16 contractAddressLen;
         uint16 swapDataZLen;
         uint16 swapDataBLen;
+        uint16 accountsLen;
 
         assembly {
             dstChainId := shr(224, calldataload(message.offset)) // 4 bytes
@@ -65,9 +67,10 @@ library SwapDataHelperLib {
             contractAddressLen := shr(240, calldataload(add(message.offset, 26))) // 2 bytes
             swapDataZLen := shr(240, calldataload(add(message.offset, 28))) // 2 bytes
             swapDataBLen := shr(240, calldataload(add(message.offset, 30))) // 2 bytes
+            accountsLen := shr(240, calldataload(add(message.offset, 32))) // 2 bytes
         }
 
-        uint offset = 32;
+        uint offset = 34; // header = 4 + 20 + 2×5 = 34
         bytes memory receiver = message[offset : offset + receiverLen];
         offset += receiverLen;
         bytes memory contractAddress = message[offset : offset + contractAddressLen];
@@ -75,6 +78,8 @@ library SwapDataHelperLib {
         bytes calldata swapDataZ = message[offset : offset + swapDataZLen];
         offset += swapDataZLen;
         bytes memory swapDataB = message[offset : offset + swapDataBLen];
+        offset += swapDataBLen;
+        bytes memory accounts = message[offset : offset + accountsLen];
 
         DecodedMessage memory decoded = DecodedMessage({
             targetZRC20: targetZRC20,
@@ -82,16 +87,19 @@ library SwapDataHelperLib {
             receiver: receiver,
             contractAddress: contractAddress,
             swapDataZ: swapDataZ,
-            swapDataB: swapDataB
+            swapDataB: swapDataB,
+            accounts: accounts
         });
+
         MixSwapParams memory params = decodeCompressedMixSwapParams(swapDataZ);
 
         return (decoded, params);
     }
 
+
     function decodeNativeMessage(
         bytes calldata message
-    ) internal pure returns (DecodedNativeMessage memory, MixSwapParams memory ) {
+    ) public pure returns (DecodedNativeMessage memory, MixSwapParams memory ) {
         // 20 bytes(evmAddress) + 20 bytes(targetZRC20) + bytes(swapData)
         address receiver = BytesHelperLib.bytesToAddress(message, 0); // 20
         address targetZRC20 = BytesHelperLib.bytesToAddress(message, 20); // 40
@@ -106,7 +114,7 @@ library SwapDataHelperLib {
         return (decoded, params);
     }
 
-    function decodeCompressedMixSwapParams(bytes calldata data) internal pure returns (MixSwapParams memory) {
+    function decodeCompressedMixSwapParams(bytes calldata data) public pure returns (MixSwapParams memory) {
         if (data.length == 0) {
             return MixSwapParams({
                 fromToken: address(0),

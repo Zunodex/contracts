@@ -24,6 +24,7 @@ contract BaseTest is Test {
     address public user2 = address(0x222);
     bytes public btcAddress = abi.encodePacked("tb1qy9pqmk2pd9sv63g27jt8r657wy0d9ueeh0nqur");
     bytes public solAddress = abi.encodePacked("DrexsvCMH9WWjgnjVbx1iFf3YZcKadupFmxnZLfSyotd");
+    bytes public solGatewaySendAddress = abi.encodePacked("EwUjcjz8jvFeE99kjcZKM5Aojs3eKcyW2JHNKNDP9M4k");
     uint256 constant initialBalance = 1000 ether;
     IUniswapV2Factory factory = IUniswapV2Factory(0x9fd96203f7b22bCF72d9DCb40ff98302376cE09c);
     IUniswapV2Router01 router = IUniswapV2Router01(0x2ca7d64A7EFE2D62A725E2B35Cf7230D6677FfEe);
@@ -75,23 +76,6 @@ contract BaseTest is Test {
         token3B = new ERC20Mock("Token3B", "TK3B", 18);
         btcZ = new ZRC20Mock("BTCZ", "BTCZ", 18);
         btc = new ERC20Mock("BTC", "BTC", 18);
-
-
-        // set GatewayEVM
-        gatewayA.setGatewayZEVM(address(gatewayZEVM));
-        gatewayA.setZRC20(address(token1A), address(token1Z));
-        gatewayA.setZRC20(address(token2A), address(token2Z));  
-        gatewayA.setZRC20(address(btc), address(btcZ));
-        gatewayA.setZRC20(_ETH_ADDRESS_, address(token3Z));
-        gatewayA.setDODORouteProxy(address(dodoRouteProxyA));
-        gatewayB.setGatewayZEVM(address(gatewayZEVM));
-        gatewayB.setZRC20(address(token1B), address(token1Z));
-        gatewayB.setZRC20(address(token2B), address(token2Z));
-        gatewayB.setZRC20(address(token3B), address(token3Z));
-        gatewayB.setZRC20(address(btc), address(btcZ));
-        gatewayB.setDODORouteProxy(address(dodoRouteProxyB));
-        gatewayB.setEVMAddress(btcAddress, address(user2));
-        gatewayB.setEVMAddress(solAddress, address(user2));
 
         // set GatewayZEVM
         gatewayZEVM.setGatewayEVM(address(gatewayB));
@@ -170,6 +154,22 @@ contract BaseTest is Test {
         );
         gatewayCrossChain = GatewayCrossChain(payable(address(crossChainProxy)));
 
+        // set GatewayEVM
+        gatewayA.setGatewayZEVM(address(gatewayZEVM));
+        gatewayA.setZRC20(address(token1A), address(token1Z));
+        gatewayA.setZRC20(address(token2A), address(token2Z));  
+        gatewayA.setZRC20(address(btc), address(btcZ));
+        gatewayA.setZRC20(_ETH_ADDRESS_, address(token3Z));
+        gatewayA.setDODORouteProxy(address(dodoRouteProxyA));
+        gatewayB.setGatewayZEVM(address(gatewayZEVM));
+        gatewayB.setZRC20(address(token1B), address(token1Z));
+        gatewayB.setZRC20(address(token2B), address(token2Z));
+        gatewayB.setZRC20(address(token3B), address(token3Z));
+        gatewayB.setZRC20(address(btc), address(btcZ));
+        gatewayB.setDODORouteProxy(address(dodoRouteProxyB));
+        gatewayB.setEVMAddress(btcAddress, address(user2));
+        gatewayB.setEVMAddress(solGatewaySendAddress, address(gatewaySendB));
+
         // set ZRC20 tokens
         token1Z.setGasFee(1e18);
         token1Z.setGasZRC20(address(token1Z));
@@ -247,13 +247,14 @@ contract BaseTest is Test {
         );
     }
 
-    function buildCompressedMessage(
+    function encodeMessage(
         uint32 dstChainId,
         address targetZRC20,
         bytes memory receiver,
         bytes memory swapDataZ,
         bytes memory contractAddress,
-        bytes memory swapDataB
+        bytes memory swapDataB,
+        bytes memory accounts
     ) public pure returns (bytes memory) {
         return abi.encodePacked(
             bytes4(dstChainId),
@@ -262,10 +263,12 @@ contract BaseTest is Test {
             uint16(contractAddress.length),
             uint16(swapDataZ.length),
             uint16(swapDataB.length),
+            uint16(accounts.length),
             receiver,
             contractAddress,
             swapDataZ,
-            swapDataB
+            swapDataB,
+            accounts
         );
     }
 
@@ -330,4 +333,31 @@ contract BaseTest is Test {
         }
     }
 
+    function compressAccounts(bytes32[] memory publicKeys, bool[] memory isWritables) public pure returns (bytes memory out) {
+        uint256 len = publicKeys.length;
+        require(len == isWritables.length, "Length mismatch");
+        require(len < type(uint16).max, "Too many accounts");
+
+        uint256 totalSize = 2 + len * 33;
+        out = new bytes(totalSize);
+
+        assembly {
+            let ptr := add(out, 32)
+
+            // accounts.length (uint16)
+            mstore8(ptr, shr(8, len))
+            mstore8(add(ptr, 1), and(len, 0xff))
+            ptr := add(ptr, 2)
+
+            for { let i := 0 } lt(i, len) { i := add(i, 1) } {
+                let pubkey := mload(add(add(publicKeys, 32), mul(i, 32)))
+                let writable := mload(add(add(isWritables, 32), mul(i, 32)))
+
+                mstore(ptr, pubkey)
+                ptr := add(ptr, 32)
+                mstore8(ptr, iszero(iszero(writable)))
+                ptr := add(ptr, 1)
+            }
+        }
+    }
 }

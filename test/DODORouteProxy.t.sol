@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 
 import "@zetachain/protocol-contracts/contracts/zevm/interfaces/IGatewayZEVM.sol";
 // import { IGatewayEVM, MessageContext } from "@zetachain/protocol-contracts/contracts/evm/interfaces/IGatewayEVM.sol";
+import {SwapDataHelperLib} from "../contracts/libraries/SwapDataHelperLib.sol";
 import {Test} from "forge-std/Test.sol";
 import {console} from "forge-std/console.sol";
 
@@ -260,7 +261,8 @@ contract DODORouteProxyTest is Test {
             contractAddress,
             abi.encodePacked(0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238, 0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238, swapDataB)
         );
-
+        console.logBytes(swapDataZ);
+        console.logBytes(abi.encode(address(0), 0));
         console.logBytes(payload);
         console.log(payload.length);
         console.log(bytes.concat(externalId, payload).length);

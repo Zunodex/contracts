@@ -53,6 +53,7 @@ contract DODORouteProxyMock {
         address fromToken,
         address toToken,
         uint256 fromTokenAmount,
+        uint256, // expReturnAmount
         uint256, // minReturnAmount
         address[] memory, // mixAdapters
         address[] memory, // mixPairs
@@ -62,13 +63,19 @@ contract DODORouteProxyMock {
         bytes memory, // feeData
         uint256 // deadLine
     ) external payable returns (uint256 receiveAmount) {
-        IERC20(fromToken).transferFrom(
-            msg.sender,
-            address(this),
-            fromTokenAmount
-        );
+        if(fromToken != _ETH_ADDRESS_) {
+            IERC20(fromToken).transferFrom(
+                msg.sender,
+                address(this),
+                fromTokenAmount
+            );
+        }
         receiveAmount = (fromTokenAmount * prices[fromToken][toToken]) / 1e18;
-        IERC20(toToken).transfer(msg.sender, receiveAmount);
+        if(toToken != _ETH_ADDRESS_) {
+            IERC20(toToken).transfer(msg.sender, receiveAmount);
+        } else {
+            payable(msg.sender).transfer(receiveAmount);
+        }
     }
 
     function dodoMutliSwap(

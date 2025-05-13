@@ -12,6 +12,22 @@ import {console} from "forge-std/console.sol";
 contract GatewaySendTest is BaseTest {
     error RouteProxyCallFailed();
 
+    function buildOutputMessage(
+        bytes32 externalId,
+        uint256 outputAmount,
+        bytes memory receiver,
+        bytes memory swapDataB
+    ) internal pure returns (bytes memory) {
+        return abi.encodePacked(
+            externalId,
+            bytes32(outputAmount),
+            uint16(receiver.length),
+            uint16(swapDataB.length),
+            receiver,
+            swapDataB
+        );
+    }
+
     function test_Set() public {
         gatewaySendA.setOwner(user1);
 
@@ -135,25 +151,34 @@ contract GatewaySendTest is BaseTest {
 
     function test_OnCallFromTokenIsETH() public {
         uint256 amount = 100 ether;
-        address fromToken = _ETH_ADDRESS_;
-        address toToken = address(token1B);
-        bytes memory swapDataA = abi.encodeWithSignature(
-            "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
+        bytes32 externalId = keccak256(abi.encodePacked(block.timestamp));
+        address fromTokenB = _ETH_ADDRESS_;
+        address toTokenB = address(token1B);
+        bytes memory swapDataB = encodeCompressedMixSwapParams(
             _ETH_ADDRESS_,
             address(token1B),
-            address(0),
-            address(0),
             amount,
             0,
-            "",
-            "",
-            block.timestamp + 60
+            0,
+            new address[](1),
+            new address[](1),
+            new address[](1),
+            0,
+            new bytes[](1),
+            abi.encode(address(0), 0),
+            block.timestamp + 600
         );
-        bytes memory crossChainSwapData = abi.encode(fromToken, toToken, swapDataA);
-        bytes32 externalId = keccak256(abi.encodePacked(block.timestamp));
-        address evmWalletAddress = user2;
-        bytes memory message = abi.encode(externalId, evmWalletAddress, amount, crossChainSwapData);
-
+        bytes memory message = buildOutputMessage(
+            externalId,
+            amount,
+            abi.encodePacked(user2),
+            abi.encodePacked(
+                fromTokenB, 
+                toTokenB, 
+                swapDataB
+            )
+        );
+        
         deal(address(gatewayB), amount);
         vm.prank(address(gatewayB));
         gatewaySendB.onCall{value: amount}(
@@ -168,24 +193,33 @@ contract GatewaySendTest is BaseTest {
 
     function test_OnCallToTokenIsETH() public {
         uint256 amount = 100 ether;
-        address fromToken = address(token1B);
-        address toToken = _ETH_ADDRESS_;
-        bytes memory swapDataA = abi.encodeWithSignature(
-            "externalSwap(address,address,address,address,uint256,uint256,bytes,bytes,uint256)",
+        bytes32 externalId = keccak256(abi.encodePacked(block.timestamp));
+        address fromTokenB = address(token1B);
+        address toTokenB = _ETH_ADDRESS_;
+        bytes memory swapDataB = encodeCompressedMixSwapParams(
             address(token1B),
             _ETH_ADDRESS_,
-            address(0),
-            address(0),
             amount,
             0,
-            "",
-            "",
-            block.timestamp + 60
+            0,
+            new address[](1),
+            new address[](1),
+            new address[](1),
+            0,
+            new bytes[](1),
+            abi.encode(address(0), 0),
+            block.timestamp + 600
         );
-        bytes memory crossChainSwapData = abi.encode(fromToken, toToken, swapDataA);
-        bytes32 externalId = keccak256(abi.encodePacked(block.timestamp));
-        address evmWalletAddress = user2;
-        bytes memory message = abi.encode(externalId, evmWalletAddress, amount, crossChainSwapData);
+        bytes memory message = buildOutputMessage(
+            externalId,
+            amount,
+            abi.encodePacked(user2),
+            abi.encodePacked(
+                fromTokenB, 
+                toTokenB, 
+                swapDataB
+            )
+        );
 
         token1B.mint(address(gatewayB), amount);
         vm.startPrank(address(gatewayB));
