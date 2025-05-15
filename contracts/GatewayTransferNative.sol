@@ -96,6 +96,8 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         _disableInitializers();
     }
 
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+
     /**
      * @dev Initialize the contract
      * @param _gateway Gateway contract address
@@ -156,7 +158,15 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         emit EddyTreasurySafeUpdated(_EddyTreasurySafe);
     }
 
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+    function superWithdraw(address zrc20) external onlyOwner {
+        if (zrc20 == _ETH_ADDRESS_) {
+            uint256 balance = address(this).balance;
+            TransferHelper.safeTransferETH(EddyTreasurySafe, balance);
+        } else {
+            uint256 balance = IZRC20(zrc20).balanceOf(address(this));
+            TransferHelper.safeTransfer(zrc20, EddyTreasurySafe, balance);
+        }
+    }
 
     function _calcExternalId(address sender) internal view returns (bytes32 externalId) {
         externalId = keccak256(abi.encodePacked(address(this), sender, globalNonce, block.timestamp));

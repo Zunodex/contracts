@@ -17,6 +17,7 @@ import {Account, AccountEncoder} from "./libraries/AccountEncoder.sol";
 import "./libraries/SwapDataHelperLib.sol";
 
 contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeable, UUPSUpgradeable {
+    address constant _ETH_ADDRESS_ = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     address public constant WZETA = 0x5F0b1a82749cb4E2278EC87F8BF6B618dC71a8bf;
     address public constant UniswapRouter = 0x2ca7d64A7EFE2D62A725E2B35Cf7230D6677FfEe;
     address public constant UniswapFactory = 0x9fd96203f7b22bCF72d9DCb40ff98302376cE09c;
@@ -95,7 +96,7 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
-        /**
+    /**
      * @dev Initialize the contract
      * @param _gateway Gateway contract address
      * @param _EddyTreasurySafe Address of the platform fee wallets
@@ -149,6 +150,16 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
     function setEddyTreasurySafe(address _EddyTreasurySafe) external onlyOwner {
         EddyTreasurySafe = _EddyTreasurySafe;
         emit EddyTreasurySafeUpdated(_EddyTreasurySafe);
+    }
+
+    function superWithdraw(address zrc20) external onlyOwner {
+        if (zrc20 == _ETH_ADDRESS_) {
+            uint256 balance = address(this).balance;
+            TransferHelper.safeTransferETH(EddyTreasurySafe, balance);
+        } else {
+            uint256 balance = IZRC20(zrc20).balanceOf(address(this));
+            TransferHelper.safeTransfer(zrc20, EddyTreasurySafe, balance);
+        }
     }
 
     // ============== Uniswap Helper ================ 
@@ -543,10 +554,4 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
             refundInfo.walletAddress
         );
     }
-
-    // function superWithdraw(address token) external onlyOwner {
-    //     if(msg.sender != EddyTreasurySafe) revert Unauthorized();
-
-    //     uint256 balance = IERC20() 
-    // }
 }

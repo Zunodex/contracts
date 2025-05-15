@@ -687,6 +687,16 @@ contract GatewayCrossChainTest is BaseTest {
         assertEq(token2B.balanceOf(evmWalletAddress), 62650614506181206212);
     }
 
+    function test_SuperWithdraw() public {
+        token1Z.mint(address(gatewayCrossChain), initialBalance);
+        gatewayCrossChain.superWithdraw(address(token1Z));
+        assertEq(token1Z.balanceOf(EddyTreasurySafe), initialBalance);
+
+        deal(address(gatewayCrossChain), initialBalance);
+        gatewayCrossChain.superWithdraw(_ETH_ADDRESS_);
+        assertEq(EddyTreasurySafe.balance, initialBalance);
+    }
+
     function test_ZOnRevert() public {
         bytes32 externalId = keccak256(abi.encodePacked(block.timestamp));
         uint256 amount = 100 ether;

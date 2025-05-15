@@ -40,7 +40,7 @@ library SwapDataHelperLib {
         uint256 outputAmount,
         bytes memory receiver,
         bytes memory swapDataB
-    ) public pure returns (bytes memory) {
+    ) internal pure returns (bytes memory) {
         return abi.encodePacked(
             externalId,
             bytes32(outputAmount),
@@ -51,7 +51,7 @@ library SwapDataHelperLib {
         );
     }
 
-    function decodeMessage(bytes calldata message) public pure returns (DecodedMessage memory, MixSwapParams memory) {
+    function decodeMessage(bytes calldata message) internal pure returns (DecodedMessage memory, MixSwapParams memory) {
         uint32 dstChainId;
         address targetZRC20;
         uint16 receiverLen;
@@ -99,7 +99,7 @@ library SwapDataHelperLib {
 
     function decodeNativeMessage(
         bytes calldata message
-    ) public pure returns (DecodedNativeMessage memory, MixSwapParams memory ) {
+    ) internal pure returns (DecodedNativeMessage memory, MixSwapParams memory ) {
         // 20 bytes(evmAddress) + 20 bytes(targetZRC20) + bytes(swapData)
         address receiver = BytesHelperLib.bytesToAddress(message, 0); // 20
         address targetZRC20 = BytesHelperLib.bytesToAddress(message, 20); // 40
@@ -114,7 +114,7 @@ library SwapDataHelperLib {
         return (decoded, params);
     }
 
-    function decodeCompressedMixSwapParams(bytes calldata data) public pure returns (MixSwapParams memory) {
+    function decodeCompressedMixSwapParams(bytes calldata data) internal pure returns (MixSwapParams memory) {
         if (data.length == 0) {
             return MixSwapParams({
                 fromToken: address(0),

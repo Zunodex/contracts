@@ -14,10 +14,10 @@ const ZETACHAIN_TESTNET_CONFIG = {
         DODOApprove: "0x143bE32C854E4Ddce45aD48dAe3343821556D0c3"
     }, 
     deployedAddress: {
-        GatewayCrossChainImpl: "0x78d43a889F42a344Fe98C3fb9455791Dc8178d55",
-        GatewayCrossChainProxy: "0x69716E51E3F8Bec9c3D4E1bB46396384AE11C594",
-        GatewayTransferNativeImpl: "0xFe837A3530dD566401d35beFCd55582AF7c4dfFC",
-        GatewayTransferNativeProxy: "0x056FcE6B76AF3050F54B71Fc9B5fcb7C387BfC1A"
+        GatewayCrossChainImpl: "0x19E10fb5875C4901D9650aFc001197285dBBC060",
+        GatewayCrossChainProxy: "0xA3148a1765897EC0A9bCA57f855C0B4718060b78",
+        GatewayTransferNativeImpl: "0x8bBD9D807ffc5c772e802333FB41Ea059F2f44d6",
+        GatewayTransferNativeProxy: "0x351a86A2C8dc47D396305AAcd7F126E096b2eee4"
     },
   };
   

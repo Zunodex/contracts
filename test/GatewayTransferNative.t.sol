@@ -859,6 +859,16 @@ contract GatewayTransferNativeTest is BaseTest {
         );
     }
 
+    function test_SuperWithdraw() public {
+        token1Z.mint(address(gatewayCrossChain), initialBalance);
+        gatewayCrossChain.superWithdraw(address(token1Z));
+        assertEq(token1Z.balanceOf(EddyTreasurySafe), initialBalance);
+
+        deal(address(gatewayCrossChain), initialBalance);
+        gatewayCrossChain.superWithdraw(_ETH_ADDRESS_);
+        assertEq(EddyTreasurySafe.balance, initialBalance);
+    }
+
     function test_ZOnRevert() public {
         bytes32 externalId = keccak256(abi.encodePacked(block.timestamp));
         uint256 amount = 100 ether;
@@ -917,7 +927,9 @@ contract GatewayTransferNativeTest is BaseTest {
         address targetZRC20 = address(token2Z);
         bytes memory evmWalletAddress = abi.encodePacked(user2);
         bytes memory swapDataZ = "0x12345678";
-        bytes memory contractAddress = "";
+        bytes memory fromTokenB = abi.encodePacked(address(token2B));
+        bytes memory toTokenB =  abi.encodePacked(address(token2B));
+        bytes memory contractAddress = abi.encodePacked(address(gatewaySendB));
         bytes memory swapDataB = "";
         bytes memory message = encodeMessage(
             dstChainId,
@@ -925,7 +937,7 @@ contract GatewayTransferNativeTest is BaseTest {
             evmWalletAddress,
             swapDataZ,
             contractAddress,
-            swapDataB,
+            abi.encodePacked(fromTokenB, toTokenB, swapDataB),
             ""
         );
 
@@ -960,16 +972,17 @@ contract GatewayTransferNativeTest is BaseTest {
             message
         );
 
-        dstChainId = 8332;
+        dstChainId = 900;
         message = encodeMessage(
             dstChainId,
             targetZRC20,
             evmWalletAddress,
             swapDataZ,
             contractAddress,
-            swapDataB,
+            abi.encodePacked(fromTokenB, toTokenB, swapDataB),
             ""
         );
+
         vm.expectRevert();
         vm.prank(user1);
         gatewayTransferNative.withdrawToNativeChain(
@@ -978,7 +991,10 @@ contract GatewayTransferNativeTest is BaseTest {
             message
         );
 
-        dstChainId = 900;
+        dstChainId = 8332;
+        fromTokenB = "";
+        toTokenB =  "";
+        contractAddress = "";
         message = encodeMessage(
             dstChainId,
             targetZRC20,
