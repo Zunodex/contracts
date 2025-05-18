@@ -29,6 +29,7 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
     address public DODORouteProxy;
     address public DODOApprove;
     mapping(bytes32 => RefundInfo) public refundInfos; // externalId => RefundInfo
+    mapping(address => bool) public bots;
     uint256 public feePercent;
     uint256 public slippage;
     uint256 public gasLimit;
@@ -39,8 +40,7 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
         bytes32 externalId;
         address token;
         uint256 amount;
-        address walletAddress;
-        bool isClaimed;
+        bytes walletAddress;
     }
 
     error Unauthorized();
@@ -53,29 +53,31 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
         bytes32 externalId,
         address token,
         uint256 amount,
-        address walletAddress
+        bytes walletAddress
     );
     event EddyCrossChainSwap(
         bytes32 externalId,
+        uint32 srcChainId,
         uint32 dstChainId,
         address zrc20,
         address targetZRC20,
         uint256 amount,
         uint256 outputAmount,
-        address walletAddress,
+        bytes sender,
+        bytes receiver,
         uint256 fees
     );
     event EddyCrossChainRefund(
         bytes32 externalId, 
         address indexed token, 
         uint256 amount,
-        address walletAddress
+        bytes walletAddress
     );
     event EddyCrossChainRefundClaimed(
         bytes32 externalId, 
         address indexed token, 
         uint256 amount,
-        address walletAddress
+        bytes walletAddress
     );
     event GatewayUpdated(address gateway);
     event FeePercentUpdated(uint256 feePercent);
@@ -152,13 +154,17 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
         emit EddyTreasurySafeUpdated(_EddyTreasurySafe);
     }
 
-    function superWithdraw(address zrc20) external onlyOwner {
-        if (zrc20 == _ETH_ADDRESS_) {
-            uint256 balance = address(this).balance;
-            TransferHelper.safeTransferETH(EddyTreasurySafe, balance);
+    function setBot(address bot, bool isAllowed) external onlyOwner {
+        bots[bot] = isAllowed;
+    }
+
+    function superWithdraw(address token, uint256 amount) external onlyOwner {
+        if (token == _ETH_ADDRESS_) {
+            require(amount <= address(this).balance, "INVALID_AMOUNT");
+            TransferHelper.safeTransferETH(EddyTreasurySafe, amount);
         } else {
-            uint256 balance = IZRC20(zrc20).balanceOf(address(this));
-            TransferHelper.safeTransfer(zrc20, EddyTreasurySafe, balance);
+            require(amount <= IZRC20(token).balanceOf(address(this)), "INVALID_AMOUNT");
+            TransferHelper.safeTransfer(token, EddyTreasurySafe, amount);
         }
     }
 
@@ -240,7 +246,7 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
         bytes memory contractAddress,
         address targetZRC20,
         uint256 outputAmount,
-        address evmWalletAddress,
+        bytes memory receiver,
         bytes memory message
     ) internal {
         gateway.withdrawAndCall(
@@ -256,7 +262,7 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
                 revertAddress: address(this),
                 callOnRevert: true,
                 abortAddress: address(0),
-                revertMessage: bytes.concat(externalId, bytes20(evmWalletAddress)),
+                revertMessage: bytes.concat(externalId, receiver),
                 onRevertGasLimit: gasLimit
             })
         );
@@ -374,7 +380,7 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
         bytes32 externalId,
         DecodedMessage memory decoded,
         uint256 outputAmount,
-        address evmWalletAddress
+        bytes memory receiver
     ) internal returns (uint256 amountsOutTarget) {
         (address gasZRC20, uint256 gasFee) = IZRC20(decoded.targetZRC20).withdrawGasFeeWithGasLimit(gasLimit);
 
@@ -398,7 +404,7 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
                 decoded.contractAddress, 
                 decoded.targetZRC20, 
                 outputAmount - gasFee, 
-                evmWalletAddress, 
+                receiver, 
                 encoded
             );
 
@@ -427,7 +433,7 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
                 decoded.contractAddress, 
                 decoded.targetZRC20, 
                 amountsOutTarget, 
-                evmWalletAddress, 
+                receiver, 
                 encoded
             );
         }
@@ -447,9 +453,9 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
         (DecodedMessage memory decoded, MixSwapParams memory params) = SwapDataHelperLib.decodeMessage(_message);
 
         // Check if the message is from Bitcoin to Solana
-        address evmWalletAddress = (decoded.dstChainId == BITCOIN_EDDY || decoded.dstChainId == SOLANA_EDDY)
-            ? context.sender
-            : address(uint160(bytes20(decoded.receiver)));
+        // address evmWalletAddress = (decoded.dstChainId == BITCOIN_EDDY || decoded.dstChainId == SOLANA_EDDY)
+        //     ? context.sender
+        //     : address(uint160(bytes20(decoded.receiver)));
 
         // Transfer platform fees
         uint256 platformFeesForTx = _handleFeeTransfer(zrc20, amount); // platformFee = 5 <> 0.5%
@@ -470,12 +476,14 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
 
             emit EddyCrossChainSwap(
                 externalId, 
+                uint32(context.chainID),
                 decoded.dstChainId, 
                 zrc20, 
                 decoded.targetZRC20, 
                 amount, 
                 outputAmount - gasFee, 
-                evmWalletAddress, 
+                decoded.sender,
+                decoded.receiver, 
                 platformFeesForTx
             );
         } else {
@@ -483,17 +491,19 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
                 externalId, 
                 decoded, 
                 outputAmount, 
-                evmWalletAddress
+                decoded.receiver
             );
 
             emit EddyCrossChainSwap(
                 externalId, 
+                uint32(context.chainID),
                 decoded.dstChainId, 
                 zrc20, 
                 decoded.targetZRC20, 
                 amount, 
-                amountsOutTarget, 
-                evmWalletAddress, 
+                amountsOutTarget,
+                decoded.sender,
+                decoded.receiver, 
                 platformFeesForTx
             );
         }
@@ -505,28 +515,48 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
      * @dev Only the gateway can call this function
      */
     function onRevert(RevertContext calldata context) external onlyGateway {
+        // 52 bytes = 32 bytes externalId + 20 bytes evmWalletAddress
         bytes32 externalId = bytes32(context.revertMessage[0:32]);
-        address sender = address(uint160(bytes20(context.revertMessage[32:])));
-        TransferHelper.safeTransfer(context.asset, sender, context.amount);
-        
-        emit EddyCrossChainRevert(
-            externalId,
-            context.asset,
-            context.amount,
-            sender
-        );
+        bytes memory walletAddress = context.revertMessage[32:];
+
+        if(context.revertMessage.length == 52) {
+            address receiver = address(uint160(bytes20(walletAddress)));
+            TransferHelper.safeTransfer(context.asset, receiver, context.amount);
+
+            emit EddyCrossChainRevert(
+                externalId,
+                context.asset,
+                context.amount,
+                walletAddress
+            );
+        } else {
+            RefundInfo memory refundInfo = RefundInfo({
+                externalId: externalId,
+                token: context.asset,
+                amount: context.amount,
+                walletAddress: walletAddress
+            });
+            refundInfos[externalId] = refundInfo;
+            
+            emit EddyCrossChainRefund(
+                externalId,
+                context.asset,
+                context.amount,
+                walletAddress
+            );
+        }
     }
 
     function onAbort(AbortContext calldata abortContext) external onlyGateway {
+        // 52 bytes = 32 bytes externalId + 20 bytes evmWalletAddress
         bytes32 externalId = bytes32(abortContext.revertMessage[0:32]);
-        address sender = address(uint160(bytes20(abortContext.revertMessage[32:])));
+        bytes memory walletAddress = abortContext.revertMessage[32:];
 
         RefundInfo memory refundInfo = RefundInfo({
             externalId: externalId,
             token: abortContext.asset,
             amount: abortContext.amount,
-            walletAddress: sender,
-            isClaimed: false
+            walletAddress: walletAddress
         });
         refundInfos[externalId] = refundInfo;
         
@@ -534,24 +564,32 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
             externalId,
             abortContext.asset,
             abortContext.amount,
-            sender
+            walletAddress
         );
     }
 
     function claimRefund(bytes32 externalId) external {
         RefundInfo storage refundInfo = refundInfos[externalId];
-        require(msg.sender == refundInfo.walletAddress, "INVALID_CALLER");
+
+        address receiver = msg.sender;
+        if(refundInfo.walletAddress.length == 20) {
+            receiver = address(uint160(bytes20(refundInfo.walletAddress)));
+        }
+        require(bots[msg.sender] || msg.sender == receiver, "INVALID_CALLER");
         require(refundInfo.externalId != "", "REFUND_NOT_EXIST");
-        require(refundInfo.isClaimed == false, "REFUND_ALREADY_CLAIMED");
         
-        refundInfo.isClaimed = true;
-        TransferHelper.safeTransfer(refundInfo.token, refundInfo.walletAddress, refundInfo.amount);
+        TransferHelper.safeTransfer(refundInfo.token, receiver, refundInfo.amount);
+        delete refundInfos[externalId];
 
         emit EddyCrossChainRefundClaimed(
             externalId,
             refundInfo.token,
             refundInfo.amount,
-            refundInfo.walletAddress
+            abi.encodePacked(msg.sender)
         );
     }
+
+    receive() external payable {}
+
+    fallback() external payable {}
 }

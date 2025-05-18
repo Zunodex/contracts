@@ -19,14 +19,16 @@ struct MixSwapParams {
 }
 
 struct DecodedNativeMessage {
-    address receiver;
     address targetZRC20;
+    bytes sender;
+    bytes receiver;
     bytes swapData;
 }
 
 struct DecodedMessage {
     address targetZRC20;
     uint32 dstChainId;
+    bytes sender;
     bytes receiver; // compatible for btc/sol/evm
     bytes swapDataZ;
     bytes contractAddress; // empty for withdraw, non-empty for withdrawAndCall
@@ -51,39 +53,51 @@ library SwapDataHelperLib {
         );
     }
 
-    function decodeMessage(bytes calldata message) internal pure returns (DecodedMessage memory, MixSwapParams memory) {
+    function decodeMessage(
+        bytes calldata message
+    ) internal pure returns (DecodedMessage memory, MixSwapParams memory) {
         uint32 dstChainId;
         address targetZRC20;
+        uint16 senderLen;
         uint16 receiverLen;
-        uint16 contractAddressLen;
         uint16 swapDataZLen;
+        uint16 contractAddressLen;
         uint16 swapDataBLen;
         uint16 accountsLen;
 
         assembly {
             dstChainId := shr(224, calldataload(message.offset)) // 4 bytes
             targetZRC20 := shr(96, calldataload(add(message.offset, 4))) // 20 bytes
-            receiverLen := shr(240, calldataload(add(message.offset, 24))) // 2 bytes
-            contractAddressLen := shr(240, calldataload(add(message.offset, 26))) // 2 bytes
+            senderLen := shr(240, calldataload(add(message.offset, 24))) // 2 bytes
+            receiverLen := shr(240, calldataload(add(message.offset, 26))) // 2 bytes
             swapDataZLen := shr(240, calldataload(add(message.offset, 28))) // 2 bytes
-            swapDataBLen := shr(240, calldataload(add(message.offset, 30))) // 2 bytes
-            accountsLen := shr(240, calldataload(add(message.offset, 32))) // 2 bytes
+            contractAddressLen := shr(240, calldataload(add(message.offset, 30))) // 2 bytes
+            swapDataBLen := shr(240, calldataload(add(message.offset, 32))) // 2 bytes
+            accountsLen := shr(240, calldataload(add(message.offset, 34))) // 2 bytes
         }
 
-        uint offset = 34; // header = 4 + 20 + 2×5 = 34
-        bytes memory receiver = message[offset : offset + receiverLen];
+        uint offset = 36;
+        bytes calldata sender = message[offset : offset + senderLen];
+        offset += senderLen;
+
+        bytes calldata receiver = message[offset : offset + receiverLen];
         offset += receiverLen;
-        bytes memory contractAddress = message[offset : offset + contractAddressLen];
-        offset += contractAddressLen;
+
         bytes calldata swapDataZ = message[offset : offset + swapDataZLen];
         offset += swapDataZLen;
-        bytes memory swapDataB = message[offset : offset + swapDataBLen];
+
+        bytes calldata contractAddress = message[offset : offset + contractAddressLen];
+        offset += contractAddressLen;
+
+        bytes calldata swapDataB = message[offset : offset + swapDataBLen];
         offset += swapDataBLen;
-        bytes memory accounts = message[offset : offset + accountsLen];
+
+        bytes calldata accounts = message[offset : offset + accountsLen];
 
         DecodedMessage memory decoded = DecodedMessage({
-            targetZRC20: targetZRC20,
             dstChainId: dstChainId,
+            targetZRC20: targetZRC20,
+            sender: sender,
             receiver: receiver,
             contractAddress: contractAddress,
             swapDataZ: swapDataZ,
@@ -92,25 +106,38 @@ library SwapDataHelperLib {
         });
 
         MixSwapParams memory params = decodeCompressedMixSwapParams(swapDataZ);
-
         return (decoded, params);
     }
 
-
     function decodeNativeMessage(
         bytes calldata message
-    ) internal pure returns (DecodedNativeMessage memory, MixSwapParams memory ) {
-        // 20 bytes(evmAddress) + 20 bytes(targetZRC20) + bytes(swapData)
-        address receiver = BytesHelperLib.bytesToAddress(message, 0); // 20
-        address targetZRC20 = BytesHelperLib.bytesToAddress(message, 20); // 40
-        bytes calldata swapData = message[40:];
+    ) internal pure returns (DecodedNativeMessage memory, MixSwapParams memory) {
+        address targetZRC20 = BytesHelperLib.bytesToAddress(message, 0); // 20 bytes
+        uint offset = 20;
+
+        uint16 senderLen;
+        uint16 receiverLen;
+
+        assembly {
+            senderLen := shr(240, calldataload(add(message.offset, offset)))         // offset + 0
+            receiverLen := shr(240, calldataload(add(message.offset, add(offset, 2)))) // offset + 2
+        }
+
+        offset += 4; // advance past both lengths
+        bytes memory sender = message[offset : offset + senderLen];
+        offset += senderLen;
+        bytes memory receiver = message[offset : offset + receiverLen];
+        offset += receiverLen;
+        bytes calldata swapData = message[offset:];
+
         DecodedNativeMessage memory decoded = DecodedNativeMessage({
-            receiver: receiver,
             targetZRC20: targetZRC20,
+            sender: sender,
+            receiver: receiver,
             swapData: swapData
         });
-        MixSwapParams memory params = decodeCompressedMixSwapParams(swapData);
 
+        MixSwapParams memory params = decodeCompressedMixSwapParams(swapData);
         return (decoded, params);
     }
 

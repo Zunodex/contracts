@@ -18,10 +18,13 @@ contract GatewayTransferNativeTest is BaseTest {
         uint32 dstChainId = 7000;
         address asset = address(token1A);
         address targetZRC20 = address(token1Z);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = abi.encodePacked(user2);
         bytes memory swapDataZ = "";
-        bytes memory payload = bytes.concat(
-            bytes20(user2),
-            bytes20(targetZRC20),
+        bytes memory payload = encodeNativeMessage(
+            targetZRC20,
+            sender,
+            receiver,
             swapDataZ
         );
 
@@ -50,6 +53,8 @@ contract GatewayTransferNativeTest is BaseTest {
         uint32 dstChainId = 7000;
         address asset = address(token1A);
         address targetZRC20 = address(token2Z);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = abi.encodePacked(user2);
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token1Z),
             address(token2Z),
@@ -64,9 +69,10 @@ contract GatewayTransferNativeTest is BaseTest {
             abi.encode(address(0), 0),
             block.timestamp + 600
         );
-        bytes memory payload = bytes.concat(
-            bytes20(user2),
-            bytes20(targetZRC20),
+        bytes memory payload = encodeNativeMessage(
+            targetZRC20,
+            sender,
+            receiver,
             swapDataZ
         );
 
@@ -95,6 +101,8 @@ contract GatewayTransferNativeTest is BaseTest {
         uint32 dstChainId = 7000;
         address asset = _ETH_ADDRESS_;
         address targetZRC20 = address(token2Z);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = abi.encodePacked(user2);
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token3Z),
             address(token2Z),
@@ -109,10 +117,10 @@ contract GatewayTransferNativeTest is BaseTest {
             abi.encode(address(0), 0),
             block.timestamp + 600
         );
-        
-        bytes memory payload = bytes.concat(
-            bytes20(user2),
-            bytes20(targetZRC20),
+        bytes memory payload = encodeNativeMessage(
+            targetZRC20,
+            sender,
+            receiver,
             swapDataZ
         );
 
@@ -152,6 +160,8 @@ contract GatewayTransferNativeTest is BaseTest {
             block.timestamp + 600
         );
         address targetZRC20 = address(token2Z);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = abi.encodePacked(user2);
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token3Z),
             address(token2Z),
@@ -166,9 +176,10 @@ contract GatewayTransferNativeTest is BaseTest {
             abi.encode(address(0), 0),
             block.timestamp + 600
         );
-        bytes memory payload = bytes.concat(
-            bytes20(user2),
-            bytes20(targetZRC20),
+        bytes memory payload = encodeNativeMessage(
+            targetZRC20,
+            sender,
+            receiver,
             swapDataZ
         );
 
@@ -214,10 +225,13 @@ contract GatewayTransferNativeTest is BaseTest {
             block.timestamp + 600
         );
         address targetZRC20 = address(token2Z);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = abi.encodePacked(user2);
         bytes memory swapDataZ = "";
-        bytes memory payload = bytes.concat(
-            bytes20(user2),
-            bytes20(targetZRC20),
+        bytes memory payload = encodeNativeMessage(
+            targetZRC20,
+            sender,
+            receiver,
             swapDataZ
         );
 
@@ -263,6 +277,8 @@ contract GatewayTransferNativeTest is BaseTest {
             block.timestamp + 600
         );
         address targetZRC20 = address(token2Z);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = abi.encodePacked(user2);
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token2Z),
             address(token1Z),
@@ -277,9 +293,10 @@ contract GatewayTransferNativeTest is BaseTest {
             abi.encode(address(0), 0),
             block.timestamp + 600
         );
-        bytes memory payload = bytes.concat(
-            bytes20(user2),
-            bytes20(targetZRC20),
+        bytes memory payload = encodeNativeMessage(
+            targetZRC20,
+            sender,
+            receiver,
             swapDataZ
         );
 
@@ -308,6 +325,8 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes32 externalId = keccak256(abi.encodePacked(block.timestamp));
         address zrc20 = address(btcZ);
         uint256 amount = 100 ether;
+        bytes memory sender = btcAddress;
+        bytes memory receiver = abi.encodePacked(user2);
         address targetZRC20 = address(token1Z);
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(btcZ),
@@ -323,9 +342,10 @@ contract GatewayTransferNativeTest is BaseTest {
             abi.encode(address(0), 0),
             block.timestamp + 600
         );
-        bytes memory message = bytes.concat(
-            bytes20(user2),
-            bytes20(targetZRC20),
+        bytes memory message = encodeNativeMessage(
+            targetZRC20,
+            sender,
+            receiver,
             swapDataZ
         );
 
@@ -351,6 +371,8 @@ contract GatewayTransferNativeTest is BaseTest {
         address zrc20 = address(token1Z);
         uint256 amount = 100 ether;
         address targetZRC20 = address(token2Z);
+        bytes memory sender = solAddress;
+        bytes memory receiver = abi.encodePacked(user2);
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token1Z),
             address(token2Z),
@@ -365,9 +387,10 @@ contract GatewayTransferNativeTest is BaseTest {
             abi.encode(address(0), 0),
             block.timestamp + 600
         );
-        bytes memory message = bytes.concat(
-            bytes20(user2),
-            bytes20(targetZRC20),
+        bytes memory message = encodeNativeMessage(
+            targetZRC20,
+            sender,
+            receiver,
             swapDataZ
         );
 
@@ -392,7 +415,8 @@ contract GatewayTransferNativeTest is BaseTest {
         uint256 amount = 100 ether;
         uint32 dstChainId = 2;
         address targetZRC20 = address(token1Z);
-        bytes memory evmWalletAddress = abi.encodePacked(user2);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = abi.encodePacked(user2);
         bytes memory swapDataZ = "";
         bytes memory contractAddress = abi.encodePacked(address(gatewaySendB));
         bytes memory fromTokenB = abi.encodePacked(address(token1B));
@@ -402,7 +426,8 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory message = encodeMessage(
             dstChainId,
             targetZRC20,
-            evmWalletAddress,
+            sender,
+            receiver,
             swapDataZ,
             contractAddress,
             abi.encodePacked(
@@ -434,7 +459,8 @@ contract GatewayTransferNativeTest is BaseTest {
         uint256 amount = 100 ether;
         uint32 dstChainId = 2;
         address targetZRC20 = address(token2Z);
-        bytes memory evmWalletAddress = abi.encodePacked(user2);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = abi.encodePacked(user2);
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token1Z),
             address(token2Z),
@@ -457,7 +483,8 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory message = encodeMessage(
             dstChainId,
             targetZRC20,
-            evmWalletAddress,
+            sender,
+            receiver,
             swapDataZ,
             contractAddress,
             abi.encodePacked(
@@ -489,7 +516,8 @@ contract GatewayTransferNativeTest is BaseTest {
         uint256 amount = 100 ether;
         uint32 dstChainId = 2;
         address targetZRC20 = address(token1Z);
-        bytes memory evmWalletAddress = abi.encodePacked(user2);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = abi.encodePacked(user2);
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token2Z),
             address(token1Z),
@@ -525,7 +553,8 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory message = encodeMessage(
             dstChainId,
             targetZRC20,
-            evmWalletAddress,
+            sender,
+            receiver,
             swapDataZ,
             contractAddress,
             abi.encodePacked(
@@ -557,6 +586,8 @@ contract GatewayTransferNativeTest is BaseTest {
         uint256 amount = 100 ether;
         uint32 dstChainId = 8332;
         address targetZRC20 = address(btcZ);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = btcAddress;
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token1Z),
             address(btcZ),
@@ -579,7 +610,8 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory message = encodeMessage(
             dstChainId,
             targetZRC20,
-            btcAddress,
+            sender,
+            receiver,
             swapDataZ,
             contractAddress,
             abi.encodePacked(
@@ -611,6 +643,8 @@ contract GatewayTransferNativeTest is BaseTest {
         uint256 amount = 100 ether;
         uint32 dstChainId = 8332;
         address targetZRC20 = address(btcZ);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = btcAddress;
         bytes memory swapDataZ = "";
         bytes memory contractAddress = "";
         bytes memory fromTokenB = "";
@@ -620,7 +654,8 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory message = encodeMessage(
             dstChainId,
             targetZRC20,
-            btcAddress,
+            sender,
+            receiver,
             swapDataZ,
             contractAddress,
             abi.encodePacked(
@@ -653,6 +688,8 @@ contract GatewayTransferNativeTest is BaseTest {
         uint256 amount = 100 ether;
         uint32 dstChainId = 900;
         address targetZRC20 = address(token1Z);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = solAddress;
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token2Z),
             address(token1Z),
@@ -681,7 +718,8 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory message = encodeMessage(
             dstChainId,
             targetZRC20,
-            solAddress,
+            sender,
+            receiver,
             swapDataZ,
             contractAddress,
             abi.encodePacked(
@@ -714,6 +752,8 @@ contract GatewayTransferNativeTest is BaseTest {
         uint256 amount = 100 ether;
         uint32 dstChainId = 900;
         address targetZRC20 = address(token1Z);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = solAddress;
         bytes memory swapDataZ = "";
         bytes memory contractAddress = solGatewaySendAddress;
         bytes memory fromTokenB = abi.encodePacked(address(token1B));
@@ -742,7 +782,8 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory message = encodeMessage(
             dstChainId,
             targetZRC20,
-            solAddress,
+            sender,
+            receiver,
             swapDataZ,
             contractAddress,
             abi.encodePacked(
@@ -775,6 +816,8 @@ contract GatewayTransferNativeTest is BaseTest {
         uint256 amount = 100 ether;
         uint32 dstChainId = 900;
         address targetZRC20 = address(token1Z);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = solAddress;
         bytes memory swapDataZ = "";
         bytes memory contractAddress = solGatewaySendAddress;
         bytes memory fromTokenB = abi.encodePacked(address(token1B));
@@ -790,7 +833,8 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory message = encodeMessage(
             dstChainId,
             targetZRC20,
-            solAddress,
+            sender,
+            receiver,
             swapDataZ,
             contractAddress,
             abi.encodePacked(
@@ -824,6 +868,8 @@ contract GatewayTransferNativeTest is BaseTest {
         address zrc20 = address(token1Z);
         uint256 amount = 100 ether;
         address targetZRC20 = WZETA;
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = abi.encodePacked(user2);
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token1Z),
             WZETA,
@@ -838,9 +884,10 @@ contract GatewayTransferNativeTest is BaseTest {
             abi.encode(address(0), 0),
             block.timestamp + 600
         );
-        bytes memory message = bytes.concat(
-            bytes20(user2),
-            bytes20(targetZRC20),
+        bytes memory message = encodeNativeMessage(
+            targetZRC20,
+            sender,
+            receiver,
             swapDataZ
         );
 
@@ -860,12 +907,12 @@ contract GatewayTransferNativeTest is BaseTest {
     }
 
     function test_SuperWithdraw() public {
-        token1Z.mint(address(gatewayCrossChain), initialBalance);
-        gatewayCrossChain.superWithdraw(address(token1Z));
+        token1Z.mint(address(gatewayTransferNative), initialBalance);
+        gatewayTransferNative.superWithdraw(address(token1Z), initialBalance);
         assertEq(token1Z.balanceOf(EddyTreasurySafe), initialBalance);
 
-        deal(address(gatewayCrossChain), initialBalance);
-        gatewayCrossChain.superWithdraw(_ETH_ADDRESS_);
+        deal(address(gatewayTransferNative), initialBalance);
+        gatewayTransferNative.superWithdraw(_ETH_ADDRESS_, initialBalance);
         assertEq(EddyTreasurySafe.balance, initialBalance);
     }
 
@@ -925,7 +972,8 @@ contract GatewayTransferNativeTest is BaseTest {
         uint256 amount = 100 ether;
         uint32 dstChainId = 2;
         address targetZRC20 = address(token2Z);
-        bytes memory evmWalletAddress = abi.encodePacked(user2);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = abi.encodePacked(user2);
         bytes memory swapDataZ = "0x12345678";
         bytes memory fromTokenB = abi.encodePacked(address(token2B));
         bytes memory toTokenB =  abi.encodePacked(address(token2B));
@@ -934,7 +982,8 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory message = encodeMessage(
             dstChainId,
             targetZRC20,
-            evmWalletAddress,
+            sender,
+            receiver,
             swapDataZ,
             contractAddress,
             abi.encodePacked(fromTokenB, toTokenB, swapDataB),
@@ -973,10 +1022,12 @@ contract GatewayTransferNativeTest is BaseTest {
         );
 
         dstChainId = 900;
+        receiver = solAddress;
         message = encodeMessage(
             dstChainId,
             targetZRC20,
-            evmWalletAddress,
+            sender,
+            receiver,
             swapDataZ,
             contractAddress,
             abi.encodePacked(fromTokenB, toTokenB, swapDataB),
@@ -992,13 +1043,15 @@ contract GatewayTransferNativeTest is BaseTest {
         );
 
         dstChainId = 8332;
+        receiver = btcAddress;
         fromTokenB = "";
         toTokenB =  "";
         contractAddress = "";
         message = encodeMessage(
             dstChainId,
             targetZRC20,
-            evmWalletAddress,
+            sender,
+            receiver,
             swapDataZ,
             contractAddress,
             swapDataB,

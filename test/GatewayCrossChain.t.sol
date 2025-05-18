@@ -5,6 +5,7 @@ pragma solidity ^0.8.20;
 import {IZRC20} from "@zetachain/protocol-contracts/contracts/zevm/interfaces/IZRC20.sol";
 import "@zetachain/protocol-contracts/contracts/zevm/interfaces/IGatewayZEVM.sol";
 import {UniswapV2Library} from "../contracts/libraries/UniswapV2Library.sol";
+import {SwapDataHelperLib} from "../contracts/libraries/SwapDataHelperLib.sol";
 import {BaseTest} from "./BaseTest.t.sol";
 import {console} from "forge-std/console.sol";
 
@@ -17,7 +18,8 @@ contract GatewayCrossChainTest is BaseTest {
         address asset = address(token2A);
         uint32 dstChainId = 2;
         address targetZRC20 = address(token2Z);
-        bytes memory evmWalletAddress = abi.encodePacked(user2);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = abi.encodePacked(user2);
         bytes memory swapDataZ = "";
         bytes memory contractAddress = abi.encodePacked(address(gatewaySendB));
         bytes memory fromTokenB = abi.encodePacked(address(token2B));
@@ -40,7 +42,8 @@ contract GatewayCrossChainTest is BaseTest {
         bytes memory payload = encodeMessage(
             dstChainId,
             targetZRC20,
-            evmWalletAddress,
+            sender,
+            receiver,
             swapDataZ,
             contractAddress,
             abi.encodePacked(
@@ -76,7 +79,8 @@ contract GatewayCrossChainTest is BaseTest {
         address asset = address(token2A);
         uint32 dstChainId = 2;
         address targetZRC20 = address(token1Z);
-        bytes memory evmWalletAddress = abi.encodePacked(user2);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = abi.encodePacked(user2);
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token2Z),
             address(token1Z),
@@ -99,7 +103,8 @@ contract GatewayCrossChainTest is BaseTest {
         bytes memory payload = encodeMessage(
             dstChainId,
             targetZRC20,
-            evmWalletAddress,
+            sender,
+            receiver,
             swapDataZ,
             contractAddress,
             abi.encodePacked(
@@ -135,7 +140,8 @@ contract GatewayCrossChainTest is BaseTest {
         address asset = address(token2A);
         uint32 dstChainId = 2;
         address targetZRC20 = address(token1Z);
-        bytes memory evmWalletAddress = abi.encodePacked(user2);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = abi.encodePacked(user2);
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token2Z),
             address(token1Z),
@@ -171,7 +177,8 @@ contract GatewayCrossChainTest is BaseTest {
         bytes memory payload = encodeMessage(
             dstChainId,
             targetZRC20,
-            evmWalletAddress,
+            sender,
+            receiver,
             swapDataZ,
             contractAddress,
             abi.encodePacked(
@@ -223,7 +230,8 @@ contract GatewayCrossChainTest is BaseTest {
         address asset = address(token1A);
         uint32 dstChainId = 2;
         address targetZRC20 = address(token2Z);
-        bytes memory evmWalletAddress = abi.encodePacked(user2);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = abi.encodePacked(user2);
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token1Z),
             address(token2Z),
@@ -246,7 +254,8 @@ contract GatewayCrossChainTest is BaseTest {
         bytes memory payload = encodeMessage(
             dstChainId,
             targetZRC20,
-            evmWalletAddress,
+            sender,
+            receiver,
             swapDataZ,
             contractAddress,
             abi.encodePacked(
@@ -299,7 +308,8 @@ contract GatewayCrossChainTest is BaseTest {
         address asset = address(token1A);
         uint32 dstChainId = 2;
         address targetZRC20 = address(token2Z);
-        bytes memory evmWalletAddress = abi.encodePacked(user2);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = abi.encodePacked(user2);
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token1Z),
             address(token2Z),
@@ -335,7 +345,8 @@ contract GatewayCrossChainTest is BaseTest {
         bytes memory payload = encodeMessage(
             dstChainId,
             targetZRC20,
-            evmWalletAddress,
+            sender,
+            receiver,
             swapDataZ,
             contractAddress,
             abi.encodePacked(
@@ -373,7 +384,8 @@ contract GatewayCrossChainTest is BaseTest {
         uint256 amount = 100 ether;
         uint32 dstChainId = 2;
         address targetZRC20 = address(token2Z);
-        bytes memory evmWalletAddress = abi.encodePacked(user2);
+        bytes memory sender = btcAddress;
+        bytes memory receiver = abi.encodePacked(user2);
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(btcZ),
             address(token2Z),
@@ -409,7 +421,8 @@ contract GatewayCrossChainTest is BaseTest {
         bytes memory payload = encodeMessage(
             dstChainId,
             targetZRC20,
-            evmWalletAddress,
+            sender,
+            receiver,
             swapDataZ,
             contractAddress,
             abi.encodePacked(
@@ -457,6 +470,8 @@ contract GatewayCrossChainTest is BaseTest {
         address asset = address(token1A);
         uint32 dstChainId = 8332;
         address targetZRC20 = address(btcZ);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = btcAddress;
         address targetContract = address(gatewayCrossChain);
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token1Z),
@@ -480,7 +495,8 @@ contract GatewayCrossChainTest is BaseTest {
         bytes memory payload = encodeMessage(
             dstChainId,
             targetZRC20,
-            btcAddress,
+            sender,
+            receiver,
             swapDataZ,
             contractAddress,
             abi.encodePacked(
@@ -532,6 +548,8 @@ contract GatewayCrossChainTest is BaseTest {
         address asset = address(token2A);
         uint32 dstChainId = 900;
         address targetZRC20 = address(token1Z);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = solAddress;
         address targetContract = address(gatewayCrossChain);
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token2Z),
@@ -561,7 +579,8 @@ contract GatewayCrossChainTest is BaseTest {
         bytes memory payload = encodeMessage(
             dstChainId,
             targetZRC20,
-            solAddress,
+            sender,
+            receiver,
             swapDataZ,
             contractAddress,
             abi.encodePacked(
@@ -614,6 +633,8 @@ contract GatewayCrossChainTest is BaseTest {
         address asset = address(token2A);
         uint32 dstChainId = 900;
         address targetZRC20 = address(token1Z);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = solAddress;
         address targetContract = address(gatewayCrossChain);
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token2Z),
@@ -656,7 +677,8 @@ contract GatewayCrossChainTest is BaseTest {
         bytes memory payload = encodeMessage(
             dstChainId,
             targetZRC20,
-            solAddress,
+            sender,
+            receiver,
             swapDataZ,
             contractAddress,
             abi.encodePacked(
@@ -689,11 +711,11 @@ contract GatewayCrossChainTest is BaseTest {
 
     function test_SuperWithdraw() public {
         token1Z.mint(address(gatewayCrossChain), initialBalance);
-        gatewayCrossChain.superWithdraw(address(token1Z));
+        gatewayCrossChain.superWithdraw(address(token1Z), initialBalance);
         assertEq(token1Z.balanceOf(EddyTreasurySafe), initialBalance);
 
         deal(address(gatewayCrossChain), initialBalance);
-        gatewayCrossChain.superWithdraw(_ETH_ADDRESS_);
+        gatewayCrossChain.superWithdraw(_ETH_ADDRESS_, initialBalance);
         assertEq(EddyTreasurySafe.balance, initialBalance);
     }
 
@@ -716,37 +738,48 @@ contract GatewayCrossChainTest is BaseTest {
     }
 
     function test_ZOnAbort() public {
-        bytes32 externalId = keccak256(abi.encodePacked(block.timestamp));
-        uint256 amount = 100 ether;
-        token1Z.mint(address(gatewayCrossChain), amount);
+        bytes32 externalId1 = keccak256(abi.encodePacked(block.timestamp));
+        token1Z.mint(address(gatewayCrossChain), 2 * initialBalance);
 
-        vm.prank(address(gatewayZEVM));
+        vm.startPrank(address(gatewayZEVM));
         gatewayCrossChain.onAbort(
             AbortContext({
                 sender: abi.encode(address(this)),
                 asset: address(token1Z),
-                amount: amount,
+                amount: initialBalance,
                 outgoing: false,
                 chainID: 7000,
-                revertMessage: bytes.concat(externalId, bytes20(user2))
+                revertMessage: bytes.concat(externalId1, abi.encodePacked(user2))
             })
         );
 
+        bytes32 externalId2 = keccak256(abi.encodePacked(block.timestamp + 600));
+        gatewayCrossChain.onAbort(
+            AbortContext({
+                sender: abi.encode(address(this)),
+                asset: address(token1Z),
+                amount: initialBalance,
+                outgoing: false,
+                chainID: 7000,
+                revertMessage: bytes.concat(externalId2, solAddress)
+            })
+        );
+        vm.stopPrank();
+
+        vm.prank(bot);
+        gatewayCrossChain.claimRefund(externalId2);
+        assertEq(token1Z.balanceOf(bot), initialBalance);
+
         vm.expectRevert();
-        gatewayCrossChain.claimRefund(externalId);
+        gatewayCrossChain.claimRefund(externalId1);
 
         vm.expectRevert();
         vm.prank(user2);
         gatewayCrossChain.claimRefund(bytes32(0));
 
         vm.prank(user2);
-        gatewayCrossChain.claimRefund(externalId);
-
-        vm.expectRevert();
-        vm.prank(user2);
-        gatewayCrossChain.claimRefund(externalId);
-
-        assertEq(token1Z.balanceOf(user2), amount);
+        gatewayCrossChain.claimRefund(externalId1);
+        assertEq(token1Z.balanceOf(user2), initialBalance);
     }
 
     function test_Set() public {
@@ -758,19 +791,23 @@ contract GatewayCrossChainTest is BaseTest {
         gatewayCrossChain.setFeePercent(0);
         gatewayCrossChain.setGateway(payable(address(0x111)));
         gatewayCrossChain.setEddyTreasurySafe(address(0x111));
+        gatewayCrossChain.setBot(address(0x111), true);
         vm.stopPrank();
     }
 
     function test_Revert() public {
         uint32 dstChainId = 8332;
         address targetZRC20 = address(btcZ);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = btcAddress;
         bytes memory swapDataZ = "";
         bytes memory contractAddress = "";
         bytes memory swapDataB = "";
         bytes memory payload = encodeMessage(
             dstChainId,
             targetZRC20,
-            btcAddress,
+            sender,
+            receiver,
             swapDataZ,
             contractAddress,
             swapDataB,
@@ -800,10 +837,12 @@ contract GatewayCrossChainTest is BaseTest {
 
         dstChainId = 900;
         targetZRC20 = address(token2Z);
+        receiver = solAddress;
         payload = encodeMessage(
             dstChainId,
             targetZRC20,
-            solAddress,
+            sender,
+            receiver,
             swapDataZ,
             contractAddress,
             swapDataB,
@@ -829,10 +868,12 @@ contract GatewayCrossChainTest is BaseTest {
         vm.stopPrank();
 
         dstChainId = 2;
+        receiver = abi.encodePacked(user2);
         payload = encodeMessage(
             dstChainId,
             targetZRC20,
-            abi.encodePacked(user2),
+            sender,
+            receiver,
             swapDataZ,
             contractAddress,
             swapDataB,

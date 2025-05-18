@@ -22,6 +22,7 @@ contract BaseTest is Test {
     address public EddyTreasurySafe = address(0x123);
     address public user1 = address(0x111);
     address public user2 = address(0x222);
+    address public bot = address(0x333);
     bytes public btcAddress = abi.encodePacked("tb1qy9pqmk2pd9sv63g27jt8r657wy0d9ueeh0nqur");
     bytes public solAddress = abi.encodePacked("DrexsvCMH9WWjgnjVbx1iFf3YZcKadupFmxnZLfSyotd");
     bytes public solGatewaySendAddress = abi.encodePacked("EwUjcjz8jvFeE99kjcZKM5Aojs3eKcyW2JHNKNDP9M4k");
@@ -136,6 +137,7 @@ contract BaseTest is Test {
             data
         );
         gatewayTransferNative = GatewayTransferNative(payable(address(transferNativeProxy)));
+        gatewayTransferNative.setBot(bot, true);
 
         // set GatewayCrossChain
         data = abi.encodeWithSignature(
@@ -153,6 +155,7 @@ contract BaseTest is Test {
             data
         );
         gatewayCrossChain = GatewayCrossChain(payable(address(crossChainProxy)));
+        gatewayCrossChain.setBot(bot, true);
 
         // set GatewayEVM
         gatewayA.setGatewayZEVM(address(gatewayZEVM));
@@ -250,6 +253,7 @@ contract BaseTest is Test {
     function encodeMessage(
         uint32 dstChainId,
         address targetZRC20,
+        bytes memory sender,
         bytes memory receiver,
         bytes memory swapDataZ,
         bytes memory contractAddress,
@@ -259,16 +263,34 @@ contract BaseTest is Test {
         return abi.encodePacked(
             bytes4(dstChainId),
             bytes20(targetZRC20),
+            uint16(sender.length),
             uint16(receiver.length),
-            uint16(contractAddress.length),
             uint16(swapDataZ.length),
+            uint16(contractAddress.length),
             uint16(swapDataB.length),
             uint16(accounts.length),
+            sender,
             receiver,
-            contractAddress,
             swapDataZ,
+            contractAddress,
             swapDataB,
             accounts
+        );
+    }
+
+    function encodeNativeMessage(
+        address targetZRC20,
+        bytes memory sender,
+        bytes memory receiver,
+        bytes memory swapData
+    ) public pure returns (bytes memory) {
+        return abi.encodePacked(
+            bytes20(targetZRC20),
+            uint16(sender.length),
+            uint16(receiver.length),
+            sender,
+            receiver,
+            swapData
         );
     }
 
