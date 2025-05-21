@@ -9,7 +9,6 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {IUniswapV2Router01} from "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router01.sol";
-import {IUniswapV2Factory} from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 import {UniswapV2Library} from "./libraries/UniswapV2Library.sol";
 import {TransferHelper} from "./libraries/TransferHelper.sol";
 import {BytesHelperLib} from "./libraries/BytesHelperLib.sol";
@@ -24,7 +23,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
     address public constant UniswapRouter = 0x2ca7d64A7EFE2D62A725E2B35Cf7230D6677FfEe;
     address public constant UniswapFactory = 0x9fd96203f7b22bCF72d9DCb40ff98302376cE09c;
     uint32 constant BITCOIN_EDDY = 8332; // chain Id from eddy db
-    uint32 constant SOLANA_EDDY = 900; // chain Id from eddy db
+    uint32 constant SOLANA_EDDY = 1399811149; // chain Id from eddy db
     uint32 constant ZETACHAIN = 7000;
     uint256 constant MAX_DEADLINE = 200;
     address private EddyTreasurySafe;
