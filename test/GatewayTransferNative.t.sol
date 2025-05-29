@@ -686,7 +686,7 @@ contract GatewayTransferNativeTest is BaseTest {
     // zetachain swap - SOL: token2Z -> token1Z -> token1B
     function test_ZSwap2SOL() public {
         uint256 amount = 100 ether;
-        uint32 dstChainId = 900;
+        uint32 dstChainId = 1399811149;
         address targetZRC20 = address(token1Z);
         bytes memory sender = abi.encodePacked(user1);
         bytes memory receiver = solAddress;
@@ -750,7 +750,7 @@ contract GatewayTransferNativeTest is BaseTest {
     // zetachain - SOL: token1Z -> token1B -> token2B
     function test_Z2SOLSwap() public {
         uint256 amount = 100 ether;
-        uint32 dstChainId = 900;
+        uint32 dstChainId = 1399811149;
         address targetZRC20 = address(token1Z);
         bytes memory sender = abi.encodePacked(user1);
         bytes memory receiver = solAddress;
@@ -814,7 +814,7 @@ contract GatewayTransferNativeTest is BaseTest {
     // zetachain - SOL: token1Z -> token1B
     function test_Z2SOL() public {
         uint256 amount = 100 ether;
-        uint32 dstChainId = 900;
+        uint32 dstChainId = 1399811149;
         address targetZRC20 = address(token1Z);
         bytes memory sender = abi.encodePacked(user1);
         bytes memory receiver = solAddress;
@@ -1021,7 +1021,7 @@ contract GatewayTransferNativeTest is BaseTest {
             message
         );
 
-        dstChainId = 900;
+        dstChainId = 1399811149;
         receiver = solAddress;
         message = encodeMessage(
             dstChainId,

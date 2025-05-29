@@ -546,7 +546,7 @@ contract GatewayCrossChainTest is BaseTest {
             block.timestamp + 600
         );
         address asset = address(token2A);
-        uint32 dstChainId = 900;
+        uint32 dstChainId = 1399811149;
         address targetZRC20 = address(token1Z);
         bytes memory sender = abi.encodePacked(user1);
         bytes memory receiver = solAddress;
@@ -631,7 +631,7 @@ contract GatewayCrossChainTest is BaseTest {
             block.timestamp + 600
         );
         address asset = address(token2A);
-        uint32 dstChainId = 900;
+        uint32 dstChainId = 1399811149;
         address targetZRC20 = address(token1Z);
         bytes memory sender = abi.encodePacked(user1);
         bytes memory receiver = solAddress;
@@ -835,7 +835,7 @@ contract GatewayCrossChainTest is BaseTest {
         );
         vm.stopPrank();
 
-        dstChainId = 900;
+        dstChainId = 1399811149;
         targetZRC20 = address(token2Z);
         receiver = solAddress;
         payload = encodeMessage(
