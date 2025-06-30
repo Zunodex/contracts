@@ -530,6 +530,8 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
                 walletAddress
             );
         } else {
+            if(refundInfos[externalId].externalId != "") return;
+            
             RefundInfo memory refundInfo = RefundInfo({
                 externalId: externalId,
                 token: context.asset,
@@ -551,6 +553,7 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
         // 52 bytes = 32 bytes externalId + 20 bytes evmWalletAddress
         bytes32 externalId = bytes32(abortContext.revertMessage[0:32]);
         bytes memory walletAddress = abortContext.revertMessage[32:];
+        if(refundInfos[externalId].externalId != "") return;
 
         RefundInfo memory refundInfo = RefundInfo({
             externalId: externalId,
