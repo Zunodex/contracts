@@ -738,10 +738,10 @@ contract GatewayCrossChainTest is BaseTest {
     }
 
     function test_ZOnAbort() public {
-        bytes32 externalId1 = keccak256(abi.encodePacked(block.timestamp));
         token1Z.mint(address(gatewayCrossChain), 2 * initialBalance);
 
         vm.startPrank(address(gatewayZEVM));
+        bytes32 externalId1 = keccak256(abi.encodePacked(block.timestamp));
         gatewayCrossChain.onAbort(
             AbortContext({
                 sender: abi.encode(address(this)),
@@ -766,20 +766,32 @@ contract GatewayCrossChainTest is BaseTest {
         );
         vm.stopPrank();
 
-        vm.prank(bot);
-        gatewayCrossChain.claimRefund(externalId2);
-        assertEq(token1Z.balanceOf(bot), initialBalance);
-
-        vm.expectRevert();
-        gatewayCrossChain.claimRefund(externalId1);
-
-        vm.expectRevert();
-        vm.prank(user2);
+        vm.expectRevert("REFUND_NOT_EXIST");
         gatewayCrossChain.claimRefund(bytes32(0));
+
+        vm.expectRevert("INVALID_CALLER");
+        vm.prank(user1);
+        gatewayCrossChain.claimRefund(externalId1);
 
         vm.prank(user2);
         gatewayCrossChain.claimRefund(externalId1);
         assertEq(token1Z.balanceOf(user2), initialBalance);
+
+        vm.expectRevert("REFUND_NOT_EXIST");
+        vm.prank(user2);
+        gatewayCrossChain.claimRefund(externalId1);
+
+        vm.expectRevert("INVALID_CALLER");
+        vm.prank(user1);
+        gatewayCrossChain.claimRefund(externalId2);
+
+        vm.prank(bot);
+        gatewayCrossChain.claimRefund(externalId2);
+        assertEq(token1Z.balanceOf(bot), initialBalance);
+
+        vm.expectRevert("REFUND_NOT_EXIST");
+        vm.prank(bot);
+        gatewayCrossChain.claimRefund(externalId2);
     }
 
     function test_Set() public {
