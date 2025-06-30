@@ -38,22 +38,35 @@ contract GatewaySendTest is BaseTest {
         vm.stopPrank();
     }
 
-    function test_AOnRevert() public {
-        bytes32 externalId = bytes32(0);
-        uint256 amount = 100 ether;
-        token1A.mint(address(gatewaySendA), amount);
+    function test_OnRevert() public {
+        vm.deal(address(gatewaySendA), initialBalance);
+        token1A.mint(address(gatewaySendA), initialBalance);
 
+        bytes32 externalId1 = keccak256(abi.encodePacked(block.timestamp));
         vm.prank(address(gatewayA));
         gatewaySendA.onRevert(
             RevertContext({
                 sender: address(this),
                 asset: address(token1A),
-                amount: amount,
-                revertMessage: bytes.concat(externalId, bytes20(user2))
+                amount: initialBalance,
+                revertMessage: bytes.concat(externalId1, abi.encodePacked(user2))
             })
         );
 
-        assertEq(token1A.balanceOf(user2), amount);
+        assertEq(token1A.balanceOf(user2), initialBalance);
+
+        bytes32 externalId2 = keccak256(abi.encodePacked(block.timestamp + 600));
+        vm.prank(address(gatewayA));
+        gatewaySendA.onRevert(
+            RevertContext({
+                sender: address(this),
+                asset: address(0),
+                amount: initialBalance,
+                revertMessage: bytes.concat(externalId2, abi.encodePacked(user2))
+            })
+        );
+
+        assertEq(user2.balance, initialBalance);
     }
 
     function test_Revert() public {
