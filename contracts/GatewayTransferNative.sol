@@ -343,7 +343,12 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         uint256 amount
     ) internal returns (uint256 platformFeesForTx) {
         platformFeesForTx = (amount * feePercent) / 1000; // platformFee = 5 <> 0.5%
-        TransferHelper.safeTransfer(zrc20, EddyTreasurySafe, platformFeesForTx);
+        
+        if(zrc20 == _ETH_ADDRESS_) {
+            TransferHelper.safeTransferETH(EddyTreasurySafe, platformFeesForTx);
+        } else {
+            TransferHelper.safeTransfer(zrc20, EddyTreasurySafe, platformFeesForTx);
+        }
     }
 
     /**
