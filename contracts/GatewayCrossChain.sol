@@ -288,7 +288,7 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
                 revertAddress: address(this),
                 callOnRevert: true,
                 abortAddress: address(0),
-                revertMessage: bytes.concat(externalId, bytes20(sender)),
+                revertMessage: bytes.concat(externalId, sender),
                 onRevertGasLimit: gasLimit
             })
         );

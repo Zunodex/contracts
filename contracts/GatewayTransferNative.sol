@@ -288,7 +288,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         bytes memory sender,
         address outputToken,
         uint256 amount
-    ) public {
+    ) internal {
         gateway.withdraw(
             sender,
             amount,
@@ -297,7 +297,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
                 revertAddress: address(this),
                 callOnRevert: true,
                 abortAddress: address(0),
-                revertMessage: bytes.concat(externalId, bytes20(sender)),
+                revertMessage: bytes.concat(externalId, sender),
                 onRevertGasLimit: gasLimit
             })
         );
