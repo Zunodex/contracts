@@ -87,6 +87,7 @@ contract BaseTest is Test {
         dodoRouteProxyA.setPrice(address(token1A), _ETH_ADDRESS_, 3e18); // 1 token1A = 3 ETH
         dodoRouteProxyZ.setPrice(address(token1Z), address(token2Z), 2e18); // 1 token1Z = 2 token2Z
         dodoRouteProxyZ.setPrice(address(token1Z), address(token3Z), 3e18); // 1 token1Z = 3 token3Z
+        dodoRouteProxyZ.setPrice(address(token2Z), _ETH_ADDRESS_, 1e18); // 1 token2Z = 1 ETH   
         dodoRouteProxyZ.setPrice(address(token2Z), address(token3Z), 1e18); // 1 token2Z = 1 token3Z
         dodoRouteProxyZ.setPrice(address(token1Z), address(btcZ), 1e18); // 1 token1Z = 1 btcZ
         dodoRouteProxyZ.setPrice(address(token2Z), address(btcZ), 2e18); // 1 token2Z = 2 btcZ
@@ -201,7 +202,7 @@ contract BaseTest is Test {
 
         // mint tokens
         vm.deal(user1, initialBalance);
-        vm.deal(address(dodoRouteProxyA), initialBalance);
+        vm.deal(address(dodoRouteProxyA), initialBalance); 
         vm.deal(address(dodoRouteProxyB), initialBalance);
 
         token1A.mint(user1, initialBalance);

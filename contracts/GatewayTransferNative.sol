@@ -436,8 +436,14 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             return amount;
         }
 
-        IZRC20(params.fromToken).approve(DODOApprove, amount);
-        return IDODORouteProxy(DODORouteProxy).mixSwap{value: msg.value}(
+        bool fromIsETH = params.fromToken == _ETH_ADDRESS_;
+        uint256 valueToSend = fromIsETH ? amount : 0;
+
+        if(!fromIsETH) {
+            TransferHelper.safeApprove(params.fromToken, DODOApprove, params.fromTokenAmount);
+        }
+
+        return IDODORouteProxy(DODORouteProxy).mixSwap{value: valueToSend}(
             params.fromToken,
             params.toToken,
             params.fromTokenAmount,

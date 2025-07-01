@@ -410,6 +410,71 @@ contract GatewayTransferNativeTest is BaseTest {
         assertEq(token2Z.balanceOf(user2), 200000000000000000000);
     }
 
+    // zetachain - B: ETH -> token2Z -> token2B -> token1B
+    function test_ZNativeSwap2BSwap() public {
+        uint256 amount = 100 ether;
+        uint32 dstChainId = 2;
+        address targetZRC20 = address(token2Z);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = abi.encodePacked(user2);
+        bytes memory swapDataZ = encodeCompressedMixSwapParams(
+            _ETH_ADDRESS_,
+            address(token2Z),
+            amount,
+            0,
+            0,
+            new address[](1),
+            new address[](1),
+            new address[](1),
+            0,
+            new bytes[](1),
+            abi.encode(address(0), 0),
+            block.timestamp + 600
+        );
+        bytes memory contractAddress = abi.encodePacked(address(gatewaySendB));
+        bytes memory fromTokenB = abi.encodePacked(address(token2B));
+        bytes memory toTokenB = abi.encodePacked(address(token1B));
+        bytes memory swapDataB = encodeCompressedMixSwapParams(
+            address(token2B),
+            address(token1B),
+            98995986959878634903,
+            0,
+            0,
+            new address[](1),
+            new address[](1),
+            new address[](1),
+            0,
+            new bytes[](1),
+            abi.encode(address(0), 0),
+            block.timestamp + 600
+        );
+        bytes memory accounts = "";
+        bytes memory message = encodeMessage(
+            dstChainId,
+            targetZRC20,
+            sender,
+            receiver,
+            swapDataZ,
+            contractAddress,
+            abi.encodePacked(
+                fromTokenB, 
+                toTokenB, 
+                swapDataB
+            ),
+            accounts
+        );
+
+        vm.prank(user1);
+        gatewayTransferNative.withdrawToNativeChain{value: amount}(
+            _ETH_ADDRESS_,
+            amount,
+            message
+        );
+
+        assertEq(user1.balance, initialBalance - amount);
+        assertEq(token1B.balanceOf(user2), 24748996739969658725); 
+    }
+
     // zatachain - B: token1Z -> token1B
     function test_Z2B() public {
         uint256 amount = 100 ether;
