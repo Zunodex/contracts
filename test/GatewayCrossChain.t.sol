@@ -720,21 +720,49 @@ contract GatewayCrossChainTest is BaseTest {
     }
 
     function test_ZOnRevert() public {
-        bytes32 externalId = keccak256(abi.encodePacked(block.timestamp));
-        uint256 amount = 100 ether;
-        token1Z.mint(address(gatewayCrossChain), amount);
+        token1Z.mint(address(gatewayCrossChain), 2 * initialBalance);
 
+        bytes32 externalId1 = keccak256(abi.encodePacked(block.timestamp));
         vm.prank(address(gatewayZEVM));
         gatewayCrossChain.onRevert(
             RevertContext({
                 sender: address(this),
                 asset: address(token1Z),
-                amount: amount,
-                revertMessage: bytes.concat(externalId, bytes20(user2))
+                amount: initialBalance,
+                revertMessage: bytes.concat(externalId1, abi.encodePacked(user2))
             })
         );
 
-        assertEq(token1Z.balanceOf(user2), amount);
+        assertEq(token1Z.balanceOf(user2), initialBalance);
+
+        bytes32 externalId2 = keccak256(abi.encodePacked(block.timestamp + 600));
+        vm.prank(address(gatewayZEVM));
+        gatewayCrossChain.onRevert(
+            RevertContext({
+                sender: address(this),
+                asset: address(token1Z),
+                amount: initialBalance,
+                revertMessage: bytes.concat(externalId2, solAddress)
+            })
+        );
+
+        ( , address token, uint256 amount, ) = gatewayCrossChain.refundInfos(externalId2);
+        assertEq(token, address(token1Z));
+        assertEq(amount, initialBalance);
+
+        vm.prank(address(gatewayZEVM));
+        gatewayCrossChain.onRevert(
+            RevertContext({
+                sender: address(this),
+                asset: address(0),
+                amount: 0,
+                revertMessage: bytes.concat(externalId2, solAddress)
+            })
+        );
+
+        ( , token, amount, ) = gatewayCrossChain.refundInfos(externalId2);
+        assertEq(token, address(token1Z));
+        assertEq(amount, initialBalance);
     }
 
     function test_ZOnAbort() public {
