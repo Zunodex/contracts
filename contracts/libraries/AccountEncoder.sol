@@ -41,7 +41,7 @@ library AccountEncoder {
                 ptr := add(ptr, 32)
 
                 // Load isWritable (as bool)
-                mstore(add(acc, 32), iszero(iszero(mload(ptr))))
+                mstore(add(acc, 32), shr(248, mload(ptr)))    
                 ptr := add(ptr, 1)
 
                 // Store pointer to struct in the array
