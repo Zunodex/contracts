@@ -368,6 +368,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
 
         // Fee for platform
         uint256 platformFeesForTx = _handleFeeTransfer(zrc20, amount); // platformFee = 5 <> 0.5%
+        amount -= platformFeesForTx;
         address receiver = address(uint160(bytes20(decoded.receiver)));
 
         if (decoded.targetZRC20 == zrc20) {
@@ -375,7 +376,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             TransferHelper.safeTransfer(
                 decoded.targetZRC20,
                 receiver,
-                amount - platformFeesForTx
+                amount
             );
 
             emit EddyCrossChainSwap(
@@ -385,7 +386,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
                 zrc20,
                 decoded.targetZRC20,
                 amount,
-                amount - platformFeesForTx,
+                amount,
                 decoded.sender,
                 decoded.receiver,
                 platformFeesForTx
