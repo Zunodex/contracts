@@ -455,7 +455,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         uint256 gasFee
     ) internal {
         if(gasFee >= outputAmount) revert NotEnoughToPayGasFee();
-        IZRC20(decoded.targetZRC20).approve(address(gateway), outputAmount + gasFee);
+        IZRC20(decoded.targetZRC20).approve(address(gateway), outputAmount);
         withdraw(
             externalId, 
             decoded.receiver, 
@@ -474,7 +474,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
 
         if (decoded.targetZRC20 == gasZRC20) {
             if (gasFee >= outputAmount) revert NotEnoughToPayGasFee();
-            IZRC20(decoded.targetZRC20).approve(address(gateway), outputAmount + gasFee);
+            IZRC20(decoded.targetZRC20).approve(address(gateway), outputAmount);
 
             bytes memory data = SwapDataHelperLib.buildOutputMessage(
                 externalId, 
