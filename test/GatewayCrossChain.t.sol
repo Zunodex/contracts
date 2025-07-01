@@ -554,7 +554,7 @@ contract GatewayCrossChainTest is BaseTest {
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token2Z),
             address(token1Z),
-            33333333333333333300,
+            300000000000000000000,
             0,
             0,
             new address[](1),
@@ -609,7 +609,7 @@ contract GatewayCrossChainTest is BaseTest {
 
         address evmWalletAddress = address(bytes20(solAddress));
         assertEq(token1A.balanceOf(user1), initialBalance - amount);
-        assertEq(token1B.balanceOf(evmWalletAddress), 15666666666666666650); 
+        assertEq(token1B.balanceOf(evmWalletAddress), 149000000000000000000); 
     }
 
     // A swap - zetachain swap - SOL swap: token1A -> token2A -> token2Z -> token1Z -> token1B -> token2B
@@ -639,7 +639,7 @@ contract GatewayCrossChainTest is BaseTest {
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token2Z),
             address(token1Z),
-            33333333333333333300,
+            300000000000000000000,
             0,
             0,
             new address[](1),
@@ -656,7 +656,7 @@ contract GatewayCrossChainTest is BaseTest {
         bytes memory swapDataB = encodeCompressedMixSwapParams(
             address(token1B),
             address(token2B),
-            15662653626545301553,
+            149000000000000000000,
             0,
             0,
             new address[](1),
@@ -706,7 +706,7 @@ contract GatewayCrossChainTest is BaseTest {
 
         address evmWalletAddress = address(bytes20(solAddress));
         assertEq(token1A.balanceOf(user1), initialBalance - amount);
-        assertEq(token2B.balanceOf(evmWalletAddress), 62650614506181206212);
+        assertEq(token2B.balanceOf(evmWalletAddress), 596000000000000000000);
     }
 
     function test_SuperWithdraw() public {

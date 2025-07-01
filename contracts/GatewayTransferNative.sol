@@ -398,8 +398,24 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             );
         } else {
             // Swap on DODO Router
-            uint256 outputAmount = _doMixSwap(decoded.swapData, amount, params);
-
+            uint256 outputAmount = amount;
+            if (decoded.swapData.length > 0) {
+                require(
+                    (zrc20 == params.fromToken) && (decoded.targetZRC20 == params.toToken),
+                    "INVALID_TOKEN_ADDRESS: TOKEN_NOT_MATCH"
+                );
+                require(
+                    amount == params.fromTokenAmount,
+                    "INVALID_TOKEN_AMOUNT: AMOUNT_NOT_MATCH"
+                );
+                outputAmount = _doMixSwap(params);
+            } else {
+                require(
+                    zrc20 == decoded.targetZRC20,
+                    "INVALID_TOKEN_AMOUNT: TOKEN_NOT_MATCH"
+                );
+            }
+  
             if (decoded.targetZRC20 == WZETA) {
                 // withdraw WZETA to get Zeta in 1:1 ratio
                 IWETH9(WZETA).withdraw(outputAmount);
@@ -429,13 +445,9 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
     }
 
     function _doMixSwap(
-        bytes memory swapData, 
-        uint256 amount, 
         MixSwapParams memory params
     ) internal returns (uint256 outputAmount) {
-        if (swapData.length == 0) {
-            return amount;
-        }
+        IZRC20(params.fromToken).approve(DODOApprove, params.fromTokenAmount);
 
         bool fromIsETH = params.fromToken == _ETH_ADDRESS_;
         uint256 valueToSend = fromIsETH ? amount : 0;
@@ -572,7 +584,23 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         amount -= platformFeesForTx;
 
         // Swap on DODO Router
-        uint256 outputAmount = _doMixSwap(decoded.swapDataZ, amount, params);
+        uint256 outputAmount = amount;
+        if (decoded.swapDataZ.length > 0) {
+            require(
+                (zrc20 == params.fromToken) && (decoded.targetZRC20 == params.toToken),
+                "INVALID_TOKEN_ADDRESS: TOKEN_NOT_MATCH"
+            );
+            require(
+                amount == params.fromTokenAmount,
+                "INVALID_TOKEN_AMOUNT: AMOUNT_NOT_MATCH"
+            );
+            outputAmount = _doMixSwap(params);
+        } else {
+            require(
+                zrc20 == decoded.targetZRC20,
+                "INVALID_TOKEN_AMOUNT: TOKEN_NOT_MATCH"
+            );
+        }
         
         // Withdraw
         if (decoded.dstChainId == BITCOIN_EDDY) {

@@ -334,16 +334,11 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
         amountsOut = targetAmount - amounts[0];
     }
 
-    function _doMixSwap(
-        bytes memory swapData, 
-        uint256 amount, 
+    function _doMixSwap( 
         MixSwapParams memory params
     ) internal returns (uint256 outputAmount) {
-        if (swapData.length == 0) {
-            return amount;
-        }
-
-        TransferHelper.safeApprove(params.fromToken, DODOApprove, amount);
+        TransferHelper.safeApprove(params.fromToken, DODOApprove, params.fromTokenAmount);
+        
         return IDODORouteProxy(DODORouteProxy).mixSwap(
             params.fromToken,
             params.toToken,
@@ -462,7 +457,23 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
         amount -= platformFeesForTx;
 
         // Swap on DODO Router
-        uint256 outputAmount = _doMixSwap(decoded.swapDataZ, amount, params);
+        uint256 outputAmount = amount;
+        if (decoded.swapDataZ.length > 0) {
+            require(
+                (zrc20 == params.fromToken) && (decoded.targetZRC20 == params.toToken),
+                "INVALID_TOKEN_ADDRESS: TOKEN_NOT_MATCH"
+            );
+            require(
+                amount == params.fromTokenAmount,
+                "INVALID_TOKEN_AMOUNT: AMOUNT_NOT_MATCH"
+            );
+            outputAmount = _doMixSwap(params);
+        } else {
+            require(
+                zrc20 == decoded.targetZRC20,
+                "INVALID_TOKEN_AMOUNT: TOKEN_NOT_MATCH"
+            );
+        }
 
         // Withdraw
         if (decoded.dstChainId == BITCOIN_EDDY) {

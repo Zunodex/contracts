@@ -198,9 +198,9 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         );
     }
 
-    function _doMixSwap(bytes calldata swapData) internal returns (uint256) {
-        MixSwapParams memory params = SwapDataHelperLib.decodeCompressedMixSwapParams(swapData);
-
+    function _doMixSwap(
+        MixSwapParams memory params
+    ) internal returns (uint256 outputAmount) {
         if(params.fromToken != _ETH_ADDRESS_) {
             TransferHelper.safeApprove(params.fromToken, DODOApprove, params.fromTokenAmount);
         }
@@ -243,9 +243,19 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         } else {
             TransferHelper.safeTransferFrom(fromToken, msg.sender, address(this), amount);
         }
+
+        MixSwapParams memory params = SwapDataHelperLib.decodeCompressedMixSwapParams(swapData);
          
         // Swap on DODO Router
-        uint256 outputAmount = _doMixSwap(swapData);
+        require(
+            (fromToken == params.fromToken) && (asset == params.toToken),
+            "INVALID_TOKEN_ADDRESS: TOKEN_NOT_MATCH"
+        );
+        require(
+            amount == params.fromTokenAmount,
+            "INVALID_TOKEN_AMOUNT: AMOUNT_NOT_MATCH"
+        );
+        uint256 outputAmount = _doMixSwap(params);
 
         // Construct message and revert options
         bytes memory message = concatBytes(externalId, payload);
@@ -360,11 +370,25 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
             TransferHelper.safeTransferFrom(fromToken, msg.sender, address(this), amount);
         }
 
-        uint256 outputAmount;
-        if(fromToken == toToken) {
-            outputAmount = amount;
+        MixSwapParams memory params = SwapDataHelperLib.decodeCompressedMixSwapParams(swapData);
+
+        // Swap on DODO Router
+        uint256 outputAmount = amount;
+        if (swapData.length > 0) {
+            require(
+                (fromToken == params.fromToken) && (toToken == params.toToken),
+                "INVALID_TOKEN_ADDRESS: TOKEN_NOT_MATCH"
+            );
+            require(
+                amount == params.fromTokenAmount,
+                "INVALID_TOKEN_AMOUNT: AMOUNT_NOT_MATCH"
+            );
+            outputAmount = _doMixSwap(params);
         } else {
-            outputAmount = _doMixSwap(swapData);
+            require(
+                fromToken == toToken,
+                "INVALID_TOKEN_AMOUNT: TOKEN_NOT_MATCH"
+            );
         }
 
         if(toIsETH) {

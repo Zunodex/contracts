@@ -165,7 +165,7 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token3Z),
             address(token2Z),
-            amount,
+            300000000000000000000,
             0,
             0,
             new address[](1),
@@ -200,7 +200,7 @@ contract GatewayTransferNativeTest is BaseTest {
         vm.stopPrank();
 
         assertEq(token1A.balanceOf(user1), initialBalance - amount);
-        assertEq(token2Z.balanceOf(user2), 100000000000000000000);  
+        assertEq(token2Z.balanceOf(user2), 300000000000000000000);  
     }
 
     // A swap - zetachain: token1A -> token2A -> token2Z
