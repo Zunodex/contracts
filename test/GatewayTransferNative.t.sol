@@ -968,6 +968,26 @@ contract GatewayTransferNativeTest is BaseTest {
         assertEq(token1Z.balanceOf(user2), amount);
     }
 
+    function test_withdrawToNativeChainRevert() public {
+        uint256 amount = 100 ether;
+
+        vm.expectRevert("INSUFFICIENT AMOUNT: ETH NOT ENOUGH");
+        vm.prank(user1);
+        gatewayTransferNative.withdrawToNativeChain(
+            _ETH_ADDRESS_,
+            amount,
+            ""
+        );
+
+        vm.expectRevert();
+        vm.prank(user1);
+        gatewayTransferNative.withdrawToNativeChain(
+            address(token1Z),
+            amount,
+            ""
+        );
+    }
+
     function test_Revert() public {
         uint256 amount = 100 ether;
         uint32 dstChainId = 2;
