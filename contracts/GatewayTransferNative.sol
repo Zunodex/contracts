@@ -544,9 +544,17 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         uint256 amount,
         bytes calldata message
     ) external payable {
-        if(zrc20 != _ETH_ADDRESS_) {
-            TransferHelper.safeTransferFrom(zrc20, msg.sender, address(this), amount);
-        } 
+        if(zrc20 == _ETH_ADDRESS_) {
+            require(
+                msg.value >= amount, 
+                "INSUFFICIENT AMOUNT: ETH NOT ENOUGH"
+            );
+        } else {
+            require(
+                IZRC20(zrc20).transferFrom(msg.sender, address(this), amount), 
+                "INSUFFICIENT ALLOWANCE: TRANSFER FROM FAILED"
+            );
+        }
 
         globalNonce++;
         bytes32 externalId = _calcExternalId(msg.sender);
