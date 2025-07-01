@@ -343,7 +343,12 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         uint256 amount
     ) internal returns (uint256 platformFeesForTx) {
         platformFeesForTx = (amount * feePercent) / 1000; // platformFee = 5 <> 0.5%
-        TransferHelper.safeTransfer(zrc20, EddyTreasurySafe, platformFeesForTx);
+        
+        if(zrc20 == _ETH_ADDRESS_) {
+            TransferHelper.safeTransferETH(EddyTreasurySafe, platformFeesForTx);
+        } else {
+            TransferHelper.safeTransfer(zrc20, EddyTreasurySafe, platformFeesForTx);
+        }
     }
 
     /**
@@ -431,8 +436,14 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             return amount;
         }
 
-        IZRC20(params.fromToken).approve(DODOApprove, amount);
-        return IDODORouteProxy(DODORouteProxy).mixSwap{value: msg.value}(
+        bool fromIsETH = params.fromToken == _ETH_ADDRESS_;
+        uint256 valueToSend = fromIsETH ? amount : 0;
+
+        if(!fromIsETH) {
+            TransferHelper.safeApprove(params.fromToken, DODOApprove, params.fromTokenAmount);
+        }
+
+        return IDODORouteProxy(DODORouteProxy).mixSwap{value: valueToSend}(
             params.fromToken,
             params.toToken,
             params.fromTokenAmount,
