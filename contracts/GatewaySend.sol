@@ -399,11 +399,17 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     function onRevert(RevertContext calldata context) external onlyGateway {
         bytes32 externalId = bytes32(context.revertMessage[0:32]);
         address sender = address(uint160(bytes20(context.revertMessage[32:])));
-        TransferHelper.safeTransfer(context.asset, sender, context.amount);
-        
+
+        address asset = context.asset == address(0) ? _ETH_ADDRESS_ : context.asset;
+        if(asset == _ETH_ADDRESS_) {
+            TransferHelper.safeTransferETH(sender, context.amount);
+        } else {
+            TransferHelper.safeTransfer(context.asset, sender, context.amount);
+        }
+    
         emit EddyCrossChainRevert(
             externalId,
-            context.asset,
+            asset,
             context.amount,
             sender
         );
