@@ -416,7 +416,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
                 );
             }
   
-            if (decoded.targetZRC20 == WZETA) {
+            if (decoded.targetZRC20 == _ETH_ADDRESS_) {
                 // withdraw WZETA to get Zeta in 1:1 ratio
                 IWETH9(WZETA).withdraw(outputAmount);
                 // transfer wzeta
@@ -447,10 +447,8 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
     function _doMixSwap(
         MixSwapParams memory params
     ) internal returns (uint256 outputAmount) {
-        IZRC20(params.fromToken).approve(DODOApprove, params.fromTokenAmount);
-
         bool fromIsETH = params.fromToken == _ETH_ADDRESS_;
-        uint256 valueToSend = fromIsETH ? amount : 0;
+        uint256 valueToSend = fromIsETH ? params.fromTokenAmount : 0;
 
         if(!fromIsETH) {
             TransferHelper.safeApprove(params.fromToken, DODOApprove, params.fromTokenAmount);

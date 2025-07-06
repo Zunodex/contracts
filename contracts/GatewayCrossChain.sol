@@ -144,6 +144,10 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
         emit FeePercentUpdated(_feePercent);
     }
 
+    function setGasLimit(uint256 _gasLimit) external onlyOwner {
+        gasLimit = _gasLimit;
+    }
+
     function setGateway(address payable _gateway) external onlyOwner {
         gateway = GatewayZEVM(_gateway);
         emit GatewayUpdated(_gateway);
@@ -338,7 +342,7 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
         MixSwapParams memory params
     ) internal returns (uint256 outputAmount) {
         TransferHelper.safeApprove(params.fromToken, DODOApprove, params.fromTokenAmount);
-        
+
         return IDODORouteProxy(DODORouteProxy).mixSwap(
             params.fromToken,
             params.toToken,

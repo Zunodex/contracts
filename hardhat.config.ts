@@ -28,36 +28,36 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
-    // coredao_mainnet: {
-    //   //@ts-ignore
-    //   accounts: [process.env.PRIVATE_KEY],
-    //   url: "https://rpc.coredao.org",
-    // },
-    // coredao_testnet: {
-    //   //@ts-ignore
-    //   accounts: [process.env.PRIVATE_KEY],
-    //   url: "https://rpc.test.btcs.network",
-    // },
-    // kakarot_testnet: {
-    //   //@ts-ignore
-    //   accounts: [process.env.PRIVATE_KEY],
-    //   url: "https://sepolia-rpc.kakarot.org",
-    // },
-    // mode_mainnet: {
-    //   //@ts-ignore
-    //   accounts: [process.env.PRIVATE_KEY],
-    //   url: "https://mainnet.mode.network",
-    // },
-    // polygon_mumbai: {
-    //   //@ts-ignore
-    //   accounts: [process.env.PRIVATE_KEY],
-    //   url: "https://polygon-mumbai.g.alchemy.com/v2/CcIjayR-uykEFwpAt7sdfBM3swhISWXE",
-    // },
-    // zetachain_mainnet: {
-    //   //@ts-ignore
-    //   accounts: [process.env.PRIVATE_KEY],
-    //   url: "https://zetachain-evm.blockpi.network:443/v1/rpc/public",
-    // },
+    ethereum: {
+      chainId: 1,
+      accounts: [process.env.PRIVATE_KEY ?? ""],
+      url: "https://1rpc.io/eth",
+      deploy: ["./deploy/ethereum/"],
+    },
+    polygon: {
+      chainId: 137,
+      accounts: [process.env.PRIVATE_KEY ?? ""],
+      url: "https://polygon-mainnet.g.alchemy.com/v2/i7AGD7NB2oucWbfTCszVNn1KE9WltlBw",
+      deploy: ["./deploy/polygon/"],
+    },
+    bnb: {
+      chainId: 56,
+      accounts: [process.env.PRIVATE_KEY ?? ""],
+      url: "https://bsc.drpc.org",
+      deploy: ["./deploy/bnb/"],
+    },
+    base: {
+      chainId: 8453,
+      accounts: [process.env.PRIVATE_KEY ?? ""],
+      url: "https://base-mainnet.g.alchemy.com/v2/i7AGD7NB2oucWbfTCszVNn1KE9WltlBw",
+      deploy: ["./deploy/base/"],
+    },
+    zetachain_mainnet: {
+      chainId: 7000,
+      accounts: [process.env.PRIVATE_KEY ?? ""],
+      url: "https://zetachain-evm.blockpi.network/v1/rpc/public",
+      deploy: ["./deploy/zetachain_mainnet/"],
+    },
     zetachain_testnet: {
       chainId: 7001,
       accounts: [process.env.PRIVATE_KEY ?? ""],
@@ -76,24 +76,51 @@ const config: HardhatUserConfig = {
       url: "https://arbitrum-sepolia.drpc.org",
       deploy: ["./deploy/arb_sepolia/"],
     },
-    // zircuit_testnet: {
-    //   //@ts-ignore
-    //   accounts: [process.env.PRIVATE_KEY],
-    //   url: "https://zircuit1.p2pify.com",
-    // },
-    // zklink_mainnet: {
-    //   //@ts-ignore
-    //   accounts: [process.env.PRIVATE_KEY],
-    //   url: "https://rpc.zklink.io",
-    // },
   },
   etherscan: {
     apiKey: {
+      ethereum: "VV6FB3HDE9FSVBBVMVXGPQX4KSJUJIY3E6",
+      polygon: "2JZHRC8JP35PTPY64QPBDTCT2QE1ARI5ZP",
+      bnb: "FDRR41V15H8WDGEGRU2KEPXWBYSS5IFDIY",
+      base: "ABVYVFMXQCR35J2Y58RH52KW4AY66EQXUZ",
       sepolia: "VV6FB3HDE9FSVBBVMVXGPQX4KSJUJIY3E6",
       arb_sepolia: "8TDWU29I4QA8AW713FK2Y29QABP5AF9FXX",
       zetachain_testnet: "6542100",
+      zetachain_mainnet: "6542100",
     },
     customChains: [
+      {
+        network: "ethereum",
+        chainId: 1,
+        urls: {
+          apiURL: "https://api.etherscan.io/api",
+          browserURL: "https://etherscan.io/",
+        },
+      },
+      {
+        network: "polygon",
+        chainId: 137,
+        urls: {
+          apiURL: "https://api.polygonscan.com/api",
+          browserURL: "https://polygonscan.com/",
+        },
+      },
+      {
+        network: "bnb",
+        chainId: 56,
+        urls: {
+          apiURL: "https://api.bscscan.com/api",
+          browserURL: "https://bscscan.com/",
+        },
+      },
+      {
+        network: "base",
+        chainId: 8453,
+        urls: {
+          apiURL: "https://api.basescan.org/api",
+          browserURL: "https://basescan.org/",
+        },
+      },
       {
         network: "sepolia",
         chainId: 11155111,
@@ -116,6 +143,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://zetachain-testnet.blockscout.com/api",
           browserURL: "https://zetachain-testnet.blockscout.com",
+        },
+      },
+      {
+        network: "zetachain_mainnet",
+        chainId: 7000,
+        urls: {
+          apiURL: "https://zetachain.blockscout.com/api",
+          browserURL: "https://zetachain.blockscout.com/",
         },
       },
     ]
