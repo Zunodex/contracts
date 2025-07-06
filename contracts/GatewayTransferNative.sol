@@ -270,7 +270,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             RevertOptions({
                 revertAddress: address(this),
                 callOnRevert: true,
-                abortAddress: address(0),
+                abortAddress: address(this),
                 revertMessage: bytes.concat(externalId, receiver),
                 onRevertGasLimit: gasLimit
             })
@@ -296,7 +296,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             RevertOptions({
                 revertAddress: address(this),
                 callOnRevert: true,
-                abortAddress: address(0),
+                abortAddress: address(this),
                 revertMessage: bytes.concat(externalId, bytes20(sender)),
                 onRevertGasLimit: gasLimit
             })
