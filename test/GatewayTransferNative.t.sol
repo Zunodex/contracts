@@ -943,58 +943,41 @@ contract GatewayTransferNativeTest is BaseTest {
             })
         );
 
-        ( , address token, uint256 amount, ) = gatewayTransferNative.refundInfos(externalId2);
-        assertEq(token, address(token1Z));
-        assertEq(amount, initialBalance);
-
-        vm.prank(address(gatewayZEVM));
-        gatewayTransferNative.onRevert(
-            RevertContext({
-                sender: address(this),
-                asset: address(0),
-                amount: 0,
-                revertMessage: bytes.concat(externalId2, solAddress)
-            })
-        );
-
-        ( , token, amount, ) = gatewayTransferNative.refundInfos(externalId2);
-        assertEq(token, address(token1Z));
-        assertEq(amount, initialBalance);
-
+        assertEq(token1Z.balanceOf(bot), initialBalance);
     }
 
     function test_ZOnAbort() public {
-        bytes32 externalId = keccak256(abi.encodePacked(block.timestamp));
-        uint256 amount = 100 ether;
-        token1Z.mint(address(gatewayTransferNative), amount);
-
+        token1Z.mint(address(gatewayTransferNative), 2 * initialBalance);
+            
+        bytes32 externalId1 = keccak256(abi.encodePacked(block.timestamp));
         vm.prank(address(gatewayZEVM));
         gatewayTransferNative.onAbort(
             AbortContext({
                 sender: abi.encode(address(this)),
                 asset: address(token1Z),
-                amount: amount,
+                amount: initialBalance,
                 outgoing: false,
                 chainID: 7000,
-                revertMessage: bytes.concat(externalId, bytes20(user2))
+                revertMessage: bytes.concat(externalId1, abi.encodePacked(user2))
             })
         );
 
-        vm.expectRevert();
-        gatewayTransferNative.claimRefund(externalId);
+        assertEq(token1Z.balanceOf(user2), initialBalance);
 
-        vm.expectRevert();
-        vm.prank(user2);
-        gatewayTransferNative.claimRefund(bytes32(0));
+        bytes32 externalId2 = keccak256(abi.encodePacked(block.timestamp + 600));
+        vm.prank(address(gatewayZEVM));
+        gatewayTransferNative.onAbort(
+            AbortContext({
+                sender: abi.encode(address(this)),
+                asset: address(token1Z),
+                amount: initialBalance,
+                outgoing: false,
+                chainID: 7000,
+                revertMessage: bytes.concat(externalId2, solAddress)
+            })
+        );
 
-        vm.prank(user2);
-        gatewayTransferNative.claimRefund(externalId);
-
-        vm.expectRevert();
-        vm.prank(user2);
-        gatewayTransferNative.claimRefund(externalId);
-
-        assertEq(token1Z.balanceOf(user2), amount);
+        assertEq(token1Z.balanceOf(bot), initialBalance);
     }
 
     function test_Revert() public {

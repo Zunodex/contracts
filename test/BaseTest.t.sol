@@ -137,7 +137,7 @@ contract BaseTest is Test {
             data
         );
         gatewayTransferNative = GatewayTransferNative(payable(address(transferNativeProxy)));
-        gatewayTransferNative.setBot(bot, true);
+        gatewayTransferNative.setBot(bot);
 
         // set GatewayCrossChain
         data = abi.encodeWithSignature(
@@ -155,7 +155,7 @@ contract BaseTest is Test {
             data
         );
         gatewayCrossChain = GatewayCrossChain(payable(address(crossChainProxy)));
-        gatewayCrossChain.setBot(bot, true);
+        gatewayCrossChain.setBot(bot);
 
         // set GatewayEVM
         gatewayA.setGatewayZEVM(address(gatewayZEVM));
