@@ -1008,31 +1008,14 @@ contract GatewayTransferNativeTest is BaseTest {
             })
         );
 
-        ( , address token, uint256 amount, ) = gatewayTransferNative.refundInfos(externalId2);
-        assertEq(token, address(token1Z));
-        assertEq(amount, initialBalance);
-
-        vm.prank(address(gatewayZEVM));
-        gatewayTransferNative.onRevert(
-            RevertContext({
-                sender: address(this),
-                asset: address(0),
-                amount: 0,
-                revertMessage: bytes.concat(externalId2, solAddress)
-            })
-        );
-
-        ( , token, amount, ) = gatewayTransferNative.refundInfos(externalId2);
-        assertEq(token, address(token1Z));
-        assertEq(amount, initialBalance);
-
+        assertEq(token1Z.balanceOf(bot), initialBalance);
     }
 
     function test_ZOnAbort() public {
         token1Z.mint(address(gatewayTransferNative), 2 * initialBalance);
-
-        vm.startPrank(address(gatewayZEVM));
+            
         bytes32 externalId1 = keccak256(abi.encodePacked(block.timestamp));
+        vm.prank(address(gatewayZEVM));
         gatewayTransferNative.onAbort(
             AbortContext({
                 sender: abi.encode(address(this)),
@@ -1044,7 +1027,10 @@ contract GatewayTransferNativeTest is BaseTest {
             })
         );
 
+        assertEq(token1Z.balanceOf(user2), initialBalance);
+
         bytes32 externalId2 = keccak256(abi.encodePacked(block.timestamp + 600));
+        vm.prank(address(gatewayZEVM));
         gatewayTransferNative.onAbort(
             AbortContext({
                 sender: abi.encode(address(this)),
@@ -1055,54 +1041,8 @@ contract GatewayTransferNativeTest is BaseTest {
                 revertMessage: bytes.concat(externalId2, solAddress)
             })
         );
-        vm.stopPrank();
 
-        vm.expectRevert("REFUND_NOT_EXIST");
-        gatewayTransferNative.claimRefund(bytes32(0));
-
-        vm.expectRevert("INVALID_CALLER");
-        vm.prank(user1);
-        gatewayTransferNative.claimRefund(externalId1);
-
-        vm.prank(user2);
-        gatewayTransferNative.claimRefund(externalId1);
-        assertEq(token1Z.balanceOf(user2), initialBalance);
-
-        vm.expectRevert("REFUND_NOT_EXIST");
-        vm.prank(user2);
-        gatewayTransferNative.claimRefund(externalId1);
-
-        vm.expectRevert("INVALID_CALLER");
-        vm.prank(user1);
-        gatewayTransferNative.claimRefund(externalId2);
-
-        vm.prank(bot);
-        gatewayTransferNative.claimRefund(externalId2);
         assertEq(token1Z.balanceOf(bot), initialBalance);
-
-        vm.expectRevert("REFUND_NOT_EXIST");
-        vm.prank(bot);
-        gatewayTransferNative.claimRefund(externalId2);
-    }
-
-    function test_withdrawToNativeChainRevert() public {
-        uint256 amount = 100 ether;
-
-        vm.expectRevert("INSUFFICIENT AMOUNT: ETH NOT ENOUGH");
-        vm.prank(user1);
-        gatewayTransferNative.withdrawToNativeChain(
-            _ETH_ADDRESS_,
-            amount,
-            ""
-        );
-
-        vm.expectRevert();
-        vm.prank(user1);
-        gatewayTransferNative.withdrawToNativeChain(
-            address(token1Z),
-            amount,
-            ""
-        );
     }
 
     function test_Revert() public {

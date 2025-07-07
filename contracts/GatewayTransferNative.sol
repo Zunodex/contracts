@@ -29,21 +29,13 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
     address private EddyTreasurySafe;
     address public DODORouteProxy;
     address public DODOApprove;
-    mapping(bytes32 => RefundInfo) public refundInfos; // externalId => RefundInfo
-    mapping(address => bool) public bots;
+    address public RefundBot;
     uint256 public globalNonce;
     uint256 public feePercent;
     uint256 public slippage;
     uint256 public gasLimit;
 
     GatewayZEVM public gateway;
-
-    struct RefundInfo {
-        bytes32 externalId;
-        address token;
-        uint256 amount;
-        bytes walletAddress;
-    }
 
     error Unauthorized();
     error RouteProxyCallFailed();
@@ -55,7 +47,8 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         bytes32 externalId,
         address token,
         uint256 amount,
-        bytes walletAddress
+        bytes refundAddress,
+        address receiver
     );
     event EddyCrossChainSwap(
         bytes32 externalId,
@@ -68,18 +61,6 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         bytes sender,
         bytes receiver,
         uint256 fees
-    );
-    event EddyCrossChainRefund(
-        bytes32 externalId, 
-        address indexed token, 
-        uint256 amount,
-        bytes walletAddress
-    );
-    event EddyCrossChainRefundClaimed(
-        bytes32 externalId, 
-        address indexed token, 
-        uint256 amount,
-        bytes walletAddress
     );
     event GatewayUpdated(address gateway);
     event FeePercentUpdated(uint256 feePercent);
@@ -159,8 +140,8 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         emit EddyTreasurySafeUpdated(_EddyTreasurySafe);
     }
 
-    function setBot(address bot, bool isAllowed) external onlyOwner {
-        bots[bot] = isAllowed;
+    function setBot(address bot) external onlyOwner {
+        RefundBot = bot;
     }
 
     function superWithdraw(address token, uint256 amount) external onlyOwner {
@@ -654,79 +635,37 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         // 52 bytes = 32 bytes externalId + 20 bytes evmWalletAddress
         bytes32 externalId = bytes32(context.revertMessage[0:32]);
         bytes memory walletAddress = context.revertMessage[32:];
+        address receiver = context.revertMessage.length == 52
+            ? address(uint160(bytes20(walletAddress)))
+            : RefundBot;
 
-        if(context.revertMessage.length == 52) {
-            address receiver = address(uint160(bytes20(walletAddress)));
-            TransferHelper.safeTransfer(context.asset, receiver, context.amount);
+        TransferHelper.safeTransfer(context.asset, receiver, context.amount);
 
-            emit EddyCrossChainRevert(
-                externalId,
-                context.asset,
-                context.amount,
-                walletAddress
-            );
-        } else {
-            if(refundInfos[externalId].externalId != "") return;
-
-            RefundInfo memory refundInfo = RefundInfo({
-                externalId: externalId,
-                token: context.asset,
-                amount: context.amount,
-                walletAddress: walletAddress
-            });
-            refundInfos[externalId] = refundInfo;
-            
-            emit EddyCrossChainRefund(
-                externalId,
-                context.asset,
-                context.amount,
-                walletAddress
-            );
-        }
+        emit EddyCrossChainRevert(
+            externalId,
+            context.asset,
+            context.amount,
+            walletAddress,
+            receiver
+        );
     }
 
     function onAbort(AbortContext calldata abortContext) external onlyGateway {
         // 52 bytes = 32 bytes externalId + 20 bytes evmWalletAddress
         bytes32 externalId = bytes32(abortContext.revertMessage[0:32]);
         bytes memory walletAddress = abortContext.revertMessage[32:];
-        if(refundInfos[externalId].externalId != "") return;
+        address receiver = abortContext.revertMessage.length == 52
+            ? address(uint160(bytes20(walletAddress)))
+            : RefundBot;
 
-        RefundInfo memory refundInfo = RefundInfo({
-            externalId: externalId,
-            token: abortContext.asset,
-            amount: abortContext.amount,
-            walletAddress: walletAddress
-        });
-        refundInfos[externalId] = refundInfo;
-        
-        emit EddyCrossChainRefund(
+        TransferHelper.safeTransfer(abortContext.asset, receiver, abortContext.amount);
+
+        emit EddyCrossChainRevert(
             externalId,
             abortContext.asset,
             abortContext.amount,
-            walletAddress
-        );
-    }
-
-    function claimRefund(bytes32 externalId) external {
-        RefundInfo storage refundInfo = refundInfos[externalId];
-        require(refundInfo.externalId != "", "REFUND_NOT_EXIST");
-
-        address receiver;
-        if(refundInfo.walletAddress.length == 20) {
-            receiver = address(uint160(bytes20(refundInfo.walletAddress)));
-        }
-        require(bots[msg.sender] || msg.sender == receiver, "INVALID_CALLER");
-        
-        address token = refundInfo.token;
-        uint256 amount = refundInfo.amount;
-        delete refundInfos[externalId];
-        TransferHelper.safeTransfer(token, msg.sender, amount);
-        
-        emit EddyCrossChainRefundClaimed(
-            externalId,
-            token,
-            amount,
-            abi.encodePacked(msg.sender)
+            walletAddress,
+            receiver
         );
     }
 

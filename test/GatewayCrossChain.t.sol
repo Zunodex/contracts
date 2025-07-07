@@ -746,30 +746,14 @@ contract GatewayCrossChainTest is BaseTest {
             })
         );
 
-        ( , address token, uint256 amount, ) = gatewayCrossChain.refundInfos(externalId2);
-        assertEq(token, address(token1Z));
-        assertEq(amount, initialBalance);
-
-        vm.prank(address(gatewayZEVM));
-        gatewayCrossChain.onRevert(
-            RevertContext({
-                sender: address(this),
-                asset: address(0),
-                amount: 0,
-                revertMessage: bytes.concat(externalId2, solAddress)
-            })
-        );
-
-        ( , token, amount, ) = gatewayCrossChain.refundInfos(externalId2);
-        assertEq(token, address(token1Z));
-        assertEq(amount, initialBalance);
+        assertEq(token1Z.balanceOf(bot), initialBalance);
     }
 
     function test_ZOnAbort() public {
         token1Z.mint(address(gatewayCrossChain), 2 * initialBalance);
 
-        vm.startPrank(address(gatewayZEVM));
         bytes32 externalId1 = keccak256(abi.encodePacked(block.timestamp));
+        vm.prank(address(gatewayZEVM));
         gatewayCrossChain.onAbort(
             AbortContext({
                 sender: abi.encode(address(this)),
@@ -781,7 +765,10 @@ contract GatewayCrossChainTest is BaseTest {
             })
         );
 
+        assertEq(token1Z.balanceOf(user2), initialBalance);
+
         bytes32 externalId2 = keccak256(abi.encodePacked(block.timestamp + 600));
+        vm.prank(address(gatewayZEVM));
         gatewayCrossChain.onAbort(
             AbortContext({
                 sender: abi.encode(address(this)),
@@ -792,34 +779,8 @@ contract GatewayCrossChainTest is BaseTest {
                 revertMessage: bytes.concat(externalId2, solAddress)
             })
         );
-        vm.stopPrank();
 
-        vm.expectRevert("REFUND_NOT_EXIST");
-        gatewayCrossChain.claimRefund(bytes32(0));
-
-        vm.expectRevert("INVALID_CALLER");
-        vm.prank(user1);
-        gatewayCrossChain.claimRefund(externalId1);
-
-        vm.prank(user2);
-        gatewayCrossChain.claimRefund(externalId1);
-        assertEq(token1Z.balanceOf(user2), initialBalance);
-
-        vm.expectRevert("REFUND_NOT_EXIST");
-        vm.prank(user2);
-        gatewayCrossChain.claimRefund(externalId1);
-
-        vm.expectRevert("INVALID_CALLER");
-        vm.prank(user1);
-        gatewayCrossChain.claimRefund(externalId2);
-
-        vm.prank(bot);
-        gatewayCrossChain.claimRefund(externalId2);
         assertEq(token1Z.balanceOf(bot), initialBalance);
-
-        vm.expectRevert("REFUND_NOT_EXIST");
-        vm.prank(bot);
-        gatewayCrossChain.claimRefund(externalId2);
     }
 
     function test_Set() public {
@@ -831,7 +792,7 @@ contract GatewayCrossChainTest is BaseTest {
         gatewayCrossChain.setFeePercent(0);
         gatewayCrossChain.setGateway(payable(address(0x111)));
         gatewayCrossChain.setEddyTreasurySafe(address(0x111));
-        gatewayCrossChain.setBot(address(0x111), true);
+        gatewayCrossChain.setBot(address(0x111));
         vm.stopPrank();
     }
 
