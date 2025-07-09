@@ -110,6 +110,26 @@
       "address": "0xe70C62baf742140ED5bAbbCD35f15b7a9811932A",
       "txHash": "0x1d43570d684a4f17b78f05cb052cb859cdb562074d702e598100be9515ab9979",
       "kind": "uups"
+    },
+    {
+      "address": "0x0C5669d63af3d4E1DFA73a4b39EaA8EF4CC82E2a",
+      "txHash": "0x02d0b5d87fc2e4778e89c6746f80b988eeef4faf9217dcbc85b2e7c750e88df1",
+      "kind": "uups"
+    },
+    {
+      "address": "0x569017b18f356F4d36D194F9cd4946163cd0B0c1",
+      "txHash": "0x3893a56d8530636bc82896f3a34978051ebc2260588605d3c51cad8a56d9f818",
+      "kind": "uups"
+    },
+    {
+      "address": "0x0FEA3705B34901cf51953be5001973EA5a739968",
+      "txHash": "0x388b2952407801c2ddd3904676f48186eb358238511d5b5dad81fe7220d89224",
+      "kind": "uups"
+    },
+    {
+      "address": "0xfd6fFee92D25158b29315C71b0Bb4dE727530FaF",
+      "txHash": "0x4f97b821d727a72ed23a8317a5482be42c35aaf4d9cf7dee203d86efae2d7e0f",
+      "kind": "uups"
     }
   ],
   "impls": {
@@ -4157,6 +4177,642 @@
               }
             ],
             "numberOfBytes": "128"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Ownable": [
+            {
+              "contract": "OwnableUpgradeable",
+              "label": "_owner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    },
+    "a8884fdc5ce98758982fbfa6e736019a6c4421950d271506e0fa26874c26e17c": {
+      "address": "0x257f07bD2179799dA10EdfaA4F4BB64fb04a46ac",
+      "txHash": "0x73ddb52fe31314c39f15d1b23942b5ee4a1706b5d44a703c019d06af563ef55f",
+      "layout": {
+        "solcVersion": "0.8.26",
+        "storage": [
+          {
+            "label": "EddyTreasurySafe",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_address",
+            "contract": "GatewayCrossChain",
+            "src": "contracts/GatewayCrossChain.sol:28"
+          },
+          {
+            "label": "DODORouteProxy",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_address",
+            "contract": "GatewayCrossChain",
+            "src": "contracts/GatewayCrossChain.sol:29"
+          },
+          {
+            "label": "DODOApprove",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_address",
+            "contract": "GatewayCrossChain",
+            "src": "contracts/GatewayCrossChain.sol:30"
+          },
+          {
+            "label": "RefundBot",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_address",
+            "contract": "GatewayCrossChain",
+            "src": "contracts/GatewayCrossChain.sol:31"
+          },
+          {
+            "label": "feePercent",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_uint256",
+            "contract": "GatewayCrossChain",
+            "src": "contracts/GatewayCrossChain.sol:32"
+          },
+          {
+            "label": "slippage",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_uint256",
+            "contract": "GatewayCrossChain",
+            "src": "contracts/GatewayCrossChain.sol:33"
+          },
+          {
+            "label": "gasLimit",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_uint256",
+            "contract": "GatewayCrossChain",
+            "src": "contracts/GatewayCrossChain.sol:34"
+          },
+          {
+            "label": "gateway",
+            "offset": 0,
+            "slot": "7",
+            "type": "t_contract(GatewayZEVM)7037",
+            "contract": "GatewayCrossChain",
+            "src": "contracts/GatewayCrossChain.sol:36"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)211_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(OwnableStorage)151_storage": {
+            "label": "struct OwnableUpgradeable.OwnableStorage",
+            "members": [
+              {
+                "label": "_owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_contract(GatewayZEVM)7037": {
+            "label": "contract GatewayZEVM",
+            "numberOfBytes": "20"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Ownable": [
+            {
+              "contract": "OwnableUpgradeable",
+              "label": "_owner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    },
+    "61cedd78887d4facf6a9a0a2f20a498ccd991e610f5bc7730bbdbb3afb005790": {
+      "address": "0x00C187Defc798E8439B8a5379eE059A1cfd2d5F4",
+      "txHash": "0x6cf2752ee1e857a327395ff4e5d126fb4c8e8958661e9b9788e2a23e4bd3a538",
+      "layout": {
+        "solcVersion": "0.8.26",
+        "storage": [
+          {
+            "label": "EddyTreasurySafe",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_address",
+            "contract": "GatewayTransferNative",
+            "src": "contracts/GatewayTransferNative.sol:29"
+          },
+          {
+            "label": "DODORouteProxy",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_address",
+            "contract": "GatewayTransferNative",
+            "src": "contracts/GatewayTransferNative.sol:30"
+          },
+          {
+            "label": "DODOApprove",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_address",
+            "contract": "GatewayTransferNative",
+            "src": "contracts/GatewayTransferNative.sol:31"
+          },
+          {
+            "label": "RefundBot",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_address",
+            "contract": "GatewayTransferNative",
+            "src": "contracts/GatewayTransferNative.sol:32"
+          },
+          {
+            "label": "globalNonce",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_uint256",
+            "contract": "GatewayTransferNative",
+            "src": "contracts/GatewayTransferNative.sol:33"
+          },
+          {
+            "label": "feePercent",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_uint256",
+            "contract": "GatewayTransferNative",
+            "src": "contracts/GatewayTransferNative.sol:34"
+          },
+          {
+            "label": "slippage",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_uint256",
+            "contract": "GatewayTransferNative",
+            "src": "contracts/GatewayTransferNative.sol:35"
+          },
+          {
+            "label": "gasLimit",
+            "offset": 0,
+            "slot": "7",
+            "type": "t_uint256",
+            "contract": "GatewayTransferNative",
+            "src": "contracts/GatewayTransferNative.sol:36"
+          },
+          {
+            "label": "gateway",
+            "offset": 0,
+            "slot": "8",
+            "type": "t_contract(GatewayZEVM)7037",
+            "contract": "GatewayTransferNative",
+            "src": "contracts/GatewayTransferNative.sol:38"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)211_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(OwnableStorage)151_storage": {
+            "label": "struct OwnableUpgradeable.OwnableStorage",
+            "members": [
+              {
+                "label": "_owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_contract(GatewayZEVM)7037": {
+            "label": "contract GatewayZEVM",
+            "numberOfBytes": "20"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Ownable": [
+            {
+              "contract": "OwnableUpgradeable",
+              "label": "_owner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    },
+    "4bd395c04e41bd15f272d71ebc7efc6b63fc97902d2dbd66a31bf806068ce981": {
+      "address": "0x03f876327F4dd491cA6BD9c4E33d60CA41EAEeF6",
+      "txHash": "0x2c83fa12d72dc742754a1f8880f9eb48de1a2230a6b59c5cf1e4ebbccc033d5d",
+      "layout": {
+        "solcVersion": "0.8.26",
+        "storage": [
+          {
+            "label": "EddyTreasurySafe",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_address",
+            "contract": "GatewayCrossChain",
+            "src": "contracts/GatewayCrossChain.sol:28"
+          },
+          {
+            "label": "DODORouteProxy",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_address",
+            "contract": "GatewayCrossChain",
+            "src": "contracts/GatewayCrossChain.sol:29"
+          },
+          {
+            "label": "DODOApprove",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_address",
+            "contract": "GatewayCrossChain",
+            "src": "contracts/GatewayCrossChain.sol:30"
+          },
+          {
+            "label": "RefundBot",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_address",
+            "contract": "GatewayCrossChain",
+            "src": "contracts/GatewayCrossChain.sol:31"
+          },
+          {
+            "label": "feePercent",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_uint256",
+            "contract": "GatewayCrossChain",
+            "src": "contracts/GatewayCrossChain.sol:32"
+          },
+          {
+            "label": "slippage",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_uint256",
+            "contract": "GatewayCrossChain",
+            "src": "contracts/GatewayCrossChain.sol:33"
+          },
+          {
+            "label": "gasLimit",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_uint256",
+            "contract": "GatewayCrossChain",
+            "src": "contracts/GatewayCrossChain.sol:34"
+          },
+          {
+            "label": "gateway",
+            "offset": 0,
+            "slot": "7",
+            "type": "t_contract(GatewayZEVM)3872",
+            "contract": "GatewayCrossChain",
+            "src": "contracts/GatewayCrossChain.sol:36"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)211_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(OwnableStorage)151_storage": {
+            "label": "struct OwnableUpgradeable.OwnableStorage",
+            "members": [
+              {
+                "label": "_owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_contract(GatewayZEVM)3872": {
+            "label": "contract GatewayZEVM",
+            "numberOfBytes": "20"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Ownable": [
+            {
+              "contract": "OwnableUpgradeable",
+              "label": "_owner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    },
+    "1c672ce47e776469a22b9f3fcb3dce416199247afab0e06cd3dd1798a0734f75": {
+      "address": "0x5f8f279C206B082206299b74c5fC338E04b31ff2",
+      "txHash": "0x6c45b3c8cf4031f079cf4192cfa91df57148b0fbd0a587658feeffcf0285386d",
+      "layout": {
+        "solcVersion": "0.8.26",
+        "storage": [
+          {
+            "label": "EddyTreasurySafe",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_address",
+            "contract": "GatewayTransferNative",
+            "src": "contracts/GatewayTransferNative.sol:29"
+          },
+          {
+            "label": "DODORouteProxy",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_address",
+            "contract": "GatewayTransferNative",
+            "src": "contracts/GatewayTransferNative.sol:30"
+          },
+          {
+            "label": "DODOApprove",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_address",
+            "contract": "GatewayTransferNative",
+            "src": "contracts/GatewayTransferNative.sol:31"
+          },
+          {
+            "label": "RefundBot",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_address",
+            "contract": "GatewayTransferNative",
+            "src": "contracts/GatewayTransferNative.sol:32"
+          },
+          {
+            "label": "globalNonce",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_uint256",
+            "contract": "GatewayTransferNative",
+            "src": "contracts/GatewayTransferNative.sol:33"
+          },
+          {
+            "label": "feePercent",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_uint256",
+            "contract": "GatewayTransferNative",
+            "src": "contracts/GatewayTransferNative.sol:34"
+          },
+          {
+            "label": "slippage",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_uint256",
+            "contract": "GatewayTransferNative",
+            "src": "contracts/GatewayTransferNative.sol:35"
+          },
+          {
+            "label": "gasLimit",
+            "offset": 0,
+            "slot": "7",
+            "type": "t_uint256",
+            "contract": "GatewayTransferNative",
+            "src": "contracts/GatewayTransferNative.sol:36"
+          },
+          {
+            "label": "gateway",
+            "offset": 0,
+            "slot": "8",
+            "type": "t_contract(GatewayZEVM)3872",
+            "contract": "GatewayTransferNative",
+            "src": "contracts/GatewayTransferNative.sol:38"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)211_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(OwnableStorage)151_storage": {
+            "label": "struct OwnableUpgradeable.OwnableStorage",
+            "members": [
+              {
+                "label": "_owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_contract(GatewayZEVM)3872": {
+            "label": "contract GatewayZEVM",
+            "numberOfBytes": "20"
           },
           "t_uint256": {
             "label": "uint256",

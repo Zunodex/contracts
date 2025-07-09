@@ -635,9 +635,10 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         // 52 bytes = 32 bytes externalId + 20 bytes evmWalletAddress
         bytes32 externalId = bytes32(context.revertMessage[0:32]);
         bytes memory walletAddress = context.revertMessage[32:];
-        address receiver = context.revertMessage.length == 52
-            ? address(uint160(bytes20(walletAddress)))
-            : RefundBot;
+        // address receiver = context.revertMessage.length == 52
+        //     ? address(uint160(bytes20(walletAddress)))
+        //     : RefundBot;
+        address receiver = RefundBot;
 
         TransferHelper.safeTransfer(context.asset, receiver, context.amount);
 
@@ -654,10 +655,11 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         // 52 bytes = 32 bytes externalId + 20 bytes evmWalletAddress
         bytes32 externalId = bytes32(abortContext.revertMessage[0:32]);
         bytes memory walletAddress = abortContext.revertMessage[32:];
-        address receiver = abortContext.revertMessage.length == 52
-            ? address(uint160(bytes20(walletAddress)))
-            : RefundBot;
-
+        // address receiver = abortContext.revertMessage.length == 52
+        //     ? address(uint160(bytes20(walletAddress)))
+        //     : RefundBot;
+        address receiver = RefundBot;
+        
         TransferHelper.safeTransfer(abortContext.asset, receiver, abortContext.amount);
 
         emit EddyCrossChainRevert(

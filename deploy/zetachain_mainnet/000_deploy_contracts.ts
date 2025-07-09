@@ -15,8 +15,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await main();
   
     async function main() {
-        // await deployProxys();
-        await upgradeProxys();
+        await deployProxys();
+        // await upgradeProxys();
     }
   
     async function deployContract(name: string, contract: string, args?: any[], verify?: boolean) {
