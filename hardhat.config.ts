@@ -7,9 +7,9 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // For WSL2 users, you may need to set a proxy agent to connect to the internet
-import { ProxyAgent, setGlobalDispatcher } from 'undici';
-const proxyAgent = new ProxyAgent("http://172.29.32.1:55315"); // replace ip with cat /etc/resolv.conf | grep nameserver
-setGlobalDispatcher(proxyAgent);
+// import { ProxyAgent, setGlobalDispatcher } from 'undici';
+// const proxyAgent = new ProxyAgent("http://172.29.32.1:55315"); // replace ip with cat /etc/resolv.conf | grep nameserver
+// setGlobalDispatcher(proxyAgent);
 
 const config: HardhatUserConfig = {
   solidity: {
