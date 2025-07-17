@@ -792,7 +792,6 @@ contract GatewayCrossChainTest is BaseTest {
         gatewayCrossChain.setFeePercent(0);
         gatewayCrossChain.setGateway(payable(address(0x111)));
         gatewayCrossChain.setEddyTreasurySafe(address(0x111));
-        gatewayCrossChain.setBot(address(0x111));
         vm.stopPrank();
     }
 
