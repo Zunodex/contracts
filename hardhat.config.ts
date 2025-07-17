@@ -52,6 +52,12 @@ const config: HardhatUserConfig = {
       url: "https://base-mainnet.g.alchemy.com/v2/i7AGD7NB2oucWbfTCszVNn1KE9WltlBw",
       deploy: ["./deploy/base/"],
     },
+    avax: {
+      chainId: 43114,
+      accounts: [process.env.PRIVATE_KEY ?? ""],
+      url: "https://api.avax.network/ext/bc/C/rpc",
+      deploy: ["./deploy/avax/"],
+    },
     zetachain_mainnet: {
       chainId: 7000,
       accounts: [process.env.PRIVATE_KEY ?? ""],
@@ -83,6 +89,7 @@ const config: HardhatUserConfig = {
       polygon: "2JZHRC8JP35PTPY64QPBDTCT2QE1ARI5ZP",
       bnb: "FDRR41V15H8WDGEGRU2KEPXWBYSS5IFDIY",
       base: "ABVYVFMXQCR35J2Y58RH52KW4AY66EQXUZ",
+      avax: "snowtrace",
       sepolia: "VV6FB3HDE9FSVBBVMVXGPQX4KSJUJIY3E6",
       arb_sepolia: "8TDWU29I4QA8AW713FK2Y29QABP5AF9FXX",
       zetachain_testnet: "6542100",
@@ -119,6 +126,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://api.basescan.org/api",
           browserURL: "https://basescan.org/",
+        },
+      },
+      {
+        network: "avax",
+        chainId: 43114,
+          urls: {
+          apiURL: "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan",
+          browserURL: "https://avalanche.routescan.io",
         },
       },
       {
