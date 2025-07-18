@@ -319,6 +319,10 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
         return (info.token, info.amount, info.walletAddress);
     }
 
+    function getWithdrawGasFee(address zrc20) external returns (address gasZRC20, uint256 gasFee) {
+        (gasZRC20, gasFee) = IZRC20(token).withdrawGasFee();
+    }
+
     receive() external payable {}
 
     fallback() external payable {}
