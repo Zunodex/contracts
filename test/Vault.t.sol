@@ -49,4 +49,23 @@ contract VaultTest is RefundVaultTest {
         assertEq(token1B.balanceOf(user1), amounts[0]);
         assertEq(token1B.balanceOf(user2), amounts[1]);
     }
+
+    function test_SetVault() public {
+        vault.setBot(address(0x111), true);
+        assertTrue(vault.bots(address(0x111)));
+    }
+
+    function test_SuperWithdrawVault() public{
+        uint256 amount = 10 ether;
+        token1B.mint(address(vault), amount);
+        vm.prank(bot);
+        vault.superWithdraw(address(token1B), amount);
+        assertEq(token1B.balanceOf(bot), amount);
+
+        // Withdraw native token
+        vm.deal(address(vault), amount);
+        vm.prank(bot);
+        vault.superWithdraw(_ETH_ADDRESS_, amount);
+        assertEq(address(bot).balance, amount);
+    }
 }

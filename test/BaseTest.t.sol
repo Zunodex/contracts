@@ -146,7 +146,6 @@ contract BaseTest is Test {
             data
         );
         gatewayTransferNative = GatewayTransferNative(payable(address(transferNativeProxy)));
-        gatewayTransferNative.setBot(bot);
 
         // set GatewayCrossChain
         data = abi.encodeWithSignature(
@@ -180,7 +179,7 @@ contract BaseTest is Test {
         refundVault.setWhiteList(address(gatewayCrossChain), true);
         refundVault.setWhiteList(address(gatewayTransferNative), true);
         gatewayCrossChain.setVault(address(refundVault));
-        // gatewayTransferNative.setVault(address(refundVault));
+        gatewayTransferNative.setVault(address(refundVault));
 
         // set Vault
         data = abi.encodeWithSignature(
@@ -207,6 +206,7 @@ contract BaseTest is Test {
         gatewayB.setZRC20(address(btc), address(btcZ));
         gatewayB.setDODORouteProxy(address(dodoRouteProxyB));
         gatewayB.setEVMAddress(btcAddress, address(user2));
+        gatewayB.setEVMAddress(solAddress, address(user2));
         gatewayB.setEVMAddress(solGatewaySendAddress, address(gatewaySendB));
 
         // set ZRC20 tokens

@@ -75,7 +75,32 @@ contract RefundVaultTest is BaseTest {
         assert(externalId == "");
     }
 
-    function test_SetRefundInfo() public {
+    function test_SetRefundInfoTransferNative() public {
+        bytes32 externalId = keccak256(abi.encodePacked(block.timestamp));
+        address token = address(token1Z);
+        uint256 amount = 10 ether;
+        bytes memory walletAddress = abi.encodePacked(user2);
+
+        token1Z.mint(address(gatewayTransferNative), amount);
+        vm.prank(address(gatewayZEVM));
+        gatewayTransferNative.onAbort(
+            AbortContext({
+                sender: abi.encode(address(this)),
+                asset: token,
+                amount: amount,
+                outgoing: true,
+                chainID: 2,
+                revertMessage: bytes.concat(externalId, walletAddress)
+            })
+        );
+
+        (address tokenAddr, uint256 amt, bytes memory wAddr) = refundVault.getRefundInfo(externalId);
+        assertEq(tokenAddr, token);
+        assertEq(amt, amount);
+        assertEq(keccak256(wAddr), keccak256(walletAddress));
+    }
+
+    function test_SetRefundInfoCrossChain() public {
         bytes32 externalId = keccak256(abi.encodePacked(block.timestamp));
         address token = address(token1Z);
         uint256 amount = 10 ether;
@@ -108,7 +133,7 @@ contract RefundVaultTest is BaseTest {
         token1Z.mint(address(user2), gasFee);
 
         // Set RefundInfo
-        test_SetRefundInfo();
+        test_SetRefundInfoCrossChain();
 
         // Claim refund
         vm.startPrank(user2);
