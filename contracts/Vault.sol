@@ -20,12 +20,6 @@ contract Vault is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
     event BotUpdated(address bot, bool allowed);
     event RefundTransferred(bytes32 externalId, address indexed token, uint256 amount, address to);
-    event BatchRefundTransferred(
-        address bot,
-        address indexed token,
-        uint256 totalAmount,
-        uint256 count
-    );
 
     modifier onlyBot() {
         require(bots[msg.sender], "Not authorized bot");
@@ -97,8 +91,6 @@ contract Vault is Initializable, OwnableUpgradeable, UUPSUpgradeable {
                 info.to
             );
         }
-
-        emit BatchRefundTransferred(msg.sender, token, totalAmount, infos.length);
     }
 
     function getBalance(address token) public view returns (uint256 balance) {

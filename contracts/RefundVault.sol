@@ -42,11 +42,11 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
         uint256 amount,
         bytes walletAddress
     );
-    event BatchRefundClaimed(
-        address bot,
-        address indexed token,
-        uint256 totalAmount,
-        uint256 count
+    event BotClaimed(
+        bytes32 externalId, 
+        address indexed token, 
+        uint256 amount,
+        bytes walletAddress
     );
     event RefundRemoved(
         bytes32 externalId, 
@@ -192,7 +192,7 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
             totalAmount += info.amount;
 
             // Emit individual refund claimed event
-            emit RefundClaimed(
+            emit BotClaimed(
                 externalId,
                 token,
                 info.amount,
@@ -222,8 +222,6 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
                 onRevertGasLimit: gasLimit
             })
         );
-
-        emit BatchRefundClaimed(msg.sender, token, totalAmount, externalIds.length);
     }
 
     // ==================== WhiteListed Caller Functions ====================
@@ -319,8 +317,8 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
         return (info.token, info.amount, info.walletAddress);
     }
 
-    function getWithdrawGasFee(address zrc20) external returns (address gasZRC20, uint256 gasFee) {
-        (gasZRC20, gasFee) = IZRC20(token).withdrawGasFee();
+    function getWithdrawGasFee(address zrc20) external view returns (address gasZRC20, uint256 gasFee) {
+        (gasZRC20, gasFee) = IZRC20(zrc20).withdrawGasFee();
     }
 
     receive() external payable {}
