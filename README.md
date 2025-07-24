@@ -4,7 +4,7 @@ This project is a cross-chain DEX, supporting both same-chain and cross-chain sw
 
 ## Documentation
 
-https://www.zetachain.com/docs/
+https://docs.zunodex.xyz/
 
 ## Usage
 
