@@ -121,6 +121,9 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         emit DODOApproveUpdated(_dodoApprove);
     }
 
+    /// @notice Set the platform fee percentage
+    /// @dev Fee is in 0.001% units. For example, 10 = 0.01%
+    /// @param _feePercent The fee percentage to set
     function setFeePercent(uint256 _feePercent) external onlyOwner {
         feePercent = _feePercent;
         emit FeePercentUpdated(_feePercent);
@@ -323,7 +326,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         address zrc20,
         uint256 amount
     ) internal returns (uint256 platformFeesForTx) {
-        platformFeesForTx = (amount * feePercent) / 1000; // platformFee = 5 <> 0.5%
+        platformFeesForTx = (amount * feePercent) / 100000;
         
         if(zrc20 == _ETH_ADDRESS_) {
             TransferHelper.safeTransferETH(EddyTreasurySafe, platformFeesForTx);
@@ -353,7 +356,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         (DecodedNativeMessage memory decoded, MixSwapParams memory params) = SwapDataHelperLib.decodeNativeMessage(_message);
 
         // Fee for platform
-        uint256 platformFeesForTx = _handleFeeTransfer(zrc20, amount); // platformFee = 5 <> 0.5%
+        uint256 platformFeesForTx = _handleFeeTransfer(zrc20, amount);
         amount -= platformFeesForTx;
         address receiver = address(uint160(bytes20(decoded.receiver)));
 

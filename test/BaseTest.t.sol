@@ -129,7 +129,7 @@ contract BaseTest is Test {
             EddyTreasurySafe,
             address(dodoRouteProxyZ),
             address(dodoRouteProxyZ), // DODOApprove
-            0,
+            10,
             10,
             100000
         );
@@ -147,7 +147,7 @@ contract BaseTest is Test {
             EddyTreasurySafe,
             address(dodoRouteProxyZ),
             address(dodoRouteProxyZ),
-            0,
+            10,
             10,
             100000
         );
