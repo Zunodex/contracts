@@ -127,6 +127,9 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
         emit DODOApproveUpdated(_dodoApprove);
     }
 
+    /// @notice Set the platform fee percentage
+    /// @dev Fee is in 0.001% units. For example, 10 = 0.01%
+    /// @param _feePercent The fee percentage to set
     function setFeePercent(uint256 _feePercent) external onlyOwner {
         feePercent = _feePercent;
         emit FeePercentUpdated(_feePercent);
@@ -287,7 +290,7 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
     }
 
     function _handleFeeTransfer(address zrc20, uint256 amount) internal returns (uint256 platformFeesForTx) {
-        platformFeesForTx = (amount * feePercent) / 1000; // platformFee = 5 <> 0.5%
+        platformFeesForTx = (amount * feePercent) / 100000;
         TransferHelper.safeTransfer(zrc20, EddyTreasurySafe, platformFeesForTx);
     }
 
@@ -445,7 +448,7 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
         //     : address(uint160(bytes20(decoded.receiver)));
 
         // Transfer platform fees
-        uint256 platformFeesForTx = _handleFeeTransfer(zrc20, amount); // platformFee = 5 <> 0.5%
+        uint256 platformFeesForTx = _handleFeeTransfer(zrc20, amount);
         amount -= platformFeesForTx;
 
         // Swap on DODO Router

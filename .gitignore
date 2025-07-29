@@ -1,7 +1,11 @@
 node_modules
 .env
+
+# solidity-coverage files
 coverage
 coverage.json
+
+# TypeChain files
 typechain
 typechain-types
 
@@ -9,4 +13,7 @@ typechain-types
 cache
 artifacts
 
-access_token
+.vscode
+.openzeppelin
+
+deployments/

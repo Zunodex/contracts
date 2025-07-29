@@ -43,7 +43,7 @@ contract GatewayTransferNativeTest is BaseTest {
         vm.stopPrank();
 
         assertEq(token1A.balanceOf(user1), initialBalance - amount);
-        assertEq(token1Z.balanceOf(user2), 100000000000000000000);  
+        assertEq(token1Z.balanceOf(user2), 99990000000000000000);  
     }
 
     // A - zetachain swap: token1A -> token1Z -> token2Z
@@ -58,7 +58,7 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token1Z),
             address(token2Z),
-            amount,
+            99990000000000000000,
             0,
             0,
             new address[](1),
@@ -91,7 +91,7 @@ contract GatewayTransferNativeTest is BaseTest {
         vm.stopPrank();
 
         assertEq(token1A.balanceOf(user1), initialBalance - amount);
-        assertEq(token2Z.balanceOf(user2), 200000000000000000000);  
+        assertEq(token2Z.balanceOf(user2), 199980000000000000000);  
     }
 
     // A native token - zetachain swap: ETH -> token3Z -> token2Z
@@ -106,7 +106,7 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token3Z),
             address(token2Z),
-            amount,
+            99990000000000000000,
             0,
             0,
             new address[](1),
@@ -135,7 +135,7 @@ contract GatewayTransferNativeTest is BaseTest {
         vm.stopPrank();
 
         assertEq(user1.balance, initialBalance - amount);
-        assertEq(token2Z.balanceOf(user2), 100000000000000000000);  
+        assertEq(token2Z.balanceOf(user2), 99990000000000000000);  
     }
 
     // A native token swap - zetachain swap: token1A -> ETH -> token3Z -> token2Z
@@ -165,7 +165,7 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token3Z),
             address(token2Z),
-            300000000000000000000,
+            299970000000000000000,
             0,
             0,
             new address[](1),
@@ -200,7 +200,7 @@ contract GatewayTransferNativeTest is BaseTest {
         vm.stopPrank();
 
         assertEq(token1A.balanceOf(user1), initialBalance - amount);
-        assertEq(token2Z.balanceOf(user2), 300000000000000000000);  
+        assertEq(token2Z.balanceOf(user2), 299970000000000000000);  
     }
 
     // A swap - zetachain: token1A -> token2A -> token2Z
@@ -252,7 +252,7 @@ contract GatewayTransferNativeTest is BaseTest {
         vm.stopPrank();
 
         assertEq(token1A.balanceOf(user1), initialBalance - amount);
-        assertEq(token2Z.balanceOf(user2), 300000000000000000000);  
+        assertEq(token2Z.balanceOf(user2), 299970000000000000000);  
     }
 
     // A swap - zetachain swap: token1A -> token2A -> token2Z -> token1Z
@@ -282,7 +282,7 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token2Z),
             address(token1Z),
-            amount,
+            99990000000000000000,
             0,
             0,
             new address[](1),
@@ -317,7 +317,7 @@ contract GatewayTransferNativeTest is BaseTest {
         vm.stopPrank();
 
         assertEq(token1A.balanceOf(user1), initialBalance - amount);
-        assertEq(token2Z.balanceOf(user2), 300000000000000000000);  
+        assertEq(token2Z.balanceOf(user2), 299970000000000000000);  
     }
 
     // BTC - zetachain swap: btc -> btcZ -> token1Z
@@ -331,7 +331,7 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(btcZ),
             address(token1Z),
-            amount,
+            99990000000000000000,
             0,
             0,
             new address[](1),
@@ -362,7 +362,7 @@ contract GatewayTransferNativeTest is BaseTest {
             bytes.concat(externalId, message)
         );
 
-        assertEq(token1Z.balanceOf(user2), 100000000000000000000);
+        assertEq(token1Z.balanceOf(user2), 99990000000000000000);
     }
 
     // SOL - zetachain swap: SOL -> token1Z -> token2Z
@@ -376,7 +376,7 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token1Z),
             address(token2Z),
-            amount,
+            99990000000000000000,
             0,
             0,
             new address[](1),
@@ -407,7 +407,7 @@ contract GatewayTransferNativeTest is BaseTest {
             bytes.concat(externalId, message)
         );
 
-        assertEq(token2Z.balanceOf(user2), 200000000000000000000);
+        assertEq(token2Z.balanceOf(user2), 199980000000000000000);
     }
 
     // zetachain - B: ETH -> token2Z -> token2B -> token1B
@@ -420,7 +420,7 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             _ETH_ADDRESS_,
             address(token2Z),
-            amount,
+            99990000000000000000,
             0,
             0,
             new address[](1),
@@ -437,7 +437,7 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory swapDataB = encodeCompressedMixSwapParams(
             address(token2B),
             address(token1B),
-            98995986959878634903,
+            98985986959878634903,
             0,
             0,
             new address[](1),
@@ -472,7 +472,7 @@ contract GatewayTransferNativeTest is BaseTest {
         );
 
         assertEq(user1.balance, initialBalance - amount);
-        assertEq(token1B.balanceOf(user2), 24748996739969658725); 
+        assertEq(token1B.balanceOf(user2), 24746496739969658725); 
     }
 
     // zatachain - B: token1Z -> token1B
@@ -516,7 +516,7 @@ contract GatewayTransferNativeTest is BaseTest {
         vm.stopPrank();
 
         assertEq(token1Z.balanceOf(user1), initialBalance - amount);
-        assertEq(token1B.balanceOf(user2), 99000000000000000000); 
+        assertEq(token1B.balanceOf(user2), 98990000000000000000); 
     }
 
     // zetachain swap - B：token1Z -> token2Z -> token2B
@@ -529,7 +529,7 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token1Z),
             address(token2Z),
-            amount,
+            99990000000000000000,
             0,
             0,
             new address[](1),
@@ -573,7 +573,7 @@ contract GatewayTransferNativeTest is BaseTest {
         vm.stopPrank();
 
         assertEq(token1Z.balanceOf(user1), initialBalance - amount);
-        assertEq(token2B.balanceOf(user2), 198995986959878634903); 
+        assertEq(token2B.balanceOf(user2), 198975986959878634903); 
     }
 
     // zetachain swap - B swap：token2Z -> token1Z -> token1B -> token2B
@@ -586,7 +586,7 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token2Z),
             address(token1Z),
-            amount,
+            99990000000000000000,
             0,
             0,
             new address[](1),
@@ -603,7 +603,7 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory swapDataB = encodeCompressedMixSwapParams(
             address(token1B),
             address(token2B),
-            49000000000000000000,
+            48995000000000000000,
             0,
             0,
             new address[](1),
@@ -643,7 +643,7 @@ contract GatewayTransferNativeTest is BaseTest {
         vm.stopPrank();
 
         assertEq(token2Z.balanceOf(user1), initialBalance - amount);
-        assertEq(token2B.balanceOf(user2), 196000000000000000000); 
+        assertEq(token2B.balanceOf(user2), 195980000000000000000); 
     }
 
     // zetachain swap - BTC: token1Z -> btcZ -> btc
@@ -656,7 +656,7 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token1Z),
             address(btcZ),
-            amount,
+            99990000000000000000,
             0,
             0,
             new address[](1),
@@ -700,7 +700,7 @@ contract GatewayTransferNativeTest is BaseTest {
         vm.stopPrank();
 
         assertEq(token1Z.balanceOf(user1), initialBalance - amount);
-        assertEq(btc.balanceOf(user2), 99000000000000000000); 
+        assertEq(btc.balanceOf(user2), 98990000000000000000); 
     }
 
     // zetachain - BTC: btcZ -> btc
@@ -745,7 +745,7 @@ contract GatewayTransferNativeTest is BaseTest {
         vm.stopPrank();
 
         assertEq(btcZ.balanceOf(user1), initialBalance - amount);
-        assertEq(btc.balanceOf(user2), 99000000000000000000); 
+        assertEq(btc.balanceOf(user2), 98990000000000000000); 
     }
 
     // zetachain swap - SOL: token2Z -> token1Z -> token1B
@@ -758,7 +758,7 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token2Z),
             address(token1Z),
-            amount,
+            99990000000000000000,
             0,
             0,
             new address[](1),
@@ -809,7 +809,7 @@ contract GatewayTransferNativeTest is BaseTest {
 
         address evmWalletAddress = address(bytes20(solAddress));
         assertEq(token2Z.balanceOf(user1), initialBalance - amount);
-        assertEq(token1B.balanceOf(evmWalletAddress), 49000000000000000000); 
+        assertEq(token1B.balanceOf(evmWalletAddress), 48995000000000000000); 
     }
 
     // zetachain - SOL: token1Z -> token1B -> token2B
@@ -826,7 +826,7 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory swapDataB = encodeCompressedMixSwapParams(
             address(token1B),
             address(token2B),
-            99000000000000000000,
+            98990000000000000000,
             0,
             0,
             new address[](1),
@@ -873,7 +873,7 @@ contract GatewayTransferNativeTest is BaseTest {
 
         address evmWalletAddress = address(bytes20(solAddress));
         assertEq(token1Z.balanceOf(user1), initialBalance - amount);
-        assertEq(token2B.balanceOf(evmWalletAddress), 396000000000000000000); 
+        assertEq(token2B.balanceOf(evmWalletAddress), 395960000000000000000); 
     }
 
     // zetachain - SOL: token1Z -> token1B
@@ -924,7 +924,7 @@ contract GatewayTransferNativeTest is BaseTest {
 
         address evmWalletAddress = address(bytes20(solAddress));
         assertEq(token1Z.balanceOf(user1), initialBalance - amount);
-        assertEq(token1B.balanceOf(evmWalletAddress), 99000000000000000000); 
+        assertEq(token1B.balanceOf(evmWalletAddress), 98990000000000000000); 
     }
 
     // A - Z: tokenWZETAA -> WZETA
@@ -938,7 +938,7 @@ contract GatewayTransferNativeTest is BaseTest {
         bytes memory swapDataZ = encodeCompressedMixSwapParams(
             address(token1Z),
             WZETA,
-            amount,
+            99990000000000000000,
             0,
             0,
             new address[](1),
@@ -969,6 +969,8 @@ contract GatewayTransferNativeTest is BaseTest {
             amount,
             bytes.concat(externalId, message)
         );
+
+        assertEq(IZRC20(WZETA).balanceOf(user2), 99990000000000000000);
     }
 
     function test_SuperWithdraw() public {
