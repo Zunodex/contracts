@@ -384,10 +384,18 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             // Swap on DODO Router
             uint256 outputAmount = amount;
             if (decoded.swapData.length > 0) {
-                require(
-                    (zrc20 == params.fromToken) && (decoded.targetZRC20 == params.toToken),
-                    "INVALID_TOKEN_ADDRESS: TOKEN_NOT_MATCH"
-                );
+                bool isETH = decoded.targetZRC20 == _ETH_ADDRESS_;
+                if (isETH) {
+                    require(
+                        (zrc20 == params.fromToken) && (params.toToken == WZETA), 
+                        "INVALID_TOKEN_ADDRESS: TOKEN_NOT_MATCH"
+                    );
+                } else {
+                    require(
+                        (zrc20 == params.fromToken) && (decoded.targetZRC20 == params.toToken),
+                        "INVALID_TOKEN_ADDRESS: TOKEN_NOT_MATCH"
+                    );
+                }
                 require(
                     amount == params.fromTokenAmount,
                     "INVALID_TOKEN_AMOUNT: AMOUNT_NOT_MATCH"
@@ -396,14 +404,14 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             } else {
                 require(
                     zrc20 == decoded.targetZRC20,
-                    "INVALID_TOKEN_AMOUNT: TOKEN_NOT_MATCH"
+                    "INVALID_TOKEN_ADDRESS: TOKEN_NOT_MATCH"
                 );
             }
   
             if (decoded.targetZRC20 == _ETH_ADDRESS_) {
-                // withdraw WZETA to get Zeta in 1:1 ratio
+                // withdraw WZETA to get ZETA
                 IWETH9(WZETA).withdraw(outputAmount);
-                // transfer wzeta
+                // transfer ZETA
                 TransferHelper.safeTransferETH(receiver, outputAmount);
             } else {
                 TransferHelper.safeTransfer(

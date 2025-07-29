@@ -13,7 +13,7 @@ const ZETACHAIN_TESTNET_CONFIG = {
     deployedAddress: {
         GatewayCrossChainImpl: "0xb6a8db416e81314669Be14E91Ae0E07bD7Ec0Daf",
         GatewayCrossChainProxy: "0x0FEA3705B34901cf51953be5001973EA5a739968",
-        GatewayTransferNativeImpl: "0x809fe4a7051304b08d6C8651d2d7f50668ab65DE",
+        GatewayTransferNativeImpl: "0xf51705E360f706f46b83029A6f42Cb7b491a24dd",
         GatewayTransferNativeProxy: "0xfd6fFee92D25158b29315C71b0Bb4dE727530FaF"
     },
   };
