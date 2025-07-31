@@ -58,6 +58,12 @@ const config: HardhatUserConfig = {
       url: "https://api.avax.network/ext/bc/C/rpc",
       deploy: ["./deploy/avax/"],
     },
+    arb: {
+      chainId: 42161,
+      accounts: [process.env.PRIVATE_KEY ?? ""],
+      url: "https://arbitrum.drpc.org",
+      deploy: ["./deploy/arb/"],
+    },
     zetachain_mainnet: {
       chainId: 7000,
       accounts: [process.env.PRIVATE_KEY ?? ""],
@@ -90,6 +96,7 @@ const config: HardhatUserConfig = {
       bnb: "FDRR41V15H8WDGEGRU2KEPXWBYSS5IFDIY",
       base: "ABVYVFMXQCR35J2Y58RH52KW4AY66EQXUZ",
       avax: "snowtrace",
+      arb: "8TDWU29I4QA8AW713FK2Y29QABP5AF9FXX",
       sepolia: "VV6FB3HDE9FSVBBVMVXGPQX4KSJUJIY3E6",
       arb_sepolia: "8TDWU29I4QA8AW713FK2Y29QABP5AF9FXX",
       zetachain_testnet: "6542100",
@@ -134,6 +141,14 @@ const config: HardhatUserConfig = {
           urls: {
           apiURL: "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan",
           browserURL: "https://avalanche.routescan.io",
+        },
+      },
+      {
+        network: "arb",
+        chainId: 42161,
+        urls: {
+          apiURL: "https://api.arbiscan.io/api",
+          browserURL: "https://arbiscan.io/",
         },
       },
       {
