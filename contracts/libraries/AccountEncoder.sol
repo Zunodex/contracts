@@ -17,38 +17,27 @@ library AccountEncoder {
     }
 
     function decompressAccounts(bytes memory input) internal pure returns (Account[] memory accounts) {
-        assembly {
-            let ptr := add(input, 32)
+        require(input.length >= 2, "Input too short");
 
-            // Read accounts length (uint16)
-            let len := add(shl(8, byte(0, mload(ptr))), byte(1, mload(ptr)))
-            ptr := add(ptr, 2)
+        uint16 len = (uint16(uint8(input[0])) << 8) | uint8(input[1]);
+        require(input.length == 2 + len * 33, "Invalid input length");
 
-            // Allocate memory for Account[] array
-            accounts := mload(0x40)
-            mstore(accounts, len)
-            let arrData := add(accounts, 32)
+        accounts = new Account[](len);
 
-            // Prepare memory for Account structs
-            let freePtr := add(arrData, mul(len, 32))
+        uint offset = 2;
+        for (uint i = 0; i < len; i++) {
+            bytes32 pubkey;
 
-            for { let i := 0 } lt(i, len) { i := add(i, 1) } {
-                let acc := freePtr
-                freePtr := add(freePtr, 64)
-
-                // Load publicKey
-                mstore(acc, mload(ptr))
-                ptr := add(ptr, 32)
-
-                // Load isWritable (as bool)
-                mstore(add(acc, 32), shr(248, mload(ptr)))    
-                ptr := add(ptr, 1)
-
-                // Store pointer to struct in the array
-                mstore(add(arrData, mul(i, 32)), acc)
+            assembly {
+                pubkey := mload(add(add(input, 32), offset))
             }
 
-            mstore(0x40, freePtr)
+            bool writable = input[offset + 32] != 0;
+
+            accounts[i] = Account(pubkey, writable);
+            offset += 33;
         }
+
+        return accounts;
     }
 }
