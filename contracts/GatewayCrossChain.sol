@@ -452,14 +452,14 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
                 "INVALID_TOKEN_ADDRESS: TOKEN_NOT_MATCH"
             );
             require(
-                amount == params.fromTokenAmount,
-                "INVALID_TOKEN_AMOUNT: AMOUNT_NOT_MATCH"
+                amount >= params.fromTokenAmount,
+                "INVALID_TOKEN_AMOUNT: AMOUNT_NOT_ENOUGH"
             );
             outputAmount = _doMixSwap(params);
         } else {
             require(
                 zrc20 == decoded.targetZRC20,
-                "INVALID_TOKEN_AMOUNT: TOKEN_NOT_MATCH"
+                "INVALID_TOKEN_ADDRESS: TOKEN_NOT_MATCH"
             );
         }
 
