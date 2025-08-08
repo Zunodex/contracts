@@ -388,10 +388,10 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
                     (zrc20 == params.fromToken) && (decoded.targetZRC20 == params.toToken),
                     "INVALID_TOKEN_ADDRESS: TOKEN_NOT_MATCH"
                 );
-                require(
-                    amount >= params.fromTokenAmount,
-                    "INVALID_TOKEN_AMOUNT: AMOUNT_NOT_ENOUGH"
-                );
+                // Handle negative slippage
+                if(amount < params.fromTokenAmount) {
+                    params.fromTokenAmount = amount;
+                }
                 outputAmount = _doMixSwap(params);
             } else {
                 require(
