@@ -649,7 +649,7 @@ contract GatewayTransferNativeTest is BaseTest {
     // zetachain swap - BTC: token1Z -> btcZ -> btc
     function test_ZSwap2BTC() public {
         uint256 amount = 100 ether;
-        uint32 dstChainId = 8332;
+        uint32 dstChainId = 8223;
         address targetZRC20 = address(btcZ);
         bytes memory sender = abi.encodePacked(user1);
         bytes memory receiver = btcAddress;
@@ -706,7 +706,7 @@ contract GatewayTransferNativeTest is BaseTest {
     // zetachain - BTC: btcZ -> btc
     function test_Z2BTC() public {
         uint256 amount = 100 ether;
-        uint32 dstChainId = 8332;
+        uint32 dstChainId = 8223;
         address targetZRC20 = address(btcZ);
         bytes memory sender = abi.encodePacked(user1);
         bytes memory receiver = btcAddress;
