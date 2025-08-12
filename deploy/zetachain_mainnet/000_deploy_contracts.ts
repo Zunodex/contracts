@@ -113,10 +113,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         // const implAddress2 = await upgrades.erc1967.getImplementationAddress(upgraded2.target);
         // console.log("🔧 New GatewayTransferNative implementation deployed at:", implAddress2);
 
-        // const GatewayCrossChain = await ethers.getContractFactory('GatewayCrossChain');
-        // const implementation1 = await GatewayCrossChain.deploy();
-        // await implementation1.waitForDeployment();
-        // console.log("🔧 New GatewayCrossChain implementation deployed at:", implementation1.target);
+        const GatewayCrossChain = await ethers.getContractFactory('GatewayCrossChain');
+        const implementation1 = await GatewayCrossChain.deploy();
+        await implementation1.waitForDeployment();
+        console.log("🔧 New GatewayCrossChain implementation deployed at:", implementation1.target);
 
         const GatewayTransferNative = await ethers.getContractFactory('GatewayTransferNative');
         const implementation2 = await GatewayTransferNative.deploy();
