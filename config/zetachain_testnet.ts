@@ -11,11 +11,11 @@ const ZETACHAIN_TESTNET_CONFIG = {
         RefundBot: "0xa19c93c48b2051135c3a5c5df9753d53e03ef239",
     }, 
     deployedAddress: {
-        GatewayCrossChainImpl: "0x724785B1c36714D18A543e7cbeE05360bc5FFB43",
+        GatewayCrossChainImpl: "0x941a43222d665590b63D53082C13d4A6852C123c",
         GatewayCrossChainProxy: "0xa6d371876F4d12968da14f6339688F5Ae93D7287",
-        GatewayTransferNativeImpl: "0x7E820457780Ac99B9A042Cd5f875b274855A1eE9",
+        GatewayTransferNativeImpl: "0x9Cb020501fd71D1A3BE5568ee898A181793Fdd71",
         GatewayTransferNativeProxy: "0xe6ea3fCf812775Aa3C3D32BCaf825Fc97B35Af4d",
-        RefundVaultImpl: "0x7Bb76aDd60518CdcCC2888d3A37aC97BAf195F4E",
+        RefundVaultImpl: "0x4087A9E54316b7cd2d540D748335FDA3058722B1",
         RefundVaultProxy: "0x420A2fA0f4c4A1E209574454f399A4aB9b4ee5a0",
     },
   };
