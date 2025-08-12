@@ -23,7 +23,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
     address public constant WZETA = 0x5F0b1a82749cb4E2278EC87F8BF6B618dC71a8bf;
     address public constant UniswapRouter = 0x2ca7d64A7EFE2D62A725E2B35Cf7230D6677FfEe;
     address public constant UniswapFactory = 0x9fd96203f7b22bCF72d9DCb40ff98302376cE09c;
-    uint32 constant BITCOIN_EDDY = 8332; // chain Id from eddy db
+    uint32 constant BITCOIN_EDDY = 8223; // chain Id from eddy db
     uint32 constant SOLANA_EDDY = 1399811149; // chain Id from eddy db
     uint32 constant ZETACHAIN = 7000;
     uint256 constant MAX_DEADLINE = 200;
@@ -391,22 +391,14 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             // Swap on DODO Router
             uint256 outputAmount = amount;
             if (decoded.swapData.length > 0) {
-                bool isETH = decoded.targetZRC20 == _ETH_ADDRESS_;
-                if (isETH) {
-                    require(
-                        (zrc20 == params.fromToken) && (params.toToken == WZETA), 
-                        "INVALID_TOKEN_ADDRESS: TOKEN_NOT_MATCH"
-                    );
-                } else {
-                    require(
-                        (zrc20 == params.fromToken) && (decoded.targetZRC20 == params.toToken),
-                        "INVALID_TOKEN_ADDRESS: TOKEN_NOT_MATCH"
-                    );
-                }
                 require(
-                    amount == params.fromTokenAmount,
-                    "INVALID_TOKEN_AMOUNT: AMOUNT_NOT_MATCH"
+                    (zrc20 == params.fromToken) && (decoded.targetZRC20 == params.toToken),
+                    "INVALID_TOKEN_ADDRESS: TOKEN_NOT_MATCH"
                 );
+                // Handle negative slippage
+                if(amount < params.fromTokenAmount) {
+                    params.fromTokenAmount = amount;
+                }
                 outputAmount = _doMixSwap(params);
             } else {
                 require(
@@ -416,8 +408,6 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
             }
   
             if (decoded.targetZRC20 == _ETH_ADDRESS_) {
-                // withdraw WZETA to get ZETA
-                IWETH9(WZETA).withdraw(outputAmount);
                 // transfer ZETA
                 TransferHelper.safeTransferETH(receiver, outputAmount);
             } else {
@@ -595,7 +585,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         } else {
             require(
                 zrc20 == decoded.targetZRC20,
-                "INVALID_TOKEN_AMOUNT: TOKEN_NOT_MATCH"
+                "INVALID_TOKEN_ADDRESS: TOKEN_NOT_MATCH"
             );
         }
         
