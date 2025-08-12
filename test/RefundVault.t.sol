@@ -194,7 +194,7 @@ contract RefundVaultTest is BaseTest {
         bytes32[] memory ids = new bytes32[](2);
         ids[0] = externalIds[0];
         ids[1] = externalIds[2];
-        refundVault.batchClaimRefund(address(token1Z), ids, address(vault));
+        refundVault.batchClaimRefund(address(token1Z), ids, abi.encodePacked(address(vault)));
         vm.stopPrank();
         
         assertEq(token1B.balanceOf(address(vault)), amounts[0] + amounts[2]);
