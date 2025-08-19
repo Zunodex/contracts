@@ -207,8 +207,12 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
         // Collect gas fee from bot and approve
         (address gasZRC20, uint256 gasFee) = IZRC20(token).withdrawGasFee();
         TransferHelper.safeTransferFrom(gasZRC20, msg.sender, address(this), gasFee);
-        TransferHelper.safeApprove(gasZRC20, address(gateway), gasFee);
-        TransferHelper.safeApprove(token, address(gateway), totalAmount);
+        if(gasZRC20 == token) {
+            TransferHelper.safeApprove(gasZRC20, address(gateway), gasFee + totalAmount);
+        } else {
+            TransferHelper.safeApprove(gasZRC20, address(gateway), gasFee);
+            TransferHelper.safeApprove(token, address(gateway), totalAmount);
+        }
 
         // Withdraw to vault address
         gateway.withdraw(
