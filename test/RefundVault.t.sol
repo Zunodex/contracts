@@ -7,6 +7,10 @@ import {BaseTest} from "./BaseTest.t.sol";
 import {console} from "forge-std/console.sol";
 
 contract RefundVaultTest is BaseTest {
+    event RefundClaimedRevert(
+        bytes32 externalId, 
+        uint256 amount
+    );
 
     function test_AddRefundInfo() public {
         bytes32[] memory externalIds = new bytes32[](3);
@@ -224,5 +228,22 @@ contract RefundVaultTest is BaseTest {
         vm.prank(bot);
         refundVault.superWithdraw(_ETH_ADDRESS_, amount);
         assertEq(address(bot).balance, amount);
+    }
+
+    function test_OnRevert() public {
+        bytes32 externalId = keccak256(abi.encodePacked(block.timestamp));
+        uint256 amount = 10 ether;
+
+        vm.prank(address(gatewayZEVM));
+        vm.expectEmit(false, false, false, true);
+        emit RefundClaimedRevert(externalId, amount);
+        refundVault.onRevert(
+            RevertContext({
+                sender: address(this),
+                asset: address(token1Z),
+                amount: amount,
+                revertMessage: abi.encodePacked(externalId)
+            })
+        );
     }
 }

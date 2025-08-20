@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {IZRC20} from "@zetachain/protocol-contracts/contracts/zevm/interfaces/IZRC20.sol";
 import {GatewayZEVM} from "@zetachain/protocol-contracts/contracts/zevm/GatewayZEVM.sol";
+import {RevertContext} from "@zetachain/protocol-contracts/contracts/zevm/interfaces/IGatewayZEVM.sol";
 import {RevertOptions} from "@zetachain/protocol-contracts/contracts/zevm/interfaces/IGatewayZEVM.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -42,6 +43,10 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
         uint256 amount,
         bytes walletAddress
     );
+    event RefundClaimedRevert(
+        bytes32 externalId, 
+        uint256 amount
+    );
     event BotClaimed(
         bytes32 externalId, 
         address indexed token, 
@@ -77,6 +82,11 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
 
     modifier onlyBot {
         if(!bots[msg.sender]) revert Unauthorized();
+        _;
+    }
+
+    modifier onlyGateway() {
+        if (msg.sender != address(gateway)) revert Unauthorized();
         _;
     }
 
@@ -221,7 +231,7 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
             token,
             RevertOptions({
                 revertAddress: address(this),
-                callOnRevert: false,
+                callOnRevert: true,
                 abortAddress: address(0),
                 revertMessage: "",
                 onRevertGasLimit: gasLimit
@@ -297,9 +307,9 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
             token,
             RevertOptions({
                 revertAddress: address(this),
-                callOnRevert: false,
+                callOnRevert: true,
                 abortAddress: address(0),
-                revertMessage: "",
+                revertMessage: abi.encodePacked(externalId),
                 onRevertGasLimit: gasLimit
             })
         );
@@ -326,8 +336,12 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
         (gasZRC20, gasFee) = IZRC20(zrc20).withdrawGasFee();
     }
 
+    function onRevert(RevertContext calldata context) external onlyGateway {
+        bytes32 externalId = abi.decode(context.revertMessage, (bytes32));
+        emit RefundClaimedRevert(externalId, context.amount);
+    }
+
     receive() external payable {}
 
     fallback() external payable {}
-
 }
