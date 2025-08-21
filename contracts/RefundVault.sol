@@ -43,15 +43,21 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
         uint256 amount,
         bytes walletAddress
     );
-    event RefundClaimedRevert(
-        bytes32 externalId, 
-        uint256 amount
-    );
     event BotClaimed(
         bytes32 externalId, 
         address indexed token, 
         uint256 amount,
         bytes walletAddress
+    );
+    event UserClaimedRevert(
+        bytes32 externalId, 
+        address indexed token, 
+        uint256 amount,
+        bytes walletAddress
+    );
+    event BotClaimedRevert(
+        address indexed token,
+        uint256 totalAmount
     );
     event RefundRemoved(
         bytes32 externalId, 
@@ -298,9 +304,13 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
             address(this),
             gasFee
         );
+        if(gasZRC20 == token) {
+            TransferHelper.safeApprove(gasZRC20, address(gateway), gasFee + amount);
+        } else {
+            TransferHelper.safeApprove(gasZRC20, address(gateway), gasFee);
+            TransferHelper.safeApprove(token, address(gateway), amount);
+        }
 
-        TransferHelper.safeApprove(gasZRC20, address(gateway), gasFee);
-        TransferHelper.safeApprove(token, address(gateway), amount);
         gateway.withdraw(
             walletAddress,
             amount,
@@ -309,7 +319,7 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
                 revertAddress: address(this),
                 callOnRevert: true,
                 abortAddress: address(0),
-                revertMessage: abi.encodePacked(externalId),
+                revertMessage: bytes.concat(externalId, walletAddress),
                 onRevertGasLimit: gasLimit
             })
         );
@@ -337,8 +347,33 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
     }
 
     function onRevert(RevertContext calldata context) external onlyGateway {
-        bytes32 externalId = abi.decode(context.revertMessage, (bytes32));
-        emit RefundClaimedRevert(externalId, context.amount);
+        // Verify sender
+        if(context.sender != address(this)) revert Unauthorized();
+
+        if(context.revertMessage.length > 0) {
+            bytes32 externalId = bytes32(context.revertMessage[0:32]);
+            bytes memory walletAddress = context.revertMessage[32:];
+
+            RefundInfo memory refundInfo = RefundInfo({
+                externalId: externalId,
+                token: context.asset,
+                amount: context.amount,
+                walletAddress: walletAddress
+            });
+
+            refundInfos[externalId] = refundInfo;
+            emit UserClaimedRevert(
+                externalId,
+                context.asset,
+                context.amount,
+                walletAddress
+            );
+        } else {
+            emit BotClaimedRevert(
+                context.asset,
+                context.amount
+            );
+        }
     }
 
     receive() external payable {}

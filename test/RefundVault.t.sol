@@ -7,9 +7,17 @@ import {BaseTest} from "./BaseTest.t.sol";
 import {console} from "forge-std/console.sol";
 
 contract RefundVaultTest is BaseTest {
-    event RefundClaimedRevert(
+    error Unauthorized();
+    
+    event UserClaimedRevert(
         bytes32 externalId, 
-        uint256 amount
+        address indexed token, 
+        uint256 amount,
+        bytes walletAddress
+    );
+    event BotClaimedRevert(
+        address indexed token,
+        uint256 totalAmount
     );
 
     function test_AddRefundInfo() public {
@@ -232,17 +240,46 @@ contract RefundVaultTest is BaseTest {
 
     function test_OnRevert() public {
         bytes32 externalId = keccak256(abi.encodePacked(block.timestamp));
+        address token = address(token1Z);
         uint256 amount = 10 ether;
+        bytes memory walletAddress = abi.encodePacked(user2);
 
         vm.prank(address(gatewayZEVM));
-        vm.expectEmit(false, false, false, true);
-        emit RefundClaimedRevert(externalId, amount);
+        vm.expectRevert(Unauthorized.selector);
         refundVault.onRevert(
             RevertContext({
                 sender: address(this),
-                asset: address(token1Z),
+                asset: token,
                 amount: amount,
-                revertMessage: abi.encodePacked(externalId)
+                revertMessage: bytes.concat(externalId, walletAddress)
+            })
+        );
+
+        vm.prank(address(gatewayZEVM));
+        vm.expectEmit(true, false, false, true);
+        emit UserClaimedRevert(externalId, token, amount, walletAddress);
+        refundVault.onRevert(
+            RevertContext({
+                sender: address(refundVault),
+                asset: token,
+                amount: amount,
+                revertMessage: bytes.concat(externalId, walletAddress)
+            })
+        );
+        (address tokenAddr, uint256 amt, bytes memory wAddr) = refundVault.getRefundInfo(externalId);
+        assertEq(tokenAddr, token);
+        assertEq(amt, amount);
+        assertEq(keccak256(wAddr), keccak256(walletAddress));
+
+        vm.prank(address(gatewayZEVM));
+        vm.expectEmit(true, false, false, true);
+        emit BotClaimedRevert(token, amount);
+        refundVault.onRevert(
+            RevertContext({
+                sender: address(refundVault),
+                asset: token,
+                amount: amount,
+                revertMessage: ""
             })
         );
     }

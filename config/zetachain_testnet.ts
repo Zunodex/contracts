@@ -15,8 +15,8 @@ const ZETACHAIN_TESTNET_CONFIG = {
         GatewayCrossChainProxy: "0xa6d371876F4d12968da14f6339688F5Ae93D7287",
         GatewayTransferNativeImpl: "0x9Cb020501fd71D1A3BE5568ee898A181793Fdd71",
         GatewayTransferNativeProxy: "0xe6ea3fCf812775Aa3C3D32BCaf825Fc97B35Af4d",
-        RefundVaultImpl: "0xd6D96e98863dE6E22208621f30a4eAab0ede04DE",
-        RefundVaultProxy: "0xC642F468394a0bD10168D0318D057f296234eF36",
+        RefundVaultImpl: "0x1DBbBC8BA58462f7139265589e0a028AB242Cf60",
+        RefundVaultProxy: "0x23f4C441a4Ef3De32e3878e9e69aAB980d2aDa36",
     },
   };
   
