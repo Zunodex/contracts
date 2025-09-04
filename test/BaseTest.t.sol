@@ -23,6 +23,8 @@ contract BaseTest is Test {
     address public user1 = address(0x111);
     address public user2 = address(0x222);
     address public bot = address(0x333);
+    bytes public tonAddress = abi.encodePacked("0:21f6bb20c44e7fb5efe6db87a4fead0c289cc13bd94880419cabf19688647987");
+    bytes public suiAddress = abi.encodePacked("0xba477ad7b87a31fde3d29c4e4512329d7340ec23e61f130ebb4d0169ba37e189");
     bytes public btcAddress = abi.encodePacked("tb1qy9pqmk2pd9sv63g27jt8r657wy0d9ueeh0nqur");
     bytes public solAddress = abi.encodePacked("DrexsvCMH9WWjgnjVbx1iFf3YZcKadupFmxnZLfSyotd");
     bytes public solGatewaySendAddress = abi.encodePacked("EwUjcjz8jvFeE99kjcZKM5Aojs3eKcyW2JHNKNDP9M4k");
@@ -172,6 +174,8 @@ contract BaseTest is Test {
         gatewayB.setZRC20(address(btc), address(btcZ));
         gatewayB.setDODORouteProxy(address(dodoRouteProxyB));
         gatewayB.setEVMAddress(btcAddress, address(user2));
+        gatewayB.setEVMAddress(suiAddress, address(user2));
+        gatewayB.setEVMAddress(tonAddress, address(user2));
         gatewayB.setEVMAddress(solGatewaySendAddress, address(gatewaySendB));
 
         // set ZRC20 tokens

@@ -876,6 +876,143 @@ contract GatewayTransferNativeTest is BaseTest {
         assertEq(token2B.balanceOf(evmWalletAddress), 395960000000000000000); 
     }
 
+    // zetachain - SUI: token1Z -> token1B
+    function test_Z2SUI() public {
+        uint256 amount = 100 ether;
+        uint32 dstChainId = 105;
+        address targetZRC20 = address(token1Z);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = abi.encodePacked(user2);
+        bytes memory swapDataZ = "";
+        bytes memory contractAddress = "";
+        bytes memory accounts = "";
+        bytes memory message = encodeMessage(
+            dstChainId,
+            targetZRC20,
+            sender,
+            receiver,
+            swapDataZ,
+            contractAddress,
+            "",
+            accounts
+        );
+
+        vm.startPrank(user1);
+        token1Z.approve(
+            address(gatewayTransferNative),
+            amount
+        );
+        gatewayTransferNative.withdrawToNativeChain(
+            address(token1Z),
+            amount,
+            message
+        );
+        vm.stopPrank();
+
+        assertEq(token1Z.balanceOf(user1), initialBalance - amount);
+        assertEq(token1B.balanceOf(user2), 98990000000000000000); 
+    }
+    
+    // zetachain swap - SUI: token1Z -> token2Z -> token2B
+    function test_ZSwap2SUI() public {
+        uint256 amount = 100 ether;
+        uint32 dstChainId = 105;
+        address targetZRC20 = address(token2Z);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = abi.encodePacked(user2);
+        bytes memory swapDataZ = encodeCompressedMixSwapParams(
+            address(token1Z),
+            address(token2Z),
+            99990000000000000000,
+            0,
+            0,
+            new address[](1),
+            new address[](1),
+            new address[](1),
+            0,
+            new bytes[](1),
+            abi.encode(address(0), 0),
+            block.timestamp + 600
+        );
+        bytes memory contractAddress = "";
+        bytes memory accounts = "";
+        bytes memory message = encodeMessage(
+            dstChainId,
+            targetZRC20,
+            sender,
+            receiver,
+            swapDataZ,
+            contractAddress,
+            "",
+            accounts
+        );
+
+        vm.startPrank(user1);
+        token1Z.approve(
+            address(gatewayTransferNative),
+            amount
+        );
+        gatewayTransferNative.withdrawToNativeChain(
+            address(token1Z),
+            amount,
+            message
+        );
+        vm.stopPrank();
+
+        assertEq(token1Z.balanceOf(user1), initialBalance - amount);
+        assertEq(token2B.balanceOf(user2), 198975986959878634903); 
+    }
+
+    // zetachain swap - TON: token2Z -> token1Z -> token1B
+    function test_ZSwap2TON() public {
+        uint256 amount = 100 ether;
+        uint32 dstChainId = 2015140;
+        address targetZRC20 = address(token1Z);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = abi.encodePacked(user2);
+        bytes memory swapDataZ = encodeCompressedMixSwapParams(
+            address(token2Z),
+            address(token1Z),
+            99990000000000000000,
+            0,
+            0,
+            new address[](1),
+            new address[](1),
+            new address[](1),
+            0,
+            new bytes[](1),
+            abi.encode(address(0), 0),
+            block.timestamp + 600
+        );
+        bytes memory contractAddress = "";
+        bytes memory accounts = "";
+        bytes memory message = encodeMessage(
+            dstChainId,
+            targetZRC20,
+            sender,
+            receiver,
+            swapDataZ,
+            contractAddress,
+            "",
+            accounts
+        );
+
+        vm.startPrank(user1);
+        token2Z.approve(
+            address(gatewayTransferNative),
+            amount
+        );
+        gatewayTransferNative.withdrawToNativeChain(
+            address(token2Z),
+            amount,
+            message
+        );
+        vm.stopPrank();
+
+        assertEq(token2Z.balanceOf(user1), initialBalance - amount);
+        assertEq(token1B.balanceOf(user2), 48995000000000000000); 
+    }
+
     // zetachain - SOL: token1Z -> token1B
     function test_Z2SOL() public {
         uint256 amount = 100 ether;
@@ -926,6 +1063,8 @@ contract GatewayTransferNativeTest is BaseTest {
         assertEq(token1Z.balanceOf(user1), initialBalance - amount);
         assertEq(token1B.balanceOf(evmWalletAddress), 98990000000000000000); 
     }
+
+
 
     // A - Z: tokenWZETAA -> WZETA
     function test_A2ZWZETA() public {
