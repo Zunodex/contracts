@@ -11,8 +11,8 @@ const SEPOLIA_CONFIG = {
         RefundBot: "0xa19c93c48b2051135c3a5c5df9753d53e03ef239",
     }, 
     deployedAddress: {
-        GatewaySendImpl: "0xF7B04b14b0F37d77E5Bb3d47e0cff694F8CEaC9c",
-        GatewaySendProxy: "0x2405965a3CB8748D7065752AdC702Bb907AA2297",
+        GatewaySendImpl: "0x4C41124074c156ac07791F5877cc43AFebcC1644",
+        GatewaySendProxy: "0x12CB68200d86DCD7E886aF49c02F67579eD00372",
         VaultImpl: "0x6640c7038AF6390397C8A4C46BFDd7B0bE7da943",
         VaultProxy: "0x626Ff9a164589Af526432044fF0231a45c54Cb4A",
     },
