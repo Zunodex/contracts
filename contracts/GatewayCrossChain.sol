@@ -24,6 +24,8 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
     address public constant UniswapFactory = 0x9fd96203f7b22bCF72d9DCb40ff98302376cE09c;
     uint32 constant BITCOIN_EDDY = 8223; // chain Id from eddy db
     uint32 constant SOLANA_EDDY = 1399811149; // chain Id from eddy db
+    uint32 constant TON_EDDY = 2015140;
+    uint32 constant SUI_EDDY = 105;
     uint32 constant ZETACHAIN = 7000;
     uint256 constant MAX_DEADLINE = 200;
     address private EddyTreasurySafe;
@@ -350,7 +352,7 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
         );
     }
 
-    function _handleBitcoinWithdraw(
+    function _handleBitcoinOrTonWithdraw(
         bytes32 externalId, 
         DecodedMessage memory decoded, 
         uint256 outputAmount,
@@ -364,6 +366,42 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
             decoded.targetZRC20, 
             outputAmount - gasFee
         );
+    }
+
+    function _handleSuiWithdraw(
+        bytes32 externalId,
+        DecodedMessage memory decoded,
+        uint256 outputAmount
+    ) internal returns (uint256 amountsOutTarget) {
+        (address gasZRC20, uint256 gasFee) = IZRC20(decoded.targetZRC20).withdrawGasFee();
+
+        if (decoded.targetZRC20 == gasZRC20) {
+            if (gasFee >= outputAmount) revert NotEnoughToPayGasFee();
+            TransferHelper.safeApprove(decoded.targetZRC20, address(gateway), outputAmount);
+            
+            withdraw(
+                externalId,
+                decoded.receiver, 
+                decoded.targetZRC20,
+                outputAmount - gasFee
+            );
+
+            amountsOutTarget = outputAmount - gasFee;
+        } else {
+            amountsOutTarget = _swapAndSendERC20Tokens(
+                decoded.targetZRC20, 
+                gasZRC20, 
+                gasFee, 
+                outputAmount
+            );
+
+            withdraw(
+                externalId, 
+                decoded.receiver, 
+                decoded.targetZRC20, 
+                amountsOutTarget
+            );
+        }
     }
 
     function _handleEvmOrSolanaWithdraw(
@@ -471,9 +509,9 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
         }
 
         // Withdraw
-        if (decoded.dstChainId == BITCOIN_EDDY) {
+        if (decoded.dstChainId == BITCOIN_EDDY || decoded.dstChainId == TON_EDDY) {
             (, uint256 gasFee) = IZRC20(decoded.targetZRC20).withdrawGasFee();
-            _handleBitcoinWithdraw(
+            _handleBitcoinOrTonWithdraw(
                 externalId, 
                 decoded, 
                 outputAmount,
@@ -488,6 +526,25 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
                 decoded.targetZRC20, 
                 amount, 
                 outputAmount - gasFee, 
+                decoded.sender,
+                decoded.receiver, 
+                platformFeesForTx
+            );
+        } else if (decoded.dstChainId == SUI_EDDY) {
+            uint256 amountsOutTarget = _handleSuiWithdraw(
+                externalId, 
+                decoded, 
+                outputAmount
+            );
+            
+            emit EddyCrossChainSwap(
+                externalId, 
+                uint32(context.chainID),
+                decoded.dstChainId, 
+                zrc20, 
+                decoded.targetZRC20, 
+                amount, 
+                amountsOutTarget,
                 decoded.sender,
                 decoded.receiver, 
                 platformFeesForTx

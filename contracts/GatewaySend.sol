@@ -379,14 +379,14 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
                 (fromToken == params.fromToken) && (toToken == params.toToken),
                 "INVALID_TOKEN_ADDRESS: TOKEN_NOT_MATCH"
             );
-            require(
-                amount == params.fromTokenAmount,
-                "INVALID_TOKEN_AMOUNT: AMOUNT_NOT_MATCH"
-            );
+            // Handle negative slippage
+            if(amount < params.fromTokenAmount) {
+                params.fromTokenAmount = amount;
+            }
             outputAmount = _doMixSwap(params);
         } else {
             require(
-                fromToken == toToken,
+                (fromToken == toToken) && (fromToken != address(0)),
                 "INVALID_TOKEN_AMOUNT: TOKEN_NOT_MATCH"
             );
         }
