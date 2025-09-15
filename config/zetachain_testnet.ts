@@ -6,8 +6,8 @@ const ZETACHAIN_TESTNET_CONFIG = {
     defaultAddress: {
         Gateway: "0x6c533f7fe93fae114d0954697069df33c9b74fd7",
         MultiSig: "0xfa0d8ebca31a1501144a785a2929e9f91b0571d0",
-        DODORouteProxy: "0x026eea5c10f526153e7578E5257801f8610D1142",
-        DODOApprove: "0x143bE32C854E4Ddce45aD48dAe3343821556D0c3",
+        DODORouteProxy: "0x898d8672d9f8811603bE3431D2163a0784e71D22",
+        DODOApprove: "0x69485b9B95df04dDbbF8669A33865C97E9B293B4",
         RefundBot: "0xa19c93c48b2051135c3a5c5df9753d53e03ef239",
     }, 
     deployedAddress: {
