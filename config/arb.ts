@@ -10,8 +10,8 @@ const ARB_CONFIG = {
         DODOApprove: "0xA867241cDC8d3b0C07C85cC06F25a0cD3b5474d8",
     }, 
     deployedAddress: {
-        GatewaySendImpl: "0x873a82F8F0D66dA6c0F3dcd861815E2F5dB57e23",
-        GatewaySendProxy: "0xF8221d25DfAbC680b15be75C2ef6bf14eF5225D7",
+        GatewaySendImpl: "0x5C889887CA4Bc76B9C1F2af80fF73Da5791FD130",
+        GatewaySendProxy: "0x9b1F69bfaCF13B8f8fE2aC093C7bae93b08a9C83",
     },
   };
   

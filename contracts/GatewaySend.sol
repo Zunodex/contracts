@@ -60,6 +60,8 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         _disableInitializers();
     }
 
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+
     /**
      * @dev Initialize the contract
      * @param _gateway Gateway contract address
@@ -79,10 +81,6 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         gasLimit = _gasLimit;
     }
 
-    function setOwner(address _owner) external onlyOwner {
-        transferOwnership(_owner);
-    }
-
     function setDODORouteProxy(address _dodoRouteProxy) external onlyOwner {
         DODORouteProxy = _dodoRouteProxy;
         emit DODORouteProxyUpdated(_dodoRouteProxy);
@@ -97,7 +95,15 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         gasLimit = _gasLimit;
     }
 
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+    function superWithdraw(address token, uint256 amount) external onlyOwner {
+        if (token == _ETH_ADDRESS_) {
+            require(amount <= address(this).balance, "INVALID_AMOUNT");
+            TransferHelper.safeTransferETH(owner(), amount);
+        } else {
+            require(amount <= IERC20(token).balanceOf(address(this)), "INVALID_AMOUNT");
+            TransferHelper.safeTransfer(token, owner(), amount);
+        }
+    }
 
     function concatBytes(bytes32 a, bytes memory b) public pure returns (bytes memory) {
         bytes memory result = new bytes(32 + b.length);

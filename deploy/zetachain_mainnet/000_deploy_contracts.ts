@@ -15,8 +15,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await main();
   
     async function main() {
-        // await deployProxys();
-        await upgradeProxys();
+        await deployProxys();
+        // await upgradeProxys();
+        // await setBot();
+        // await transferOwnership();
     }
   
     async function deployContract(name: string, contract: string, args?: any[], verify?: boolean) {
@@ -63,9 +65,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     async function deployProxys() {
         const d = config.defaultAddress;
-        const feePercent = 2; // 0.2%
+        const feePercent = 10; // 0.01%
         const slippage = 10;
-        const gasLimit = 1000000;
+        const gasLimit = 300000;
         
         const GatewayCrossChain = await ethers.getContractFactory('GatewayCrossChain');
         const gatewayCrossChain = await upgrades.deployProxy(GatewayCrossChain, [
@@ -122,6 +124,38 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         const implementation2 = await GatewayTransferNative.deploy();
         await implementation2.waitForDeployment();
         console.log("🔧 New GatewayTransferNative implementation deployed at:", implementation2.target);
+    }
+
+    async function setBot() {
+        const d = config.deployedAddress;
+        const gatewayCrossChain = await ethers.getContractAt("GatewayCrossChain", d.GatewayCrossChainProxy);
+        const gatewayTransferNative = await ethers.getContractAt("GatewayTransferNative", d.GatewayTransferNativeProxy);
+
+        console.log("Setting GatewayCrossChain bot...")
+        const tx1 = await gatewayCrossChain.setBot(config.defaultAddress.RefundBot);
+        await tx1.wait();
+        console.log("✅ Bot set transaction confirmed");
+
+        console.log("Setting GatewayTransferNative bot...")
+        const tx2 = await gatewayTransferNative.setBot(config.defaultAddress.RefundBot);
+        await tx2.wait();
+        console.log("✅ Bot set transaction confirmed");
+    }
+
+    async function transferOwnership() {
+        const d = config.deployedAddress;
+        const gatewayCrossChain = await ethers.getContractAt("GatewayCrossChain", d.GatewayCrossChainProxy);
+        const gatewayTransferNative = await ethers.getContractAt("GatewayTransferNative", d.GatewayTransferNativeProxy);
+
+        console.log("Transferring GatewayCrossChain ownership...")
+        const tx1 = await gatewayCrossChain.transferOwnership(config.defaultAddress.MultiSig);
+        await tx1.wait();
+        console.log("✅ Ownership transfer transaction confirmed");
+
+        console.log("Transferring GatewayTransferNative ownership...")
+        const tx2 = await gatewayTransferNative.transferOwnership(config.defaultAddress.MultiSig);
+        await tx2.wait();
+        console.log("✅ Ownership transfer transaction confirmed");
     }
 };
 

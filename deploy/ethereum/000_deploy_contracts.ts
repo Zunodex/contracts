@@ -17,6 +17,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     async function main() {
         await deployProxys();
         // await upgradeProxys();
+        // await transferOwnership();
     }
   
     async function deployContract(name: string, contract: string, args?: any[], verify?: boolean) {
@@ -86,6 +87,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
         const implAddress = await upgrades.erc1967.getImplementationAddress(upgraded.target);
         console.log("🔧 New GatewaySend implementation deployed at:", implAddress);
+    }
+
+    async function transferOwnership() {
+        const d = config.deployedAddress;
+        const gatewaySend = await ethers.getContractAt("GatewaySend", d.GatewaySendProxy);
+        
+        console.log("Transferring GatewaySend ownership...")
+        const tx = await gatewaySend.transferOwnership(config.defaultAddress.MultiSig);
+        await tx.wait();
+        console.log("✅ Ownership transfer transaction confirmed");
     }
 };
 

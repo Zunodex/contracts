@@ -1,7 +1,7 @@
 const ZETACHAIN_MAINNET_CONFIG = {
     chain: {
         chainId: 7000,
-        explorerURL: "https://zetachain.blockscout.com",
+        explorerURL: "https://zetascan.com/",
     },
     defaultAddress: {
         Gateway: "0xfEDD7A6e3Ef1cC470fbfbF955a22D793dDC0F44E",
@@ -11,10 +11,10 @@ const ZETACHAIN_MAINNET_CONFIG = {
         RefundBot: "0xa19c93c48b2051135c3a5c5df9753d53e03ef239",
     }, 
     deployedAddress: {
-        GatewayCrossChainImpl: "0x724785B1c36714D18A543e7cbeE05360bc5FFB43",
-        GatewayCrossChainProxy: "0xDbAF291a4380749a0E6474E25Ab8A3186475074A",
-        GatewayTransferNativeImpl: "0xa6d371876F4d12968da14f6339688F5Ae93D7287",
-        GatewayTransferNativeProxy: "0x56D74Fce859468565ebe3Cf926f819968246b4E9"
+        GatewayCrossChainImpl: "0xe6ea3fCf812775Aa3C3D32BCaf825Fc97B35Af4d",
+        GatewayCrossChainProxy: "0x1F575e25D1312bc2187941FDadAbA99985dC6D08",
+        GatewayTransferNativeImpl: "0x420A2fA0f4c4A1E209574454f399A4aB9b4ee5a0",
+        GatewayTransferNativeProxy: "0x48bB8F6BdADc4aA2b0A47Eb6706E234A31b43636"
     },
   };
   

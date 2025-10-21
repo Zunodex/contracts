@@ -10,8 +10,8 @@ const POLYGON_CONFIG = {
         DODOApprove: "0x6D310348d5c12009854DFCf72e0DF9027e8cb4f4",
     }, 
     deployedAddress: {
-        GatewaySendImpl: "0xB88f7eb2dA59E1E8E00E0158b195D5ca48403921",
-        GatewaySendProxy: "0x9691bBce4680d0c0bb9E798a71984984Ab1440C1",
+        GatewaySendImpl: "0x7D381e6a9c23A0E6969658f6B8Eba57A4Dbf93a0",
+        GatewaySendProxy: "0xC975769aB5Ef947CB82535ca6607B0683a355195",
     },
   };
   

@@ -10,8 +10,8 @@ const ETHEREUM_CONFIG = {
         DODOApprove: "0xCB859eA579b28e02B87A1FDE08d087ab9dbE5149",
     }, 
     deployedAddress: {
-        GatewaySendImpl: "0x873a82F8F0D66dA6c0F3dcd861815E2F5dB57e23",
-        GatewaySendProxy: "0xF8221d25DfAbC680b15be75C2ef6bf14eF5225D7",
+        GatewaySendImpl: "0xBab0F46049D03A593f09Dbb45E33F04cD4439962",
+        GatewaySendProxy: "0x03f876327F4dd491cA6BD9c4E33d60CA41EAEeF6",
     },
   };
   

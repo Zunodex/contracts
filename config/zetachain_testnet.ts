@@ -1,7 +1,7 @@
 const ZETACHAIN_TESTNET_CONFIG = {
     chain: {
         chainId: 7001,
-        explorerURL: "https://zetachain-testnet.blockscout.com",
+        explorerURL: "https://testnet.zetascan.com/",
     },
     defaultAddress: {
         Gateway: "0x6c533f7fe93fae114d0954697069df33c9b74fd7",

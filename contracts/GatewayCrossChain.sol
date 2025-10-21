@@ -108,10 +108,6 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
         gasLimit = _gasLimit;
     }
 
-    function setOwner(address _owner) external onlyOwner {
-        transferOwnership(_owner);
-    }
-
     function setDODORouteProxy(address _dodoRouteProxy) external onlyOwner {
         DODORouteProxy = _dodoRouteProxy;
         emit DODORouteProxyUpdated(_dodoRouteProxy);

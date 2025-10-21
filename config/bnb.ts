@@ -10,8 +10,8 @@ const BNB_CONFIG = {
         DODOApprove: "0xa128Ba44B2738A558A1fdC06d6303d52D3Cef8c1",
     }, 
     deployedAddress: {
-        GatewaySendImpl: "0xf7f3E253508289Ec46FdabBbb8c5c21d4c9b4EF1",
-        GatewaySendProxy: "0x8825A822ee3Ef0D0a85CbE007d66f6AAD97Bb032",
+        GatewaySendImpl: "0xc39f8c093b10660e12d982256979e239b18d073d",
+        GatewaySendProxy: "0xbE3499499C928F086a32B0bE586e07A9D085b5eF",
     },
   };
   
