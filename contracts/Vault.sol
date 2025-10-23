@@ -65,14 +65,10 @@ contract Vault is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         require(token != address(0), "INVALID_TOKEN");
         require(infos.length > 0, "EMPTY_INPUT");
 
-        uint256 totalAmount = 0;
-
         for (uint256 i = 0; i < infos.length; i++) {
             RefundInfo calldata info = infos[i];
             require(info.token == token, "TOKEN_MISMATCH");
             require(info.to != address(0), "INVALID_RECIPIENT");
-
-            totalAmount += info.amount;
 
             // Transfer token or native ETH
             if (token == _ETH_ADDRESS_) {
