@@ -103,7 +103,7 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
         uint256 _feePercent,
         uint256 _slippage,
         uint256 _gasLimit
-    ) public initializer {
+    ) external initializer {
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
         gateway = GatewayZEVM(_gateway);

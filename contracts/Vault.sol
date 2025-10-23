@@ -31,7 +31,7 @@ contract Vault is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         _disableInitializers();
     }
 
-    function initialize() public initializer {
+    function initialize() external initializer {
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
     }

@@ -70,7 +70,7 @@ contract GatewaySend is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         address _dodoRouteProxy,
         address _dodoApprove,
         uint256 _gasLimit
-    ) public initializer {
+    ) external initializer {
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
         gateway = GatewayEVM(_gateway);
