@@ -192,7 +192,7 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
      * @param externalIds List of externalIds to claim, all must match the given token.
      * @param vault The address of the vault to receive the refunds.
      */
-    function batchClaimRefund(address token, bytes32[] calldata externalIds, bytes memory vault) external onlyBot {
+    function batchClaimRefund(address token, bytes32[] calldata externalIds, bytes calldata vault) external onlyBot {
         require(token != address(0), "INVALID_TOKEN");
         require(externalIds.length > 0, "EMPTY_LIST");
         require(vault.length > 0 , "INVALID_VAULT");
@@ -251,7 +251,7 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
         bytes32 externalId, 
         address token, 
         uint256 amount, 
-        bytes memory walletAddress
+        bytes calldata walletAddress
     ) external onlyWhiteListed {
         RefundInfo storage existing = refundInfos[externalId];
 
