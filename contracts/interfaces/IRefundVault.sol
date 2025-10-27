@@ -6,6 +6,6 @@ interface IRefundVault {
         bytes32 externalId, 
         address token, 
         uint256 amount, 
-        bytes memory walletAddress
+        bytes calldata walletAddress
     ) external;
 }

@@ -109,11 +109,15 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
     ) public initializer {
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
+
+        require(_gateway != address(0), "INVALID_ADDRESS");
+
         gateway = GatewayZEVM(_gateway);
         gasLimit = _gasLimit;
     }
 
     function setWhiteList(address addr, bool isAllowed) external onlyOwner {
+        require(addr != address(0), "INVALID_ADDRESS");
         isWhiteListed[addr] = isAllowed;
     }
 
@@ -122,11 +126,13 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
     }
 
     function setGateway(address payable _gateway) external onlyOwner {
+        require(_gateway != address(0), "INVALID_ADDRESS");
         gateway = GatewayZEVM(_gateway);
         emit GatewayUpdated(_gateway);
     }
 
     function setBot(address bot, bool isAllowd) external onlyOwner {
+        require(bot != address(0), "INVALID_ADDRESS");
         bots[bot] = isAllowd;
         emit BotUpdated(bot, isAllowd);
     }
@@ -134,6 +140,7 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
     // ==================== Bot Functions ====================
 
     function superWithdraw(address token, uint256 amount) external onlyBot {
+        require(token != address(0), "INVALID_ADDRESS");
         if (token == _ETH_ADDRESS_) {
             require(amount <= address(this).balance, "INVALID_AMOUNT");
             TransferHelper.safeTransferETH(msg.sender, amount);
@@ -156,7 +163,11 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
             "ARRAY_LENGTH_MISMATCH"
         );
 
-        for (uint256 i = 0; i < externalIds.length; i++) {
+        for (uint256 i = 0; i < externalIds.length; ++i) {
+            require(
+                tokens[i] != address(0) && walletAddresses[i].length != 0,
+                "INVALID_ADDRESS"
+            );
             RefundInfo memory refundInfo = RefundInfo({
                 externalId: externalIds[i],
                 token: tokens[i],
@@ -171,7 +182,7 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
     }
 
     function removeRefundInfo(bytes32[] calldata externalIds) external onlyBot {
-        for (uint256 i = 0; i < externalIds.length; i++) {
+        for (uint256 i = 0; i < externalIds.length; ++i) {
             bytes32 externalId = externalIds[i];
             RefundInfo storage refundInfo = refundInfos[externalId];
             if (refundInfo.externalId != "") {
@@ -192,14 +203,14 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
      * @param externalIds List of externalIds to claim, all must match the given token.
      * @param vault The address of the vault to receive the refunds.
      */
-    function batchClaimRefund(address token, bytes32[] calldata externalIds, bytes memory vault) external onlyBot {
+    function batchClaimRefund(address token, bytes32[] calldata externalIds, bytes calldata vault) external onlyBot {
         require(token != address(0), "INVALID_TOKEN");
         require(externalIds.length > 0, "EMPTY_LIST");
         require(vault.length > 0 , "INVALID_VAULT");
 
         uint256 totalAmount = 0;
 
-        for (uint256 i = 0; i < externalIds.length; i++) {
+        for (uint256 i = 0; i < externalIds.length; ++i) {
             bytes32 externalId = externalIds[i];
             RefundInfo storage info = refundInfos[externalId];
 
@@ -251,7 +262,7 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
         bytes32 externalId, 
         address token, 
         uint256 amount, 
-        bytes memory walletAddress
+        bytes calldata walletAddress
     ) external onlyWhiteListed {
         RefundInfo storage existing = refundInfos[externalId];
 
