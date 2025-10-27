@@ -116,7 +116,7 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
         gasLimit = _gasLimit;
     }
 
-    function setWhiteList(address addr, bool isAllowed) public onlyOwner {
+    function setWhiteList(address addr, bool isAllowed) external onlyOwner {
         require(addr != address(0), "INVALID_ADDRESS");
         isWhiteListed[addr] = isAllowed;
     }
