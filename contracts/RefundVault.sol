@@ -163,7 +163,7 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
             "ARRAY_LENGTH_MISMATCH"
         );
 
-        for (uint256 i = 0; i < externalIds.length; i++) {
+        for (uint256 i = 0; i < externalIds.length; ++i) {
             require(
                 tokens[i] != address(0) && walletAddresses[i].length != 0,
                 "INVALID_ADDRESS"
@@ -182,7 +182,7 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
     }
 
     function removeRefundInfo(bytes32[] calldata externalIds) external onlyBot {
-        for (uint256 i = 0; i < externalIds.length; i++) {
+        for (uint256 i = 0; i < externalIds.length; ++i) {
             bytes32 externalId = externalIds[i];
             RefundInfo storage refundInfo = refundInfos[externalId];
             if (refundInfo.externalId != "") {
@@ -210,7 +210,7 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
 
         uint256 totalAmount = 0;
 
-        for (uint256 i = 0; i < externalIds.length; i++) {
+        for (uint256 i = 0; i < externalIds.length; ++i) {
             bytes32 externalId = externalIds[i];
             RefundInfo storage info = refundInfos[externalId];
 
