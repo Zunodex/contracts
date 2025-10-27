@@ -104,7 +104,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         uint256 _feePercent,
         uint256 _slippage,
         uint256 _gasLimit
-    ) external initializer {
+    ) public initializer {
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
         gateway = GatewayZEVM(_gateway);

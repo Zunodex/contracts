@@ -106,7 +106,7 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
     function initialize(
         address payable _gateway,
         uint256 _gasLimit
-    ) external initializer {
+    ) public initializer {
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
         gateway = GatewayZEVM(_gateway);
