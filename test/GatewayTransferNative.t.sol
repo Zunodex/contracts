@@ -1306,7 +1306,7 @@ contract GatewayTransferNativeTest is BaseTest {
     }
 
     function test_Set() public {
-        gatewayTransferNative.setOwner(user1);
+        gatewayTransferNative.transferOwnership(user1);
 
         vm.startPrank(user1);
         gatewayTransferNative.setDODORouteProxy(address(0x111));

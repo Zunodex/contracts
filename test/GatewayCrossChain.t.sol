@@ -984,7 +984,7 @@ contract GatewayCrossChainTest is BaseTest {
     }
 
     function test_Set() public {
-        gatewayCrossChain.setOwner(user1);
+        gatewayCrossChain.transferOwnership(user1);
 
         vm.startPrank(user1);
         gatewayCrossChain.setDODORouteProxy(address(0x111));
