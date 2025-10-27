@@ -107,6 +107,12 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
     ) public initializer {
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
+
+        require(_gateway != address(0), "INVALID_ADDRESS");
+        require(_EddyTreasurySafe != address(0), "INVALID_ADDRESS");
+        require(_dodoRouteProxy != address(0), "INVALID_ADDRESS");
+        require(_dodoApprove != address(0), "INVALID_ADDRESS");
+
         gateway = GatewayZEVM(_gateway);
         EddyTreasurySafe = _EddyTreasurySafe;
         DODORouteProxy = _dodoRouteProxy;
@@ -121,11 +127,13 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
     }
 
     function setDODORouteProxy(address _dodoRouteProxy) external onlyOwner {
+        require(_dodoRouteProxy != address(0), "INVALID_ADDRESS");
         DODORouteProxy = _dodoRouteProxy;
         emit DODORouteProxyUpdated(_dodoRouteProxy);
     }
 
     function setDODOApprove(address _dodoApprove) external onlyOwner {
+        require(_dodoApprove != address(0), "INVALID_ADDRESS");
         DODOApprove = _dodoApprove;
         emit DODOApproveUpdated(_dodoApprove);
     }
@@ -143,20 +151,24 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
     }
 
     function setGateway(address payable _gateway) external onlyOwner {
+        require(_gateway != address(0), "INVALID_ADDRESS");
         gateway = GatewayZEVM(_gateway);
         emit GatewayUpdated(_gateway);
     }
 
     function setEddyTreasurySafe(address _EddyTreasurySafe) external onlyOwner {
+        require(_EddyTreasurySafe != address(0), "INVALID_ADDRESS");
         EddyTreasurySafe = _EddyTreasurySafe;
         emit EddyTreasurySafeUpdated(_EddyTreasurySafe);
     }
 
     function setVault(address vault) external onlyOwner {
+        require(vault != address(0), "INVALID_ADDRESS");
         RefundVault = vault;
     }
 
     function superWithdraw(address token, uint256 amount) external onlyOwner {
+        require(token != address(0), "INVALID_ADDRESS");
         if (token == _ETH_ADDRESS_) {
             require(amount <= address(this).balance, "INVALID_AMOUNT");
             TransferHelper.safeTransferETH(EddyTreasurySafe, amount);
