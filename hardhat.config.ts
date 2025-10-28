@@ -28,11 +28,11 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
-    ethereum: {
+    eth: {
       chainId: 1,
       accounts: [process.env.PRIVATE_KEY ?? ""],
       url: "https://1rpc.io/eth",
-      deploy: ["./deploy/ethereum/"],
+      deploy: ["./deploy/eth/"],
     },
     polygon: {
       chainId: 137,
@@ -61,7 +61,7 @@ const config: HardhatUserConfig = {
     arb: {
       chainId: 42161,
       accounts: [process.env.PRIVATE_KEY ?? ""],
-      url: "https://arbitrum.drpc.org",
+      url: "https://arb-mainnet.g.alchemy.com/v2/i7AGD7NB2oucWbfTCszVNn1KE9WltlBw",
       deploy: ["./deploy/arb/"],
     },
     zetachain_mainnet: {
@@ -91,20 +91,20 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
-      ethereum: "VV6FB3HDE9FSVBBVMVXGPQX4KSJUJIY3E6",
-      polygon: "VV6FB3HDE9FSVBBVMVXGPQX4KSJUJIY3E6",
-      bnb: "VV6FB3HDE9FSVBBVMVXGPQX4KSJUJIY3E6",
-      base: "VV6FB3HDE9FSVBBVMVXGPQX4KSJUJIY3E6",
-      avax: "VV6FB3HDE9FSVBBVMVXGPQX4KSJUJIY3E6",
-      arb: "VV6FB3HDE9FSVBBVMVXGPQX4KSJUJIY3E6",
-      sepolia: "VV6FB3HDE9FSVBBVMVXGPQX4KSJUJIY3E6",
-      arb_sepolia: "VV6FB3HDE9FSVBBVMVXGPQX4KSJUJIY3E6",
+      eth: "JP1EHB7VINQ6YP3UYBNCY8YFW6CXDEYTRE",
+      polygon: "JP1EHB7VINQ6YP3UYBNCY8YFW6CXDEYTRE",
+      bnb: "JP1EHB7VINQ6YP3UYBNCY8YFW6CXDEYTRE",
+      base: "JP1EHB7VINQ6YP3UYBNCY8YFW6CXDEYTRE",
+      avax: "JP1EHB7VINQ6YP3UYBNCY8YFW6CXDEYTRE",
+      arb: "JP1EHB7VINQ6YP3UYBNCY8YFW6CXDEYTRE",
+      sepolia: "JP1EHB7VINQ6YP3UYBNCY8YFW6CXDEYTRE",
+      arb_sepolia: "JP1EHB7VINQ6YP3UYBNCY8YFW6CXDEYTRE",
       zetachain_testnet: "6542100",
       zetachain_mainnet: "6542100",
     },
     customChains: [
       {
-        network: "ethereum",
+        network: "eth",
         chainId: 1,
         urls: {
           apiURL: "https://api.etherscan.io/v2/api?chainid=1",

@@ -15,10 +15,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await main();
   
     async function main() {
-        await deployProxys();
-        // await upgradeProxys();
-        // await setBot();
+        // await deployProxys();
+        // await deployRefundVault();
+        // await setProxys();
+        // await setRefundVault();
         // await transferOwnership();
+        // await upgradeProxys();
+        // await upgradeRefundVault();
     }
   
     async function deployContract(name: string, contract: string, args?: any[], verify?: boolean) {
@@ -67,7 +70,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         const d = config.defaultAddress;
         const feePercent = 10; // 0.01%
         const slippage = 10;
-        const gasLimit = 300000;
+        const gasLimit = 1000000;
         
         const GatewayCrossChain = await ethers.getContractFactory('GatewayCrossChain');
         const gatewayCrossChain = await upgrades.deployProxy(GatewayCrossChain, [
@@ -100,6 +103,62 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         console.log("🔧 GatewayTransferNative implementation deployed at:", implAddress2);
     }
 
+    async function deployRefundVault() {
+        const d = config.defaultAddress;
+        const gasLimit = 1000000;
+
+        const RefundVault = await ethers.getContractFactory('RefundVault');
+        const refundVault = await upgrades.deployProxy(RefundVault, [
+            d.Gateway,
+            gasLimit
+        ]);
+        await refundVault.waitForDeployment();
+        console.log("✅ RefundVault proxy deployed at:", refundVault.target);
+        const implAddress = await upgrades.erc1967.getImplementationAddress(refundVault.target);
+        console.log("🔧 RefundVault implementation deployed at:", implAddress);
+        await verifyContract(implAddress, []);
+    }
+
+    async function setProxys() {
+        const d = config.deployedAddress;
+
+        console.log("GatewayCrossChain set refund vault...");
+        const gatewayCrossChain = await ethers.getContractAt('GatewayCrossChain', d.GatewayCrossChainProxy);
+        await gatewayCrossChain.setVault(d.RefundVaultProxy);
+
+        console.log("GatewayTransferNative set refund vault...");
+        const gatewayTransferNative = await ethers.getContractAt('GatewayTransferNative', d.GatewayTransferNativeProxy);
+        await gatewayTransferNative.setVault(d.RefundVaultProxy);
+    }
+
+    async function setRefundVault() {
+        const d = config.deployedAddress;
+
+        console.log("RefundVault set whiteList contracts...");
+        const refundVault = await ethers.getContractAt('RefundVault', d.RefundVaultProxy);
+        await refundVault.setWhiteList(d.GatewayCrossChainProxy, true);
+        await refundVault.setWhiteList(d.GatewayTransferNativeProxy, true);
+
+        console.log("RefundVault set bot...");
+        await refundVault.setBot(config.defaultAddress.RefundBot, true);
+    }
+
+    async function transferOwner() {
+        const d = config.deployedAddress;
+
+        console.log("RefundVault transfer owner...");
+        const refundVault = await ethers.getContractAt('RefundVault', d.RefundVaultProxy);
+        await refundVault.transferOwnership(config.defaultAddress.MultiSig);
+
+        console.log("GatewayCrossChain transfer owner...");
+        const gatewayCrossChain = await ethers.getContractAt('GatewayCrossChain', d.GatewayCrossChainProxy);
+        await gatewayCrossChain.transferOwnership(config.defaultAddress.MultiSig);
+
+        console.log("GatewayTransferNative transfer owner...");
+        const gatewayTransferNative = await ethers.getContractAt('GatewayTransferNative', d.GatewayTransferNativeProxy);
+        await gatewayTransferNative.transferOwnership(config.defaultAddress.MultiSig);
+    }
+
     async function upgradeProxys() {
         const d = config.deployedAddress;
 
@@ -126,36 +185,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         console.log("🔧 New GatewayTransferNative implementation deployed at:", implementation2.target);
     }
 
-    async function setBot() {
+    async function upgradeRefundVault() {
         const d = config.deployedAddress;
-        const gatewayCrossChain = await ethers.getContractAt("GatewayCrossChain", d.GatewayCrossChainProxy);
-        const gatewayTransferNative = await ethers.getContractAt("GatewayTransferNative", d.GatewayTransferNativeProxy);
 
-        console.log("Setting GatewayCrossChain bot...")
-        const tx1 = await gatewayCrossChain.setBot(config.defaultAddress.RefundBot);
-        await tx1.wait();
-        console.log("✅ Bot set transaction confirmed");
-
-        console.log("Setting GatewayTransferNative bot...")
-        const tx2 = await gatewayTransferNative.setBot(config.defaultAddress.RefundBot);
-        await tx2.wait();
-        console.log("✅ Bot set transaction confirmed");
-    }
-
-    async function transferOwnership() {
-        const d = config.deployedAddress;
-        const gatewayCrossChain = await ethers.getContractAt("GatewayCrossChain", d.GatewayCrossChainProxy);
-        const gatewayTransferNative = await ethers.getContractAt("GatewayTransferNative", d.GatewayTransferNativeProxy);
-
-        console.log("Transferring GatewayCrossChain ownership...")
-        const tx1 = await gatewayCrossChain.transferOwnership(config.defaultAddress.MultiSig);
-        await tx1.wait();
-        console.log("✅ Ownership transfer transaction confirmed");
-
-        console.log("Transferring GatewayTransferNative ownership...")
-        const tx2 = await gatewayTransferNative.transferOwnership(config.defaultAddress.MultiSig);
-        await tx2.wait();
-        console.log("✅ Ownership transfer transaction confirmed");
+        const RefundVault = await ethers.getContractFactory('RefundVault');
+        const upgraded = await upgrades.upgradeProxy(d.RefundVaultProxy, RefundVault);
+        console.log("✅ RefundVault proxy upgraded at:", upgraded.target);
+        const implAddress = await upgrades.erc1967.getImplementationAddress(upgraded.target);
+        console.log("🔧 New RefundVault implementation deployed at:", implAddress);
     }
 };
 

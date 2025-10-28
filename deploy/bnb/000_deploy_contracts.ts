@@ -15,9 +15,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await main();
   
     async function main() {
-        await deployProxys();
+        // await deployProxys();
+        // await deployVault();
+        // await setVault();
+        // await transferOwner();
         // await upgradeProxys();
-        // await transferOwnership();
+        // await upgradeVault();
     }
   
     async function deployContract(name: string, contract: string, args?: any[], verify?: boolean) {
@@ -79,6 +82,34 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         console.log("🔧 GatewaySend implementation deployed at:", implAddress);
     }
 
+    async function deployVault() {
+        const Vault = await ethers.getContractFactory('Vault');
+        const vault = await upgrades.deployProxy(Vault, []);
+        await vault.waitForDeployment();
+        console.log("✅ Vault proxy deployed at:", vault.target);
+        const implAddress = await upgrades.erc1967.getImplementationAddress(vault.target);
+        console.log("🔧 Vault implementation deployed at:", implAddress);
+        await verifyContract(implAddress, []);
+    }
+
+    async function setVault() {
+        const d = config.deployedAddress;
+
+        console.log("Vault set bot...");
+        const vault = await ethers.getContractAt('Vault', d.VaultProxy);
+        await vault.setBot(config.defaultAddress.RefundBot, true);
+    }
+
+    async function transferOwner() {
+        const d = config.deployedAddress;
+        const gatewaySend = await ethers.getContractAt("GatewaySend", d.GatewaySendProxy);
+        
+        console.log("Transferring GatewaySend ownership...")
+        const tx = await gatewaySend.transferOwnership(config.defaultAddress.MultiSig);
+        await tx.wait();
+        console.log("✅ Ownership transfer transaction confirmed");
+    }
+
     async function upgradeProxys() {
         const d = config.deployedAddress;
         const GatewaySend = await ethers.getContractFactory('GatewaySend');
@@ -89,14 +120,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         console.log("🔧 New GatewaySend implementation deployed at:", implAddress);
     }
 
-    async function transferOwnership() {
+    async function upgradeVault() {
         const d = config.deployedAddress;
-        const gatewaySend = await ethers.getContractAt("GatewaySend", d.GatewaySendProxy);
-        
-        console.log("Transferring GatewaySend ownership...")
-        const tx = await gatewaySend.transferOwnership(config.defaultAddress.MultiSig);
-        await tx.wait();
-        console.log("✅ Ownership transfer transaction confirmed");
+
+        const Vault = await ethers.getContractFactory('RefundVault');
+        const upgraded = await upgrades.upgradeProxy(d.VaultProxy, Vault);
+        console.log("✅ Vault proxy upgraded at:", upgraded.target);
+        const implAddress = await upgrades.erc1967.getImplementationAddress(upgraded.target);
+        console.log("🔧 New Vault implementation deployed at:", implAddress);
     }
 };
 
