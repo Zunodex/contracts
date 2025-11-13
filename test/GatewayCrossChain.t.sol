@@ -709,6 +709,206 @@ contract GatewayCrossChainTest is BaseTest {
         assertEq(token2B.balanceOf(evmWalletAddress), 595940000000000000000);
     }
 
+    // A swap - zetachain - SUI: token2A -> token1A -> token1Z -> token1B
+    function test_ASwap2Z2SUI() public {
+        address fromToken = address(token2A);
+        uint256 amount = 100 ether;
+        bytes memory swapDataA = encodeCompressedMixSwapParams(
+            address(token2A),
+            address(token1A),
+            amount,
+            0,
+            0,
+            new address[](1),
+            new address[](1),
+            new address[](1),
+            0,
+            new bytes[](1),
+            abi.encode(address(0), 0),
+            block.timestamp + 600
+        );
+        address asset = address(token1A);
+        uint32 dstChainId = 105;
+        address targetZRC20 = address(token1Z);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = suiAddress;
+        address targetContract = address(gatewayCrossChain);
+        bytes memory swapDataZ = "";
+        bytes memory contractAddress = "";
+        bytes memory accounts = "";
+        bytes memory payload = encodeMessage(
+            dstChainId,
+            targetZRC20,
+            sender,
+            receiver,
+            swapDataZ,
+            contractAddress,
+            "",
+            accounts
+        );
+
+        vm.startPrank(user1);
+        token2A.approve(
+            address(gatewaySendA),
+            amount
+        );
+        gatewaySendA.depositAndCall(
+            fromToken,
+            amount,
+            swapDataA,
+            targetContract,
+            asset,
+            dstChainId,
+            payload
+        );
+        vm.stopPrank();
+
+        assertEq(token2A.balanceOf(user1), initialBalance - amount);
+        assertEq(token1B.balanceOf(user2), 32329999999999999967); 
+    }
+
+    // A swap - zetachain swap - SUI: A swap - token2A -> token1A -> token1Z -> token2Z -> token2B
+    function test_ASwap2ZSwap2SUI() public {
+        address fromToken = address(token2A);
+        uint256 amount = 100 ether;
+        bytes memory swapDataA = encodeCompressedMixSwapParams(
+            address(token2A),
+            address(token1A),
+            amount,
+            0,
+            0,
+            new address[](1),
+            new address[](1),
+            new address[](1),
+            0,
+            new bytes[](1),
+            abi.encode(address(0), 0),
+            block.timestamp + 600
+        );
+        address asset = address(token1A);
+        uint32 dstChainId = 105;
+        address targetZRC20 = address(token2Z);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = suiAddress;
+        address targetContract = address(gatewayCrossChain);
+        bytes memory swapDataZ = encodeCompressedMixSwapParams(
+            address(token1Z),
+            address(token2Z),
+            33329999999999999967,
+            0,
+            0,
+            new address[](1),
+            new address[](1),
+            new address[](1),
+            0,
+            new bytes[](1),
+            abi.encode(address(0), 0),
+            block.timestamp + 600
+        );
+        bytes memory contractAddress = "";
+        bytes memory accounts = "";
+        bytes memory payload = encodeMessage(
+            dstChainId,
+            targetZRC20,
+            sender,
+            receiver,
+            swapDataZ,
+            contractAddress,
+            "",
+            accounts
+        );
+
+        vm.startPrank(user1);
+        token2A.approve(
+            address(gatewaySendA),
+            amount
+        );
+        gatewaySendA.depositAndCall(
+            fromToken,
+            amount,
+            swapDataA,
+            targetContract,
+            asset,
+            dstChainId,
+            payload
+        );
+        vm.stopPrank();
+
+        assertEq(token2A.balanceOf(user1), initialBalance - amount);
+        assertEq(token2B.balanceOf(user2), 65655986959878634837); 
+    }
+
+    // A swap - zetachain swap - TON: token1A -> token2A -> token2Z -> token1Z -> token1B
+    function test_ASwap2ZSwap2TON() public {
+        address fromToken = address(token1A);
+        uint256 amount = 100 ether;
+        bytes memory swapDataA = encodeCompressedMixSwapParams(
+            address(token1A),
+            address(token2A),
+            amount,
+            0,
+            0,
+            new address[](1),
+            new address[](1),
+            new address[](1),
+            0,
+            new bytes[](1),
+            abi.encode(address(0), 0),
+            block.timestamp + 600
+        );
+        address asset = address(token2A);
+        uint32 dstChainId = 2015140;
+        address targetZRC20 = address(token1Z);
+        bytes memory sender = abi.encodePacked(user1);
+        bytes memory receiver = tonAddress;
+        address targetContract = address(gatewayCrossChain);
+        bytes memory swapDataZ = encodeCompressedMixSwapParams(
+            address(token2Z),
+            address(token1Z),
+            33329999999999999967,
+            0,
+            0,
+            new address[](1),
+            new address[](1),
+            new address[](1),
+            0,
+            new bytes[](1),
+            abi.encode(address(0), 0),
+            block.timestamp + 600
+        );
+        bytes memory contractAddress = "";
+        bytes memory accounts = "";
+        bytes memory payload = encodeMessage(
+            dstChainId,
+            targetZRC20,
+            sender,
+            receiver,
+            swapDataZ,
+            contractAddress,
+            "",
+            accounts
+        );
+
+        vm.startPrank(user1);
+        token1A.approve(
+            address(gatewaySendA),
+            amount
+        );
+        gatewaySendA.depositAndCall(
+            fromToken,
+            amount,
+            swapDataA,
+            targetContract,
+            asset,
+            dstChainId,
+            payload
+        );
+        vm.stopPrank();
+
+        assertEq(token1A.balanceOf(user1), initialBalance - amount);
+        assertEq(token1B.balanceOf(user2), 15664999999999999983); 
+    }
+
     function test_SuperWithdraw() public {
         token1Z.mint(address(gatewayCrossChain), initialBalance);
         gatewayCrossChain.superWithdraw(address(token1Z), initialBalance);
@@ -720,33 +920,35 @@ contract GatewayCrossChainTest is BaseTest {
     }
 
     function test_ZOnRevert() public {
-        token1Z.mint(address(gatewayCrossChain), 2 * initialBalance);
+        uint256 amount = 10 ether;
 
+        token1Z.mint(address(gatewayCrossChain), amount);
         bytes32 externalId1 = keccak256(abi.encodePacked(block.timestamp));
         vm.prank(address(gatewayZEVM));
         gatewayCrossChain.onRevert(
             RevertContext({
                 sender: address(this),
                 asset: address(token1Z),
-                amount: initialBalance,
+                amount: amount,
                 revertMessage: bytes.concat(externalId1, abi.encodePacked(user2))
             })
         );
 
-        assertEq(token1Z.balanceOf(bot), initialBalance);
+        assertEq(token1B.balanceOf(user2), 9000000000000000000);
 
+        token2Z.mint(address(gatewayCrossChain), amount);
         bytes32 externalId2 = keccak256(abi.encodePacked(block.timestamp + 600));
         vm.prank(address(gatewayZEVM));
         gatewayCrossChain.onRevert(
             RevertContext({
                 sender: address(this),
-                asset: address(token1Z),
-                amount: initialBalance,
+                asset: address(token2Z),
+                amount: amount,
                 revertMessage: bytes.concat(externalId2, solAddress)
             })
         );
 
-        assertEq(token1Z.balanceOf(bot), 2 * initialBalance);
+        assertEq(token2B.balanceOf(user2), 8995986959878634903);
     }
 
     function test_ZOnAbort() public {
@@ -764,8 +966,11 @@ contract GatewayCrossChainTest is BaseTest {
                 revertMessage: bytes.concat(externalId1, abi.encodePacked(user2))
             })
         );
+        (address ast, uint256 amt, bytes memory wAddr) = refundVault.getRefundInfo(externalId1);
 
-        assertEq(token1Z.balanceOf(bot), initialBalance);
+        assertTrue(ast == address(token1Z));
+        assertTrue(amt == initialBalance);
+        assertTrue(keccak256(abi.encodePacked(user2)) == keccak256(wAddr));
 
         bytes32 externalId2 = keccak256(abi.encodePacked(block.timestamp + 600));
         vm.prank(address(gatewayZEVM));
@@ -779,12 +984,15 @@ contract GatewayCrossChainTest is BaseTest {
                 revertMessage: bytes.concat(externalId2, solAddress)
             })
         );
+        (ast, amt, wAddr) = refundVault.getRefundInfo(externalId2);
 
-        assertEq(token1Z.balanceOf(bot), 2 * initialBalance);
+        assertTrue(ast == address(token1Z));
+        assertTrue(amt == initialBalance);
+        assertTrue(keccak256(solAddress) == keccak256(wAddr));
     }
 
     function test_Set() public {
-        gatewayCrossChain.setOwner(user1);
+        gatewayCrossChain.transferOwnership(user1);
 
         vm.startPrank(user1);
         gatewayCrossChain.setDODORouteProxy(address(0x111));
@@ -792,7 +1000,6 @@ contract GatewayCrossChainTest is BaseTest {
         gatewayCrossChain.setFeePercent(0);
         gatewayCrossChain.setGateway(payable(address(0x111)));
         gatewayCrossChain.setEddyTreasurySafe(address(0x111));
-        gatewayCrossChain.setBot(address(0x111));
         vm.stopPrank();
     }
 

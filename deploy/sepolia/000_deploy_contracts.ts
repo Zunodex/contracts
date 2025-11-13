@@ -12,11 +12,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployer } = await getNamedAccounts();
     const { ethers, upgrades } = require("hardhat");
   
-    await main();
+    // await main();
   
     async function main() {
         await deployProxys();
-        // await upgradeProxys();
+        await deployVault();
+        await setVault();
+        await upgradeProxys();
+        await upgradeVault();
     }
   
     async function deployContract(name: string, contract: string, args?: any[], verify?: boolean) {
@@ -76,6 +79,25 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
         const implAddress = await upgrades.erc1967.getImplementationAddress(gatewaySend.target);
         console.log("🔧 GatewaySend implementation deployed at:", implAddress);
+        await verifyContract(implAddress, []);
+    }
+
+    async function deployVault() {
+        const Vault = await ethers.getContractFactory('Vault');
+        const vault = await upgrades.deployProxy(Vault, []);
+        await vault.waitForDeployment();
+        console.log("✅ Vault proxy deployed at:", vault.target);
+        const implAddress = await upgrades.erc1967.getImplementationAddress(vault.target);
+        console.log("🔧 Vault implementation deployed at:", implAddress);
+        await verifyContract(implAddress, []);
+    }
+
+    async function setVault() {
+        const d = config.deployedAddress;
+
+        console.log("Vault set bot...");
+        const vault = await ethers.getContractAt('Vault', d.VaultProxy);
+        await vault.setBot(config.defaultAddress.RefundBot, true);
     }
 
     async function upgradeProxys() {
@@ -86,6 +108,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
         const implAddress = await upgrades.erc1967.getImplementationAddress(upgraded.target);
         console.log("🔧 New GatewaySend implementation deployed at:", implAddress);
+    }
+
+    async function upgradeVault() {
+        const d = config.deployedAddress;
+
+        const Vault = await ethers.getContractFactory('RefundVault');
+        const upgraded = await upgrades.upgradeProxy(d.VaultProxy, Vault);
+        console.log("✅ Vault proxy upgraded at:", upgraded.target);
+        const implAddress = await upgrades.erc1967.getImplementationAddress(upgraded.target);
+        console.log("🔧 New Vault implementation deployed at:", implAddress);
     }
 };
 

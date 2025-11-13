@@ -1,7 +1,7 @@
 const ZETACHAIN_MAINNET_CONFIG = {
     chain: {
         chainId: 7000,
-        explorerURL: "https://zetachain.blockscout.com",
+        explorerURL: "https://zetascan.com/",
     },
     defaultAddress: {
         Gateway: "0xfEDD7A6e3Ef1cC470fbfbF955a22D793dDC0F44E",
@@ -11,10 +11,12 @@ const ZETACHAIN_MAINNET_CONFIG = {
         RefundBot: "0xa19c93c48b2051135c3a5c5df9753d53e03ef239",
     }, 
     deployedAddress: {
-        GatewayCrossChainImpl: "0x724785B1c36714D18A543e7cbeE05360bc5FFB43",
-        GatewayCrossChainProxy: "0xDbAF291a4380749a0E6474E25Ab8A3186475074A",
-        GatewayTransferNativeImpl: "0xa6d371876F4d12968da14f6339688F5Ae93D7287",
-        GatewayTransferNativeProxy: "0x56D74Fce859468565ebe3Cf926f819968246b4E9"
+        GatewayCrossChainImpl: "0xB2392D22011929E580D28232a5096cCa6f4ae981",
+        GatewayCrossChainProxy: "0xdd186D9E0c6A0EC8731E183a853EFB1eeC8438ec",
+        GatewayTransferNativeImpl: "0x52913eD5DB9c61Ea7c088a2D417160bC70d7DD37",
+        GatewayTransferNativeProxy: "0xba2932595302e2d7b2Aa3829D11bD2Cc0A8F43Aa",
+        RefundVaultImpl: "0x7f963E7879113BB6997259084dBEE0c620aE7BC1",
+        RefundVaultProxy: "0x9e9b7BE2C81c2529A8e069b0975a72E204c2eB79",
     },
   };
   

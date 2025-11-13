@@ -9,6 +9,8 @@ import {GatewayZEVMMock} from "../contracts/mocks/GatewayZEVMMock.sol";
 import {GatewaySend} from "../contracts/GatewaySend.sol";
 import {GatewayCrossChain} from "../contracts/GatewayCrossChain.sol";
 import {GatewayTransferNative} from "../contracts/GatewayTransferNative.sol";
+import {RefundVault} from "../contracts/RefundVault.sol";
+import {Vault} from "../contracts/Vault.sol";
 import {ERC20Mock} from "../contracts/mocks/ERC20Mock.sol";
 import {ZRC20Mock} from "../contracts/mocks/ZRC20Mock.sol";
 import {DODORouteProxyMock} from "../contracts/mocks/DODORouteProxyMock.sol";
@@ -23,6 +25,8 @@ contract BaseTest is Test {
     address public user1 = address(0x111);
     address public user2 = address(0x222);
     address public bot = address(0x333);
+    bytes public tonAddress = abi.encodePacked("0:21f6bb20c44e7fb5efe6db87a4fead0c289cc13bd94880419cabf19688647987");
+    bytes public suiAddress = abi.encodePacked("0xba477ad7b87a31fde3d29c4e4512329d7340ec23e61f130ebb4d0169ba37e189");
     bytes public btcAddress = abi.encodePacked("tb1qy9pqmk2pd9sv63g27jt8r657wy0d9ueeh0nqur");
     bytes public solAddress = abi.encodePacked("DrexsvCMH9WWjgnjVbx1iFf3YZcKadupFmxnZLfSyotd");
     bytes public solGatewaySendAddress = abi.encodePacked("EwUjcjz8jvFeE99kjcZKM5Aojs3eKcyW2JHNKNDP9M4k");
@@ -37,10 +41,14 @@ contract BaseTest is Test {
     GatewaySend public gatewaySendB;
     GatewayCrossChain public gatewayCrossChain; // on zetachain
     GatewayTransferNative public gatewayTransferNative; // on zetachain
+    RefundVault public refundVault; // on zetachain
+    Vault public vault;
     ERC1967Proxy public sendProxyA; 
     ERC1967Proxy public sendProxyB;
     ERC1967Proxy public crossChainProxy;
     ERC1967Proxy public transferNativeProxy;
+    ERC1967Proxy public refundVaultProxy;
+    ERC1967Proxy public vaultProxy;
     ERC20Mock public token1A; 
     ERC20Mock public token2A;
     ZRC20Mock public token1Z;
@@ -66,6 +74,8 @@ contract BaseTest is Test {
         dodoRouteProxyA = new DODORouteProxyMock();
         dodoRouteProxyZ = new DODORouteProxyMock();
         dodoRouteProxyB = new DODORouteProxyMock();
+        refundVault = new RefundVault();
+        vault = new Vault();
         
         token1A = new ERC20Mock("Token1A", "TK1A", 18);
         token2A = new ERC20Mock("Token2A", "TK2A", 18);
@@ -138,7 +148,6 @@ contract BaseTest is Test {
             data
         );
         gatewayTransferNative = GatewayTransferNative(payable(address(transferNativeProxy)));
-        gatewayTransferNative.setBot(bot);
 
         // set GatewayCrossChain
         data = abi.encodeWithSignature(
@@ -156,7 +165,34 @@ contract BaseTest is Test {
             data
         );
         gatewayCrossChain = GatewayCrossChain(payable(address(crossChainProxy)));
-        gatewayCrossChain.setBot(bot);
+
+        // set RefundVault
+        data = abi.encodeWithSignature(
+            "initialize(address,uint256)",
+            address(gatewayZEVM),
+            100000
+        );
+        refundVaultProxy = new ERC1967Proxy(
+            address(refundVault),
+            data
+        );
+        refundVault = RefundVault(payable(address(refundVaultProxy)));
+        refundVault.setBot(bot, true);
+        refundVault.setWhiteList(address(gatewayCrossChain), true);
+        refundVault.setWhiteList(address(gatewayTransferNative), true);
+        gatewayCrossChain.setVault(address(refundVault));
+        gatewayTransferNative.setVault(address(refundVault));
+
+        // set Vault
+        data = abi.encodeWithSignature(
+            "initialize()"
+        );
+        vaultProxy = new ERC1967Proxy(
+            address(vault),
+            data
+        );
+        vault = Vault(payable(address(vaultProxy)));
+        vault.setBot(bot, true);
 
         // set GatewayEVM
         gatewayA.setGatewayZEVM(address(gatewayZEVM));
@@ -172,6 +208,9 @@ contract BaseTest is Test {
         gatewayB.setZRC20(address(btc), address(btcZ));
         gatewayB.setDODORouteProxy(address(dodoRouteProxyB));
         gatewayB.setEVMAddress(btcAddress, address(user2));
+        gatewayB.setEVMAddress(solAddress, address(user2));
+        gatewayB.setEVMAddress(suiAddress, address(user2));
+        gatewayB.setEVMAddress(tonAddress, address(user2));
         gatewayB.setEVMAddress(solGatewaySendAddress, address(gatewaySendB));
 
         // set ZRC20 tokens

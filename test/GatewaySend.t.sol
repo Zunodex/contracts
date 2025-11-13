@@ -29,7 +29,7 @@ contract GatewaySendTest is BaseTest {
     }
 
     function test_Set() public {
-        gatewaySendA.setOwner(user1);
+        gatewaySendA.transferOwnership(user1);
 
         vm.startPrank(user1);
         gatewaySendA.setDODORouteProxy(address(0x111));

@@ -7,9 +7,9 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // For WSL2 users, you may need to set a proxy agent to connect to the internet
-import { ProxyAgent, setGlobalDispatcher } from 'undici';
-const proxyAgent = new ProxyAgent("http://172.29.32.1:55315"); // replace ip with cat /etc/resolv.conf | grep nameserver
-setGlobalDispatcher(proxyAgent);
+// import { ProxyAgent, setGlobalDispatcher } from 'undici';
+// const proxyAgent = new ProxyAgent("http://172.29.32.1:55315"); // replace ip with cat /etc/resolv.conf | grep nameserver
+// setGlobalDispatcher(proxyAgent);
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -28,11 +28,11 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
-    ethereum: {
+    eth: {
       chainId: 1,
       accounts: [process.env.PRIVATE_KEY ?? ""],
       url: "https://1rpc.io/eth",
-      deploy: ["./deploy/ethereum/"],
+      deploy: ["./deploy/eth/"],
     },
     polygon: {
       chainId: 137,
@@ -61,7 +61,7 @@ const config: HardhatUserConfig = {
     arb: {
       chainId: 42161,
       accounts: [process.env.PRIVATE_KEY ?? ""],
-      url: "https://arbitrum.drpc.org",
+      url: "https://arb-mainnet.g.alchemy.com/v2/i7AGD7NB2oucWbfTCszVNn1KE9WltlBw",
       deploy: ["./deploy/arb/"],
     },
     zetachain_mainnet: {
@@ -91,23 +91,23 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
-      ethereum: "VV6FB3HDE9FSVBBVMVXGPQX4KSJUJIY3E6",
-      polygon: "2JZHRC8JP35PTPY64QPBDTCT2QE1ARI5ZP",
-      bnb: "FDRR41V15H8WDGEGRU2KEPXWBYSS5IFDIY",
-      base: "ABVYVFMXQCR35J2Y58RH52KW4AY66EQXUZ",
-      avax: "snowtrace",
-      arb: "8TDWU29I4QA8AW713FK2Y29QABP5AF9FXX",
-      sepolia: "VV6FB3HDE9FSVBBVMVXGPQX4KSJUJIY3E6",
-      arb_sepolia: "8TDWU29I4QA8AW713FK2Y29QABP5AF9FXX",
+      eth: "JP1EHB7VINQ6YP3UYBNCY8YFW6CXDEYTRE",
+      polygon: "JP1EHB7VINQ6YP3UYBNCY8YFW6CXDEYTRE",
+      bnb: "JP1EHB7VINQ6YP3UYBNCY8YFW6CXDEYTRE",
+      base: "JP1EHB7VINQ6YP3UYBNCY8YFW6CXDEYTRE",
+      avax: "JP1EHB7VINQ6YP3UYBNCY8YFW6CXDEYTRE",
+      arb: "JP1EHB7VINQ6YP3UYBNCY8YFW6CXDEYTRE",
+      sepolia: "JP1EHB7VINQ6YP3UYBNCY8YFW6CXDEYTRE",
+      arb_sepolia: "JP1EHB7VINQ6YP3UYBNCY8YFW6CXDEYTRE",
       zetachain_testnet: "6542100",
       zetachain_mainnet: "6542100",
     },
     customChains: [
       {
-        network: "ethereum",
+        network: "eth",
         chainId: 1,
         urls: {
-          apiURL: "https://api.etherscan.io/api",
+          apiURL: "https://api.etherscan.io/v2/api?chainid=1",
           browserURL: "https://etherscan.io/",
         },
       },
@@ -115,7 +115,7 @@ const config: HardhatUserConfig = {
         network: "polygon",
         chainId: 137,
         urls: {
-          apiURL: "https://api.polygonscan.com/api",
+          apiURL: "https://api.etherscan.io/v2/api?chainid=137",
           browserURL: "https://polygonscan.com/",
         },
       },
@@ -123,7 +123,7 @@ const config: HardhatUserConfig = {
         network: "bnb",
         chainId: 56,
         urls: {
-          apiURL: "https://api.bscscan.com/api",
+          apiURL: "https://api.etherscan.io/v2/api?chainid=56",
           browserURL: "https://bscscan.com/",
         },
       },
@@ -131,7 +131,7 @@ const config: HardhatUserConfig = {
         network: "base",
         chainId: 8453,
         urls: {
-          apiURL: "https://api.basescan.org/api",
+          apiURL: "https://api.etherscan.io/v2/api?chainid=8453",
           browserURL: "https://basescan.org/",
         },
       },
@@ -139,15 +139,15 @@ const config: HardhatUserConfig = {
         network: "avax",
         chainId: 43114,
           urls: {
-          apiURL: "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan",
-          browserURL: "https://avalanche.routescan.io",
+          apiURL: "https://api.etherscan.io/v2/api?chainid=43114",
+          browserURL: "https://snowscan.xyz/",
         },
       },
       {
         network: "arb",
         chainId: 42161,
         urls: {
-          apiURL: "https://api.arbiscan.io/api",
+          apiURL: "https://api.etherscan.io/v2/api?chainid=42161",
           browserURL: "https://arbiscan.io/",
         },
       },
@@ -155,7 +155,7 @@ const config: HardhatUserConfig = {
         network: "sepolia",
         chainId: 11155111,
         urls: {
-          apiURL: "https://api-sepolia.etherscan.io/api",
+          apiURL: "https://api.etherscan.io/v2/api?chainid=11155111",
           browserURL: "https://sepolia.etherscan.io/",
         },
       },
@@ -163,7 +163,7 @@ const config: HardhatUserConfig = {
         network: "arb_sepolia",
         chainId: 421614,
         urls: {
-          apiURL: "https://api-sepolia.arbiscan.io/api",
+          apiURL: "https://api.etherscan.io/v2/api?chainid=421614",
           browserURL: "https://sepolia.arbiscan.io/",
         },
       },
@@ -171,16 +171,16 @@ const config: HardhatUserConfig = {
         network: "zetachain_testnet",
         chainId: 7001,
         urls: {
-          apiURL: "https://zetachain-testnet.blockscout.com/api",
-          browserURL: "https://zetachain-testnet.blockscout.com",
+          apiURL: "https://testnet.zetascan.com/api",
+          browserURL: "https://testnet.zetascan.com/",
         },
       },
       {
         network: "zetachain_mainnet",
         chainId: 7000,
         urls: {
-          apiURL: "https://zetachain.blockscout.com/api",
-          browserURL: "https://zetachain.blockscout.com/",
+          apiURL: "https://zetascan.com/api",
+          browserURL: "https://zetascan.com/",
         },
       },
     ]
