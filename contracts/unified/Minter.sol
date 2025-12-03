@@ -19,8 +19,8 @@ interface IVault {
 }
 
 contract Minter is Initializable, OwnableUpgradeable, UUPSUpgradeable {
-    address public _UTOKEN_;
-    address public _VAULT_;
+    address public uToken;
+    address public vault;
     
     struct AssetConfig {
         address asset;
@@ -66,16 +66,16 @@ contract Minter is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     function initialize(
-        address uToken,
-        address vault
+        address _uToken,
+        address _vault
     ) public initializer {
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
 
-        require(uToken != address(0) && vault != address(0), "Minter: INVALID_ADDRESS");
+        require(_uToken != address(0) && _vault != address(0), "Minter: INVALID_ADDRESS");
 
-        _UTOKEN_ = uToken;
-        _VAULT_ = vault;
+        uToken = _uToken;
+        vault = _vault;
     }
 
     function registerAsset(
@@ -145,21 +145,21 @@ contract Minter is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
         if (isMint) {
             // Token => UnifiedToken
-            require(toToken == _UTOKEN_, "Minter: TOKEN_ADDRESS_NOT_MATCH");
+            require(toToken == uToken, "Minter: TOKEN_ADDRESS_NOT_MATCH");
 
-            IZRC20(fromToken).approve(_VAULT_, amount);
-            IVault(_VAULT_).collect(fromToken, address(this), amount);
+            IZRC20(fromToken).approve(vault, amount);
+            IVault(vault).collect(fromToken, address(this), amount);
 
-            uint256 amt = _scale(amount, IZRC20Metadata(fromToken).decimals(), IUnifiedToken(_UTOKEN_).decimals());
-            IUnifiedToken(_UTOKEN_).mint(to, amt);
+            uint256 amt = _scale(amount, IZRC20Metadata(fromToken).decimals(), IUnifiedToken(uToken).decimals());
+            IUnifiedToken(uToken).mint(to, amt);
         } else {
-            require(fromToken == _UTOKEN_, "Minter: TOKEN_ADDRESS_NOT_MATCH");
+            require(fromToken == uToken, "Minter: TOKEN_ADDRESS_NOT_MATCH");
 
-            IUnifiedToken(_UTOKEN_).approve(_UTOKEN_, amount);
-            IUnifiedToken(_UTOKEN_).burn(amount);
+            IUnifiedToken(uToken).approve(uToken, amount);
+            IUnifiedToken(uToken).burn(amount);
 
-            uint256 amt = _scale(amount, IUnifiedToken(_UTOKEN_).decimals(), IZRC20Metadata(toToken).decimals());
-            IVault(_VAULT_).payout(toToken, to, amt);
+            uint256 amt = _scale(amount, IUnifiedToken(uToken).decimals(), IZRC20Metadata(toToken).decimals());
+            IVault(vault).payout(toToken, to, amt);
         }
     }
 
@@ -172,6 +172,4 @@ contract Minter is Initializable, OwnableUpgradeable, UUPSUpgradeable {
             return amount / (10 ** uint256(inDecimal - outDecimal));
         }
     }
-
-    receive() external payable {}
 }

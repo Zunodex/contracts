@@ -1,12 +1,17 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity ^0.8.20;
 
 import {MinterFlowTest} from "./MinterFlow.t.sol";
-import {Minter} from "../contracts/token/Minter.sol";
-import {MinterAdapter} from "../contracts/token/MinterAdapter.sol";
-import {ZRC20Mock} from "../contracts/mocks/ZRC20Mock.sol";
+import {Minter} from "../../contracts/unified/Minter.sol";
+import {MinterAdapter} from "../../contracts/unified/MinterAdapter.sol";
+import {ZRC20Mock} from "../../contracts/mocks/ZRC20Mock.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+
+interface IERC20 {
+    function transfer(address to, uint256 amount) external returns (bool);
+
+    function balanceOf(address account) external view returns (uint256);
+}
 
 contract MinterTest is MinterFlowTest {
     address public user = address(0x111);
@@ -40,8 +45,8 @@ contract MinterTest is MinterFlowTest {
     }
 
     function test_InitializeSetConfig() public view {
-        assertEq(minter._UTOKEN_(), address(uToken));
-        // assertEq(minter._VAULT_(), address(vault));
+        assertEq(minter.uToken(), address(uToken));
+        assertEq(minter.vault(), address(vault));
     }
 
     function test_RegisterAsset() public {
@@ -71,14 +76,14 @@ contract MinterTest is MinterFlowTest {
         assertEq(maxOrder0, 0);
 
         vm.expectEmit(true, false, false, true);
-        emit AssetUpdated(address(token1), false, 10, 20);
-        minter.updateAsset(address(token1), false, 10, 20);
+        emit AssetUpdated(address(token1), false, 10e6, 20e6);
+        minter.updateAsset(address(token1), false, 10e6, 20e6);
 
         (address asset1, bool enabled1, uint256 minOrder1, uint256 maxOrder1) = minter.assets(address(token1));
         assertEq(asset1, address(token1));
         assertFalse(enabled1);
-        assertEq(minOrder1, 10);
-        assertEq(maxOrder1, 20);
+        assertEq(minOrder1, 10e6);
+        assertEq(maxOrder1, 20e6);
     }
 
     function test_SetAdapter() public {
@@ -129,25 +134,49 @@ contract MinterTest is MinterFlowTest {
         minter.updateAsset(address(0x3333), true, 0, 0);
     }
 
+    // token1 -> uToken
     function test_ExecuteMintScaleUp() public {
         minter.updateAsset(address(token1), true, 0, 0);
 
         uint256 amount = 100e6;
+        token1.mint(address(adapter), amount);
 
-        vm.prank(address(adapter));
+        assertEq(token1.balanceOf(address(adapter)), amount);
+
+        uint256 vaultBefore = token1.balanceOf(address(vault));
+
+        vm.startPrank(address(adapter));
+        token1.transfer(address(minter), amount);
         minter.execute(true, address(token1), address(uToken), amount, user);
+        vm.stopPrank();
+
+        assertEq(token1.balanceOf(address(adapter)), 0);
+        assertEq(token1.balanceOf(address(vault)), vaultBefore + 100e6);
+        assertEq(uToken.balanceOf(user), 100e18);
+        assertEq(uToken.totalSupply(), 100e18);
     }
 
+    // uToken -> token2
     function test_ExecuteBurnScaleDown() public {
         minter.updateAsset(address(uToken), true, 0, 0);
 
         uint256 amount = 100e18;
+        vm.prank(address(minter));
+        uToken.mint(address(adapter), amount);
 
-        uToken.mint(address(minter), amount);
-        assertEq(uToken.balanceOf(address(minter)), amount);
+        assertEq(uToken.balanceOf(address(adapter)), amount);
 
-        vm.prank(address(adapter));
-        minter.execute(false, address(uToken), address(token1), amount, user);
+        uint256 vaultBefore = token2.balanceOf(address(vault));
+
+        vm.startPrank(address(adapter));
+        uToken.transfer(address(minter), amount);
+        minter.execute(false, address(uToken), address(token2), amount, user);
+        vm.stopPrank();
+
+        assertEq(uToken.balanceOf(address(adapter)), 0);
+        assertEq(uToken.totalSupply(), 0);
+        assertEq(token2.balanceOf(address(vault)), vaultBefore - 100e18);
+        assertEq(token2.balanceOf(user), 100e18);
     }
 
 
@@ -196,32 +225,36 @@ contract MinterTest is MinterFlowTest {
     function test_Revert_ExecuteExceedMinMaxOrder() public {
         // min = 100
         // max = 1000
-        minter.updateAsset(address(token1), true, 100, 1000);
+        minter.updateAsset(address(token1), true, 100e6, 1000e6);
+
+        token1.mint(address(adapter), 2000e6);
+
+        vm.startPrank(address(adapter));
 
         // amount < min -> underflow
-        vm.prank(address(adapter));
+        token1.transfer(address(minter), 99e6);
         vm.expectRevert(bytes("Minter: UNDERFLOW"));
-        minter.execute(true, address(token1), address(uToken), 99, user);
+        minter.execute(true, address(token1), address(uToken), 99e6, user);
 
         // amount > max -> overflow
-        vm.prank(address(adapter));
+        token1.transfer(address(minter), 1001e6);
         vm.expectRevert(bytes("Minter: OVERFLOW"));
-        minter.execute(true, address(token1), address(uToken), 1001, user);
+        minter.execute(true, address(token1), address(uToken), 1001e6, user);
 
         // min <= amount <= max -> executed
-        vm.prank(address(adapter));
-        minter.execute(true, address(token1), address(uToken), 500, user);
+        token1.transfer(address(minter), 500e6);
+        minter.execute(true, address(token1), address(uToken), 500e6, user);
+
+        vm.stopPrank();
     }
 
     function test_Revert_ExecuteTokenNotMatch() public {
-        address otherToken = address(0x1234);
+        vm.prank(address(adapter));
+        vm.expectRevert(bytes("Minter: TOKEN_ADDRESS_NOT_MATCH"));
+        minter.execute(true, address(token1), address(token2), 100e6, user);
 
         vm.prank(address(adapter));
         vm.expectRevert(bytes("Minter: TOKEN_ADDRESS_NOT_MATCH"));
-        minter.execute(true, address(token1), address(otherToken), 100e6, user);
-
-        vm.prank(address(adapter));
-        vm.expectRevert(bytes("Minter: TOKEN_ADDRESS_NOT_MATCH"));
-        minter.execute(false, address(otherToken), address(token1), 100e18, user);
+        minter.execute(false, address(token2), address(token1), 100e18, user);
     }
 }
