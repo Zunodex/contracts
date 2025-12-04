@@ -105,13 +105,8 @@ interface IMinter {
 }
 
 contract MinterAdapter is IDODOAdapter {
-    address public immutable minter;
 
-    constructor(address _minter) {
-        minter = _minter;
-    }
-
-    function sellBase(address to, address /*pool*/, bytes memory moreInfo) external override {
+    function sellBase(address to, address minter, bytes memory moreInfo) external override {
         (address fromToken, address toToken) = abi.decode(moreInfo, (address, address));
         
         uint256 amount = IERC20(fromToken).balanceOf(address(this));
@@ -119,7 +114,7 @@ contract MinterAdapter is IDODOAdapter {
         IMinter(minter).execute(true, fromToken, toToken, amount, to);
     }
 
-    function sellQuote(address to, address /*pool*/, bytes memory moreInfo) external override {
+    function sellQuote(address to, address minter, bytes memory moreInfo) external override {
         (address fromToken, address toToken) = abi.decode(moreInfo, (address, address));
         
         uint256 amount = IERC20(fromToken).balanceOf(address(this));

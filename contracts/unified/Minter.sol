@@ -78,22 +78,33 @@ contract Minter is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         vault = _vault;
     }
 
-    function registerAsset(
-        address asset, 
-        bool enabled, 
-        uint256 minOrder, 
-        uint256 maxOrder
+    function registerAssets(
+        address[] calldata assetList,
+        bool[] calldata enabledList,
+        uint256[] calldata minOrderList,
+        uint256[] calldata maxOrderList
     ) external onlyOwner {
-        require(asset != address(0), "Minter: INVALID_ADDRESS");
+        uint256 len = assetList.length;
+        require(
+            len == enabledList.length &&
+            len == minOrderList.length &&
+            len == maxOrderList.length,
+            "Minter: LENGTH_NOT_MATCH"
+        );
 
-        assets[asset] = AssetConfig({
-            asset: asset, 
-            enabled: enabled, 
-            minOrder: minOrder, 
-            maxOrder: maxOrder
-        });
+        for (uint256 i = 0; i < len; ++i) {
+            address asset = assetList[i];
+            require(asset != address(0), "Minter: INVALID_ADDRESS");
 
-        emit AssetRegistered(asset, enabled, minOrder, maxOrder);
+            assets[asset] = AssetConfig({
+                asset: asset,
+                enabled: enabledList[i],
+                minOrder: minOrderList[i],
+                maxOrder: maxOrderList[i]
+            });
+
+            emit AssetRegistered(asset, enabledList[i], minOrderList[i], maxOrderList[i]);
+        }
     }
 
     function updateAsset(

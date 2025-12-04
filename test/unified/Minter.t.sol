@@ -52,20 +52,62 @@ contract MinterTest is MinterFlowTest {
     function test_RegisterAsset() public {
         ZRC20Mock token3 = new ZRC20Mock("Token3", "TK.3", 18);
 
+        address[] memory assetList = new address[](1);
+        assetList[0] = address(token3);
+
+        bool[] memory enabledList = new bool[](1);
+        enabledList[0] = true;
+
+        uint256[] memory minOrderList = new uint256[](1);
+        minOrderList[0] = 100e18;
+
+        uint256[] memory maxOrderList = new uint256[](1);
+        maxOrderList[0] = 1_000e18;
+
         vm.expectEmit(true, false, false, true);
-        emit AssetRegistered(address(token3), true, 100, 1000);
-        minter.registerAsset(address(token3), true, 100, 1000);
+        emit AssetRegistered(address(token3), true, 100e18, 1_000e18);
+        minter.registerAssets(assetList, enabledList, minOrderList, maxOrderList);
 
         (address asset, bool enabled, uint256 minOrder, uint256 maxOrder) = minter.assets(address(token3));
         assertEq(asset, address(token3));
         assertTrue(enabled);
-        assertEq(minOrder, 100);
-        assertEq(maxOrder, 1000);
+        assertEq(minOrder, 100e18);
+        assertEq(maxOrder, 1_000e18);
     }
 
     function test_Revert_RegisterZeroAsset() public {
+        address[] memory assetList = new address[](1);
+        assetList[0] = address(0);
+
+        bool[] memory enabledList = new bool[](1);
+        enabledList[0] = true;
+
+        uint256[] memory minOrderList = new uint256[](1);
+        minOrderList[0] = 0;
+
+        uint256[] memory maxOrderList = new uint256[](1);
+        maxOrderList[0] = 0;
+
         vm.expectRevert(bytes("Minter: INVALID_ADDRESS"));
-        minter.registerAsset(address(0), true, 0, 0);
+        minter.registerAssets(assetList, enabledList, minOrderList, maxOrderList);
+    }
+
+    function test_Revert_RegisterAssetLengthNotMatch() public {
+        address[] memory assetList = new address[](1);
+        assetList[0] = address(0x123);
+
+        bool[] memory enabledList = new bool[](2);
+        enabledList[0] = true;
+        enabledList[1] = true;
+
+        uint256[] memory minOrderList = new uint256[](1);
+        minOrderList[0] = 0;
+
+        uint256[] memory maxOrderList = new uint256[](1);
+        maxOrderList[0] = 0;
+
+        vm.expectRevert(bytes("Minter: LENGTH_NOT_MATCH"));
+        minter.registerAssets(assetList, enabledList, minOrderList, maxOrderList);
     }
 
     function test_UpdateAsset() public {
@@ -125,9 +167,21 @@ contract MinterTest is MinterFlowTest {
         vm.expectRevert();
         minter.setPaused(true);
 
+        address[] memory assetList = new address[](1);
+        assetList[0] = address(0x222);
+
+        bool[] memory enabledList = new bool[](1);
+        enabledList[0] = true;
+
+        uint256[] memory minOrderList = new uint256[](1);
+        minOrderList[0] = 0;
+
+        uint256[] memory maxOrderList = new uint256[](1);
+        maxOrderList[0] = 0;
+
         vm.prank(user);
         vm.expectRevert();
-        minter.registerAsset(address(0x2222), true, 0, 0);
+        minter.registerAssets(assetList, enabledList, minOrderList, maxOrderList);
 
         vm.prank(user);
         vm.expectRevert();

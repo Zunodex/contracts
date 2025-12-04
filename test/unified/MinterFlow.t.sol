@@ -24,6 +24,7 @@ contract MinterFlowTest is Test {
         uToken = new UnifiedToken();
         minter = new Minter();
         vault = new Vault();
+        adapter = new MinterAdapter();
 
         // initialize UnifiedToken
         bytes memory data = abi.encodeWithSignature(
@@ -49,12 +50,28 @@ contract MinterFlowTest is Test {
         );
         minter = Minter(address(minterProxy));
 
-        adapter = new MinterAdapter(address(minter));
-
         // register asset
-        minter.registerAsset(address(token1), true, 0, 0);
-        minter.registerAsset(address(token2), true, 0, 0);
-        minter.registerAsset(address(uToken), true, 0, 0);
+        address[] memory assetList = new address[](3);
+        assetList[0] = address(token1);
+        assetList[1] = address(token2);
+        assetList[2] = address(uToken);
+
+        bool[] memory enabledList = new bool[](3);
+        enabledList[0] = true;
+        enabledList[1] = true;
+        enabledList[2] = true;
+
+        uint256[] memory minOrderList = new uint256[](3);
+        minOrderList[0] = 0;
+        minOrderList[1] = 0;
+        minOrderList[2] = 0;
+
+        uint256[] memory maxOrderList = new uint256[](3);
+        maxOrderList[0] = 0;
+        maxOrderList[1] = 0;
+        maxOrderList[2] = 0;
+
+        minter.registerAssets(assetList, enabledList, minOrderList, maxOrderList);
 
         // set adapter
         minter.setAdapter(address(adapter), true);
