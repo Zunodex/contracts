@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IZRC20} from "@zetachain/protocol-contracts/contracts/zevm/interfaces/IZRC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Vault is Ownable {
@@ -23,14 +23,18 @@ contract Vault is Ownable {
     }
 
     function withdraw(address token, address to, uint256 amount) external onlyOwner {
-        IERC20(token).transfer(to, amount);
+        IZRC20(token).transfer(to, amount);
     }
 
     function collect(address asset, address from, uint256 amount) external onlyMinter {
-        IERC20(asset).transferFrom(from, address(this), amount);
+        IZRC20(asset).transferFrom(from, address(this), amount);
     }
 
     function payout(address asset, address to, uint256 amount) external onlyMinter {
-        IERC20(asset).transfer(to, amount);
+        IZRC20(asset).transfer(to, amount);
+    }
+
+    function getBalance(address asset) public view returns (uint256 balance) {
+        balance = IZRC20(asset).balanceOf(address(this));
     }
 }

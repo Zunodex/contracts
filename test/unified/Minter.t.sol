@@ -197,7 +197,7 @@ contract MinterTest is MinterFlowTest {
 
         assertEq(token1.balanceOf(address(adapter)), amount);
 
-        uint256 vaultBefore = token1.balanceOf(address(vault));
+        uint256 vaultBefore = vault.getBalance(address(token1));
 
         vm.startPrank(address(adapter));
         token1.transfer(address(minter), amount);
@@ -205,7 +205,7 @@ contract MinterTest is MinterFlowTest {
         vm.stopPrank();
 
         assertEq(token1.balanceOf(address(adapter)), 0);
-        assertEq(token1.balanceOf(address(vault)), vaultBefore + 100e6);
+        assertEq(vault.getBalance(address(token1)), vaultBefore + 100e6);
         assertEq(uToken.balanceOf(user), 100e18);
         assertEq(uToken.totalSupply(), 100e18);
     }
@@ -220,7 +220,7 @@ contract MinterTest is MinterFlowTest {
 
         assertEq(uToken.balanceOf(address(adapter)), amount);
 
-        uint256 vaultBefore = token2.balanceOf(address(vault));
+        uint256 vaultBefore = vault.getBalance(address(token2));
 
         vm.startPrank(address(adapter));
         uToken.transfer(address(minter), amount);
@@ -229,7 +229,7 @@ contract MinterTest is MinterFlowTest {
 
         assertEq(uToken.balanceOf(address(adapter)), 0);
         assertEq(uToken.totalSupply(), 0);
-        assertEq(token2.balanceOf(address(vault)), vaultBefore - 100e18);
+        assertEq(vault.getBalance(address(token2)), vaultBefore - 100e18);
         assertEq(token2.balanceOf(user), 100e18);
     }
 

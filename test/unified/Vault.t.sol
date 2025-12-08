@@ -59,13 +59,13 @@ contract VaultTest is Test {
         vault.collect(address(token1), user, amount);
 
         uint256 minterBefore = token1.balanceOf(minter);
-        uint256 vaultBefore = token1.balanceOf(address(vault));
+        uint256 vaultBefore = vault.getBalance(address(token1));
 
         vm.prank(minter);
         vault.collect(address(token1), minter, amount);
 
         assertEq(token1.balanceOf(minter), minterBefore - amount);
-        assertEq(token1.balanceOf(address(vault)), vaultBefore + amount);
+        assertEq(vault.getBalance(address(token1)), vaultBefore + amount);
     }
 
     function test_Payout() public {
@@ -76,18 +76,18 @@ contract VaultTest is Test {
         vault.payout(address(token2), minter, amount);
 
         uint256 minterBefore = token2.balanceOf(minter);
-        uint256 vaultBefore = token2.balanceOf(address(vault));
+        uint256 vaultBefore = vault.getBalance(address(token2));
 
         vm.prank(minter);
         vault.payout(address(token2), minter, amount);
 
         assertEq(token2.balanceOf(minter), minterBefore + amount);
-        assertEq(token2.balanceOf(address(vault)), vaultBefore - amount);
+        assertEq(vault.getBalance(address(token2)), vaultBefore - amount);
     }
 
     function test_Withdraw() public {
         uint256 amount1 = 100e6;
-        uint256 vaultBefore1 = token1.balanceOf(address(vault));
+        uint256 vaultBefore1 = vault.getBalance(address(token1));
         uint256 ownerBefore1 = token1.balanceOf(owner);
 
         vm.prank(user);
@@ -96,16 +96,16 @@ contract VaultTest is Test {
 
         vault.withdraw(address(token1), owner, amount1);
 
-        assertEq(token1.balanceOf(address(vault)), vaultBefore1 - amount1);
+        assertEq(vault.getBalance(address(token1)), vaultBefore1 - amount1);
         assertEq(token1.balanceOf(owner), ownerBefore1 + amount1);
 
         uint256 amount2 = 100e18;
-        uint256 vaultBefore2 = token2.balanceOf(address(vault));
+        uint256 vaultBefore2 = vault.getBalance(address(token2));
         uint256 ownerBefore2 = token2.balanceOf(owner);
 
         vault.withdraw(address(token2), owner, amount2);
 
-        assertEq(token2.balanceOf(address(vault)), vaultBefore2 - amount2);
+        assertEq(vault.getBalance(address(token2)), vaultBefore2 - amount2);
         assertEq(token2.balanceOf(owner), ownerBefore2 + amount2);
     }
 }
