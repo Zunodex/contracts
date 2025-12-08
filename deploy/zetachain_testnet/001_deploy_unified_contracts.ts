@@ -40,9 +40,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 from: deployer,
                 args: args,
                 log: true,
-            });
+                });
+            await verifyContract(deployResult.address, args);
             return deployResult.address;
         } else {
+            verify = true;
             if (verify) {
                 await verifyContract(deployedAddress, args);
             }
@@ -81,20 +83,20 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         console.log("🔧 uUSDC implementation deployed at:", implAddress1);
         await verifyContract(implAddress1, []);
 
-        const uUSDT = await upgrades.deployProxy(UnifiedToken, [
-            "Unified USDT",
-            "uUSDT"
-        ]);
-        await uUSDT.waitForDeployment();
-        console.log("✅ uUSDT proxy deployed at:", uUSDT.target);
-        const implAddress2 = await upgrades.erc1967.getImplementationAddress(uUSDT.target);
-        console.log("🔧 uUSDT implementation deployed at:", implAddress2);
-        await verifyContract(implAddress2, []);
+        // const uUSDT = await upgrades.deployProxy(UnifiedToken, [
+        //     "Unified USDT",
+        //     "uUSDT"
+        // ]);
+        // await uUSDT.waitForDeployment();
+        // console.log("✅ uUSDT proxy deployed at:", uUSDT.target);
+        // const implAddress2 = await upgrades.erc1967.getImplementationAddress(uUSDT.target);
+        // console.log("🔧 uUSDT implementation deployed at:", implAddress2);
+        // await verifyContract(implAddress2, []);
     }
 
     async function deployVaults() {
-        await deployContract("USDCVault", "contracts/unified/Vault.sol");
-        await deployContract("USDTVault", "contracts/unified/Vault.sol");
+        await deployContract("USDCVault", "contracts/unified/Vault.sol:Vault");
+        // await deployContract("USDTVault", "contracts/unified/Vault.sol:Vault");
     }
 
     async function deployMinters() {
@@ -111,15 +113,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         console.log("🔧 uUSDCMinter implementation deployed at:", implAddress1);
         await verifyContract(implAddress1, []);
 
-        const uUSDTMinter = await upgrades.deployProxy(Minter, [
-            d.uUSDTProxy,
-            d.USDTVault
-        ]);
-        await uUSDTMinter.waitForDeployment();
-        console.log("✅ uUSDTMinter proxy deployed at:", uUSDTMinter.target);
-        const implAddress2 = await upgrades.erc1967.getImplementationAddress(uUSDTMinter.target);
-        console.log("🔧 uUSDTMinter implementation deployed at:", implAddress2);
-        await verifyContract(implAddress2, []);
+        // const uUSDTMinter = await upgrades.deployProxy(Minter, [
+        //     d.uUSDTProxy,
+        //     d.USDTVault
+        // ]);
+        // await uUSDTMinter.waitForDeployment();
+        // console.log("✅ uUSDTMinter proxy deployed at:", uUSDTMinter.target);
+        // const implAddress2 = await upgrades.erc1967.getImplementationAddress(uUSDTMinter.target);
+        // console.log("🔧 uUSDTMinter implementation deployed at:", implAddress2);
+        // await verifyContract(implAddress2, []);
     }
 
     async function deployAdapter() {
@@ -143,19 +145,33 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         );
         await USDCVault.setMinter(d.uUSDCMinterProxy);
 
-        console.log("uUSDT set minter...");
-        const uUSDT = await ethers.getContractAt(
-        "UnifiedToken",
-        d.uUSDTProxy
+        console.log("uUSDCMinter set adapter...");
+        const uUSDCMinter = await ethers.getContractAt(
+        "Minter",
+        d.uUSDCMinterProxy
         );
-        await uUSDT.setMinter(d.uUSDTMinterProxy);
+        await uUSDCMinter.setAdapter(d.MinterAdapter, true);
 
-        console.log("USDTVault set minter...");
-        const USDTVault = await ethers.getContractAt(
-        "contracts/unified/Vault.sol:Vault",
-        d.USDTVault
+        // console.log("uUSDT set minter...");
+        // const uUSDT = await ethers.getContractAt(
+        // "UnifiedToken",
+        // d.uUSDTProxy
+        // );
+        // await uUSDT.setMinter(d.uUSDTMinterProxy);
+
+        // console.log("USDTVault set minter...");
+        // const USDTVault = await ethers.getContractAt(
+        // "contracts/unified/Vault.sol:Vault",
+        // d.USDTVault
+        // );
+        // await USDTVault.setMinter(d.uUSDTMinterProxy);
+
+        console.log("uUSDTMinter set adapter...");
+        const uUSDTMinter = await ethers.getContractAt(
+        "Minter",
+        d.uUSDTMinterProxy
         );
-        await USDTVault.setMinter(d.uUSDTMinterProxy);
+        await uUSDTMinter.setAdapter(d.MinterAdapter, true);
     }
 
     async function registerAssets() {
@@ -203,17 +219,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         const uUSDCMinter = await ethers.getContractAt('Minter', dep.uUSDCMinterProxy);
         await uUSDCMinter.transferOwnership(def.UnifiedMultiSig);
 
-        console.log("uUSDT transfer owner...");
-        const uUSDT = await ethers.getContractAt('UnifiedToken', dep.uUSDTProxy);
-        await uUSDT.transferOwnership(def.UnifiedMultiSig);
+        // console.log("uUSDT transfer owner...");
+        // const uUSDT = await ethers.getContractAt('UnifiedToken', dep.uUSDTProxy);
+        // await uUSDT.transferOwnership(def.UnifiedMultiSig);
 
-        console.log("USDTVault transfer owner...");
-        const USDTVault = await ethers.getContractAt('contracts/unified/Vault.sol:Vault', dep.USDTVault);
-        await USDTVault.transferOwnership(def.UnifiedMultiSig);
+        // console.log("USDTVault transfer owner...");
+        // const USDTVault = await ethers.getContractAt('contracts/unified/Vault.sol:Vault', dep.USDTVault);
+        // await USDTVault.transferOwnership(def.UnifiedMultiSig);
 
-        console.log("uUSDTMinter transfer owner...");
-        const uUSDTMinter = await ethers.getContractAt('Minter', dep.uUSDTMinterProxy);
-        await uUSDTMinter.transferOwnership(def.UnifiedMultiSig);
+        // console.log("uUSDTMinter transfer owner...");
+        // const uUSDTMinter = await ethers.getContractAt('Minter', dep.uUSDTMinterProxy);
+        // await uUSDTMinter.transferOwnership(def.UnifiedMultiSig);
     }
 
     async function upgradeProxys() {
