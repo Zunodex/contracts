@@ -3,7 +3,6 @@ pragma solidity ^0.8.20;
 
 import {GatewayZEVM, MessageContext, RevertContext, AbortContext, CallOptions, RevertOptions} from "@zetachain/protocol-contracts/contracts/zevm/GatewayZEVM.sol";
 import {IZRC20} from "@zetachain/protocol-contracts/contracts/zevm/interfaces/IZRC20.sol";
-import {UniversalContract} from "@zetachain/protocol-contracts/contracts/zevm/interfaces/UniversalContract.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -16,6 +15,16 @@ import {IDODORouteProxy} from "./interfaces/IDODORouteProxy.sol";
 import {IRefundVault} from "./interfaces/IRefundVault.sol";
 import {Account, AccountEncoder} from "./libraries/AccountEncoder.sol";
 import "./libraries/SwapDataHelperLib.sol";
+
+interface UniversalContract {
+    /// @notice Function to handle cross-chain calls with ZRC20 token transfers
+    function onCall(
+        MessageContext calldata context,
+        address zrc20,
+        uint256 amount,
+        bytes calldata message
+    ) external;
+}
 
 contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgradeable, UUPSUpgradeable {
     address constant _ETH_ADDRESS_ = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
@@ -38,8 +47,9 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
     uint256 public gasLimit;
     uint256 public withdrawGasLimit;
 
-    GatewayZEVM public gatewayZEVM;
+    GatewayZEVM public gateway;
 
+    error Unauthorized();
     error RouteProxyCallFailed();
     error NotEnoughToPayGasFee();
     error IdenticalAddresses();
@@ -76,6 +86,11 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
     event DODOApproveUpdated(address dodoApprove);
     event EddyTreasurySafeUpdated(address EddyTreasurySafe);
 
+    modifier onlyGateway() {
+        if (msg.sender != address(gateway)) revert Unauthorized();
+        _;
+    }
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -107,14 +122,14 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         require(_dodoRouteProxy != address(0), "INVALID_ADDRESS");
         require(_dodoApprove != address(0), "INVALID_ADDRESS");
 
-        gatewayZEVM = GatewayZEVM(_gateway);
+        gateway = GatewayZEVM(_gateway);
         EddyTreasurySafe = _EddyTreasurySafe;
         DODORouteProxy = _dodoRouteProxy;
         DODOApprove = _dodoApprove;
         feePercent = _feePercent;
         slippage = _slippage;
         gasLimit = _gasLimit;
-        withdrawGasLimit = gatewayZEVM.MIN_GAS_LIMIT();
+        withdrawGasLimit = gateway.MIN_GAS_LIMIT();
     }
 
     function setDODORouteProxy(address _dodoRouteProxy) external onlyOwner {
@@ -142,13 +157,13 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
     }
 
     function setWithdrawGasLimit(uint256 _withdrawGasLimit) external onlyOwner {
-        require(_withdrawGasLimit >= gatewayZEVM.MIN_GAS_LIMIT(), "INVALID_WITHDRAW_GAS_LIMIT");
+        require(_withdrawGasLimit >= gateway.MIN_GAS_LIMIT(), "INVALID_WITHDRAW_GAS_LIMIT");
         gasLimit = _withdrawGasLimit;
     }
 
     function setGateway(address payable _gateway) external onlyOwner {
         require(_gateway != address(0), "INVALID_ADDRESS");
-        gatewayZEVM = GatewayZEVM(_gateway);
+        gateway = GatewayZEVM(_gateway);
         emit GatewayUpdated(_gateway);
     }
 
@@ -259,7 +274,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         bytes memory receiver,
         bytes memory message
     ) internal {
-        gatewayZEVM.withdrawAndCall(
+        gateway.withdrawAndCall(
             contractAddress,
             outputAmount,
             targetZRC20,
@@ -290,7 +305,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         address outputToken,
         uint256 amount
     ) internal {
-        gatewayZEVM.withdraw(
+        gateway.withdraw(
             sender,
             amount,
             outputToken,
@@ -334,8 +349,8 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         require(IZRC20(gasZRC20).balanceOf(address(this)) >= gasFee, "INSUFFICIENT_GAS_FOR_WITHDRAW");
         require(targetAmount - amountInMax > 0, "INSUFFICIENT_AMOUNT_FOR_WITHDRAW");
 
-        TransferHelper.safeApprove(gasZRC20, address(gatewayZEVM), gasFee);
-        TransferHelper.safeApprove(targetZRC20, address(gatewayZEVM), targetAmount - amounts[0]);
+        TransferHelper.safeApprove(gasZRC20, address(gateway), gasFee);
+        TransferHelper.safeApprove(targetZRC20, address(gateway), targetAmount - amounts[0]);
 
         amountsOut = targetAmount - amounts[0];
     }
@@ -477,7 +492,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         uint256 gasFee
     ) internal {
         if(gasFee >= outputAmount) revert NotEnoughToPayGasFee();
-        TransferHelper.safeApprove(decoded.targetZRC20, address(gatewayZEVM), outputAmount);
+        TransferHelper.safeApprove(decoded.targetZRC20, address(gateway), outputAmount);
         withdraw(
             externalId, 
             decoded.receiver, 
@@ -495,7 +510,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
 
         if (decoded.targetZRC20 == gasZRC20) {
             if (gasFee >= outputAmount) revert NotEnoughToPayGasFee();
-            TransferHelper.safeApprove(decoded.targetZRC20, address(gatewayZEVM), outputAmount);
+            TransferHelper.safeApprove(decoded.targetZRC20, address(gateway), outputAmount);
             
             withdraw(
                 externalId,
@@ -532,7 +547,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
 
         if (decoded.targetZRC20 == gasZRC20) {
             if (gasFee >= outputAmount) revert NotEnoughToPayGasFee();
-            TransferHelper.safeApprove(decoded.targetZRC20, address(gatewayZEVM), outputAmount);
+            TransferHelper.safeApprove(decoded.targetZRC20, address(gateway), outputAmount);
 
             bytes memory data = SwapDataHelperLib.buildOutputMessage(
                 externalId, 
@@ -712,7 +727,7 @@ contract GatewayTransferNative is UniversalContract, Initializable, OwnableUpgra
         (address gasZRC20, uint256 gasFee) = IZRC20(asset).withdrawGasFee();
         if(asset == gasZRC20) {
             if (gasFee >= context.amount) revert NotEnoughToPayGasFee();
-            TransferHelper.safeApprove(asset, address(gatewayZEVM), amount);
+            TransferHelper.safeApprove(asset, address(gateway), amount);
             amountOut = amount - gasFee;
         } else {
             amountOut = _swapAndSendERC20Tokens(
