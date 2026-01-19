@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {GatewayZEVM} from "@zetachain/protocol-contracts/contracts/zevm/GatewayZEVM.sol";
-import "@zetachain/protocol-contracts/contracts/zevm/interfaces/IGatewayZEVM.sol";
+import {GatewayZEVM, MessageContext, RevertContext, AbortContext, CallOptions, RevertOptions} from "@zetachain/protocol-contracts/contracts/zevm/GatewayZEVM.sol";
 import {IZRC20} from "@zetachain/protocol-contracts/contracts/zevm/interfaces/IZRC20.sol";
-import {UniversalContract} from "@zetachain/protocol-contracts/contracts/zevm/interfaces/UniversalContract.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -16,6 +14,16 @@ import {IDODORouteProxy} from "./interfaces/IDODORouteProxy.sol";
 import {IRefundVault} from "./interfaces/IRefundVault.sol";
 import {Account, AccountEncoder} from "./libraries/AccountEncoder.sol";
 import "./libraries/SwapDataHelperLib.sol";
+
+interface UniversalContract {
+    /// @notice Function to handle cross-chain calls with ZRC20 token transfers
+    function onCall(
+        MessageContext calldata context,
+        address zrc20,
+        uint256 amount,
+        bytes calldata message
+    ) external;
+}
 
 contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeable, UUPSUpgradeable {
     address constant _ETH_ADDRESS_ = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
@@ -35,6 +43,7 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
     uint256 public feePercent;
     uint256 public slippage;
     uint256 public gasLimit;
+    uint256 public withdrawGasLimit;
 
     GatewayZEVM public gateway;
 
@@ -74,8 +83,7 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
     event DODORouteProxyUpdated(address dodoRouteProxy);
     event DODOApproveUpdated(address dodoApprove);
     event EddyTreasurySafeUpdated(address EddyTreasurySafe);
-    
-    
+
     modifier onlyGateway() {
         if (msg.sender != address(gateway)) revert Unauthorized();
         _;
@@ -119,6 +127,7 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
         feePercent = _feePercent;
         slippage = _slippage;
         gasLimit = _gasLimit;
+        withdrawGasLimit = gateway.MIN_GAS_LIMIT();
     }
 
     function setDODORouteProxy(address _dodoRouteProxy) external onlyOwner {
@@ -143,6 +152,11 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
 
     function setGasLimit(uint256 _gasLimit) external onlyOwner {
         gasLimit = _gasLimit;
+    }
+
+    function setWithdrawGasLimit(uint256 _withdrawGasLimit) external onlyOwner {
+        require(_withdrawGasLimit >= gateway.MIN_GAS_LIMIT(), "INVALID_WITHDRAW_GAS_LIMIT");
+        gasLimit = _withdrawGasLimit;
     }
 
     function setGateway(address payable _gateway) external onlyOwner {
@@ -289,6 +303,7 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
             sender,
             amount,
             outputToken,
+            withdrawGasLimit,
             RevertOptions({
                 revertAddress: address(this),
                 callOnRevert: true,
@@ -480,7 +495,7 @@ contract GatewayCrossChain is UniversalContract, Initializable, OwnableUpgradeab
         address zrc20,
         uint256 amount,
         bytes calldata message
-    ) external onlyGateway {
+    ) external override onlyGateway {
         // Decode the message: 32 bytes(externalId) + bytes message
         (bytes32 externalId) = abi.decode(message[0:32], (bytes32)); 
         bytes calldata _message = message[32:];

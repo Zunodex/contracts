@@ -437,8 +437,8 @@ contract GatewayCrossChainTest is BaseTest {
         vm.prank(address(gatewayZEVM));
         gatewayCrossChain.onCall(
             MessageContext({
-                origin: "",
-                sender: msg.sender,
+                sender: abi.encodePacked(msg.sender),
+                senderEVM: msg.sender,
                 chainID: 8332
             }),
             zrc20,
@@ -1033,8 +1033,8 @@ contract GatewayCrossChainTest is BaseTest {
         vm.expectRevert();
         gatewayCrossChain.onCall(
             MessageContext({
-                origin: "",
-                sender: msg.sender,
+                sender: abi.encodePacked(msg.sender),
+                senderEVM: msg.sender,
                 chainID: 1
             }),
             address(token1Z),
@@ -1065,8 +1065,8 @@ contract GatewayCrossChainTest is BaseTest {
         vm.expectRevert();
         gatewayCrossChain.onCall(
             MessageContext({
-                origin: "",
-                sender: msg.sender,
+                sender: abi.encodePacked(msg.sender),
+                senderEVM: msg.sender,
                 chainID: 1
             }),
             address(token1Z),
@@ -1096,8 +1096,8 @@ contract GatewayCrossChainTest is BaseTest {
         vm.expectRevert();
         gatewayCrossChain.onCall(
             MessageContext({
-                origin: "",
-                sender: msg.sender,
+                sender: abi.encodePacked(msg.sender),
+                senderEVM: msg.sender,
                 chainID: 1
             }),
             address(token1Z),

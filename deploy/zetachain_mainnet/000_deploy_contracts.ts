@@ -70,33 +70,45 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         const d = config.defaultAddress;
         const feePercent = 10; // 0.01%
         const slippage = 10;
-        const gasLimit = 1000000;
+        const gasLimit = 700000;
         
         const GatewayCrossChain = await ethers.getContractFactory('GatewayCrossChain');
-        const gatewayCrossChain = await upgrades.deployProxy(GatewayCrossChain, [
-            d.Gateway,
-            d.MultiSig,
-            d.DODORouteProxy,
-            d.DODOApprove,
-            feePercent,
-            slippage,
-            gasLimit
-        ])
+        const gatewayCrossChain = await upgrades.deployProxy(
+            GatewayCrossChain,
+            [
+                d.Gateway,
+                d.MultiSig,
+                d.DODORouteProxy,
+                d.DODOApprove,
+                feePercent,
+                slippage,
+                gasLimit
+            ],
+            {
+                redeployImplementation: "always",
+            }
+        );
         await gatewayCrossChain.waitForDeployment();
         console.log("✅ GatewayCrossChain proxy deployed at:", gatewayCrossChain.target);
         const implAddress1 = await upgrades.erc1967.getImplementationAddress(gatewayCrossChain.target);
         console.log("🔧 GatewayCrossChain implementation deployed at:", implAddress1);
 
         const GatewayTransferNative = await ethers.getContractFactory('GatewayTransferNative');
-        const gatewayTransferNative = await upgrades.deployProxy(GatewayTransferNative, [
-            d.Gateway,
-            d.MultiSig,
-            d.DODORouteProxy,
-            d.DODOApprove,
-            feePercent,
-            slippage,
-            gasLimit
-        ])
+        const gatewayTransferNative = await upgrades.deployProxy(
+            GatewayTransferNative,
+            [
+                d.Gateway,
+                d.MultiSig,
+                d.DODORouteProxy,
+                d.DODOApprove,
+                feePercent,
+                slippage,
+                gasLimit
+            ],
+            {
+                redeployImplementation: "always",
+            }
+        );
         await gatewayTransferNative.waitForDeployment();
         console.log("✅ GatewayTransferNative proxy deployed at:", gatewayTransferNative.target);
         const implAddress2 = await upgrades.erc1967.getImplementationAddress(gatewayTransferNative.target);

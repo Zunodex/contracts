@@ -25,8 +25,8 @@ contract GatewayZEVMMock {
         IZRC20(zrc20).transfer(target, amount);
         UniversalContract(target).onCall(
             MessageContext({
-                origin: "",
-                sender: address(this),
+                sender: abi.encodePacked(msg.sender),
+                senderEVM: msg.sender,
                 chainID: chainId
             }), 
             zrc20, 

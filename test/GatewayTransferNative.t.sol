@@ -353,8 +353,8 @@ contract GatewayTransferNativeTest is BaseTest {
         vm.prank(address(gatewayZEVM));
         gatewayTransferNative.onCall(
             MessageContext({
-                origin: "",
-                sender: msg.sender,
+                sender: abi.encodePacked(msg.sender),
+                senderEVM: msg.sender,
                 chainID: 8332
             }),
             zrc20,
@@ -398,8 +398,8 @@ contract GatewayTransferNativeTest is BaseTest {
         vm.prank(address(gatewayZEVM));
         gatewayTransferNative.onCall(
             MessageContext({
-                origin: "",
-                sender: msg.sender,
+                sender: abi.encodePacked(msg.sender),
+                senderEVM: msg.sender,
                 chainID: 900
             }),
             zrc20,
@@ -1100,8 +1100,8 @@ contract GatewayTransferNativeTest is BaseTest {
         vm.prank(address(gatewayZEVM));
         gatewayTransferNative.onCall(
             MessageContext({
-                origin: "",
-                sender: msg.sender,
+                sender: abi.encodePacked(msg.sender),
+                senderEVM: msg.sender,
                 chainID: 2
             }),
             zrc20,
@@ -1303,8 +1303,8 @@ contract GatewayTransferNativeTest is BaseTest {
         vm.prank(address(gatewayZEVM));
         gatewayTransferNative.onCall(
             MessageContext({
-                origin: "",
-                sender: address(this),
+                sender: abi.encodePacked(msg.sender),
+                senderEVM: msg.sender,
                 chainID: 1
             }),
             address(token1Z),
