@@ -181,10 +181,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         const d = config.deployedAddress;
 
         const RefundVault = await ethers.getContractFactory('RefundVault');
+
+        // Re-register existing proxy in OpenZeppelin manifest (required when .openzeppelin is empty)
+        // await upgrades.forceImport(d.RefundVaultProxy, RefundVault, { kind: 'uups' });
+        // console.log("✅ RefundVault proxy force imported");
+
+        // const upgraded = await upgrades.upgradeProxy(d.RefundVaultProxy, RefundVault, { redeployImplementation: 'always' });
         const upgraded = await upgrades.upgradeProxy(d.RefundVaultProxy, RefundVault);
         console.log("✅ RefundVault proxy upgraded at:", upgraded.target);
         const implAddress = await upgrades.erc1967.getImplementationAddress(upgraded.target);
         console.log("🔧 New RefundVault implementation deployed at:", implAddress);
+        await verifyContract(implAddress, []);
     }
 };
 
