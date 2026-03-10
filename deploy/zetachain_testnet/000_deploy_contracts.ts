@@ -143,6 +143,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
         console.log("RefundVault set bot...");
         await refundVault.setBot(config.defaultAddress.RefundBot, true);
+        await refundVault.setBot(config.defaultAddress.RefundBot2, true);
     }
 
     async function transferOwner() {
