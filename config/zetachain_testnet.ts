@@ -9,6 +9,7 @@ const ZETACHAIN_TESTNET_CONFIG = {
         DODORouteProxy: "0x898d8672d9f8811603bE3431D2163a0784e71D22",
         DODOApprove: "0x69485b9B95df04dDbbF8669A33865C97E9B293B4",
         RefundBot: "0xa19c93c48b2051135c3a5c5df9753d53e03ef239",
+        RefundBot2: "0x86ab2e54fe38f99484b17ec0cd8ca2d3e5a3d50c",
     }, 
     deployedAddress: {
         GatewayCrossChainImpl: "0x4111660aEc40Fbb21866cFF008819E783407c276",
