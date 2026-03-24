@@ -204,6 +204,34 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
      * @param vault The address of the vault to receive the refunds.
      */
     function batchClaimRefund(address token, bytes32[] calldata externalIds, bytes calldata vault) external onlyBot {
+        _batchClaimRefund(token, externalIds, vault, gasLimit);
+    }
+
+    /**
+     * @notice Batch claim refund for a specific token by a bot with custom gas limit.
+     * @param token The address of the ZRC20 token to claim.
+     * @param externalIds List of externalIds to claim, all must match the given token.
+     * @param vault The address of the vault to receive the refunds.
+     * @param customGasLimit Custom gas limit for the withdraw.
+     */
+    function batchClaimRefundWithCustomGasLimit(
+        address token,
+        bytes32[] calldata externalIds,
+        bytes calldata vault,
+        uint256 customGasLimit
+    ) external onlyBot {
+        _batchClaimRefund(token, externalIds, vault, customGasLimit);
+    }
+
+    /**
+     * @dev Internal function to process batch claim refund.
+     */
+    function _batchClaimRefund(
+        address token,
+        bytes32[] calldata externalIds,
+        bytes calldata vault,
+        uint256 _gasLimit
+    ) internal {
         require(token != address(0), "INVALID_TOKEN");
         require(externalIds.length > 0, "EMPTY_LIST");
         require(vault.length > 0 , "INVALID_VAULT");
@@ -251,7 +279,7 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
                 callOnRevert: true,
                 abortAddress: address(0),
                 revertMessage: "",
-                onRevertGasLimit: gasLimit
+                onRevertGasLimit: _gasLimit
             })
         );
     }
@@ -300,14 +328,32 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
     // ==================== User Functions ====================
 
     function claimRefund(bytes32 externalId) external {
+        _claimRefund(externalId, gasLimit);
+    }
+
+    /**
+     * @notice Claim refund with custom gas limit.
+     * @param externalId The external ID of the refund.
+     * @param customGasLimit Custom gas limit for the withdraw.
+     */
+    function claimRefundWithCustomGasLimit(bytes32 externalId, uint256 customGasLimit) external {
+        _claimRefund(externalId, customGasLimit);
+    }
+
+    /**
+     * @dev Internal function to process claim refund.
+     */
+    function _claimRefund(bytes32 externalId, uint256 _gasLimit) internal {
         RefundInfo storage refundInfo = refundInfos[externalId];
         require(refundInfo.externalId != "", "REFUND_NOT_EXIST");
 
         address token = refundInfo.token;
         uint256 amount = refundInfo.amount;
         bytes memory walletAddress = refundInfo.walletAddress;
+        // Clear refund info after claiming
         delete refundInfos[externalId];
 
+        // Collect gas fee from user and approve
         (address gasZRC20, uint256 gasFee) = IZRC20(token).withdrawGasFee();
         TransferHelper.safeTransferFrom(
             gasZRC20,
@@ -322,6 +368,7 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
             TransferHelper.safeApprove(token, address(gateway), amount);
         }
 
+        // Withdraw to user wallet address
         gateway.withdraw(
             walletAddress,
             amount,
@@ -331,7 +378,7 @@ contract RefundVault is IRefundVault, Initializable, OwnableUpgradeable, UUPSUpg
                 callOnRevert: true,
                 abortAddress: address(0),
                 revertMessage: bytes.concat(externalId, walletAddress),
-                onRevertGasLimit: gasLimit
+                onRevertGasLimit: _gasLimit
             })
         );
 
